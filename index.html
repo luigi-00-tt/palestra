@@ -731,6 +731,22 @@ span.att { color: var(--warm); font-size: 11.5px; }
 
 /* pulsante esplicito per accendere la fotocamera nel pannello di scansione */
 .scan-on { width: 100%; }
+
+/* «Scatta una foto del codice»: l'alternativa che non chiede permessi
+   alla pagina, perché apre la fotocamera di sistema. */
+.scan-foto {
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: var(--surface-2); border: 1px solid var(--accent-line);
+  border-radius: var(--radius); padding: 13px 14px; min-height: var(--tap);
+}
+.scan-foto:active { background: var(--surface-3); }
+.scan-foto input { display: none; }
+.scan-foto svg {
+  width: 26px; height: 26px; flex: none; fill: none;
+  stroke: var(--accent); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+.scan-foto b { display: block; font-size: 14px; font-weight: 600; }
+.scan-foto i { font-style: normal; font-size: 11.5px; color: var(--text-dim); }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -3688,12 +3704,16 @@ function spiegaFotocamera(d, err) {
       SITO_URL + '</a>.';
   }
   if (nome === 'NotAllowedError' || nome === 'SecurityError') {
-    return '<b>Il permesso per la fotocamera è stato negato.</b> Si rimette così: tocca ' +
-      'l\'<b>icona a sinistra dell\'indirizzo</b> (il lucchetto o i due cursori) &rarr; ' +
-      '<b>Autorizzazioni</b> &rarr; <b>Fotocamera</b> &rarr; <b>Consenti</b>, poi ricarica la ' +
-      'pagina.<br><br>Se hai aperto l\'app dalla schermata Home e non vedi la barra ' +
-      'dell\'indirizzo: Impostazioni di Android &rarr; App &rarr; Chrome &rarr; Autorizzazioni ' +
-      '&rarr; Fotocamera.';
+    return '<b>Chrome ha la fotocamera bloccata per questo sito</b>, quindi rifiuta senza ' +
+      'nemmeno chiedertelo: finché resta così, insistere con il pulsante non serve.<br><br>' +
+      '<b>La via più veloce è qui sopra: «Scatta una foto del codice».</b> Apre la fotocamera ' +
+      'normale del telefono, che il permesso ce l\'ha già, e leggo il codice dalla foto.<br><br>' +
+      'Se invece vuoi sbloccare la scansione dal vivo: tocca l\'<b>icona a sinistra ' +
+      'dell\'indirizzo</b> (i due cursori, accanto a <i>github.io</i>) &rarr; ' +
+      '<b>Autorizzazioni</b> o <b>Impostazioni sito</b> &rarr; <b>Fotocamera</b> &rarr; ' +
+      '<b>Consenti</b>, poi <b>ricarica la pagina</b>.<br><br>' +
+      'Se non vedi la barra dell\'indirizzo perché hai aperto l\'app dalla schermata Home: ' +
+      'Impostazioni di Android &rarr; App &rarr; Chrome &rarr; Autorizzazioni &rarr; Fotocamera.';
   }
   if (nome === 'NotFoundError' || nome === 'OverconstrainedError') {
     return '<b>Non trovo una fotocamera utilizzabile</b> su questo dispositivo. ' +
@@ -3924,7 +3944,15 @@ function leggiEAN13(run, p) {
 
   /* la guardia iniziale sono tre strisce larghe un modulo */
   var unita = (run[p] + run[p + 1] + run[p + 2]) / 3;
-  if (unita < 0.8) return null;
+  /* Sotto i due pixel per modulo le misure diventano rumore e ogni tanto
+     compone per caso una sequenza che supera anche la cifra di controllo. */
+  if (unita < 2) return null;
+  /* Zona di rispetto: prima delle barre un codice vero ha sempre un'area
+     chiara larga almeno una decina di moduli. E' il filtro che distingue un
+     codice da una tessitura qualsiasi inquadrata per sbaglio.
+     L'eccezione e' quando quella striscia e' la PRIMA della riga: li' e'
+     tagliata dal bordo dell'inquadratura e la sua larghezza non dice niente. */
+  if (p > 1 && run[p - 1] < unita * 3) return null;
   if (Math.abs(run[p] - unita) > unita * 0.6) return null;
   if (Math.abs(run[p + 1] - unita) > unita * 0.6) return null;
   if (Math.abs(run[p + 2] - unita) > unita * 0.6) return null;
@@ -3956,6 +3984,13 @@ function leggiEAN13(run, p) {
     i += 4;
   }
 
+  /* Guardia finale: tre strisce da un modulo, come quella iniziale. Mancava,
+     ed e' un controllo che costa niente: senza, una sequenza di rumore che per
+     caso superava la cifra di controllo veniva accettata. */
+  for (k = 0; k < 3; k++) {
+    if (Math.abs(run[i + k] - unita) > unita * 0.75) return null;
+  }
+
   var prima = EAN_PARITA.indexOf(parita);
   if (prima < 0) return null;
   cifre.unshift(prima);
@@ -3968,7 +4003,8 @@ function leggiEAN13(run, p) {
 function leggiEAN8(run, p) {
   if (p + 43 > run.length) return null;
   var unita = (run[p] + run[p + 1] + run[p + 2]) / 3;
-  if (unita < 0.8) return null;
+  if (unita < 2) return null;
+  if (p > 1 && run[p - 1] < unita * 3) return null;
   for (var g = 0; g < 3; g++) if (Math.abs(run[p + g] - unita) > unita * 0.6) return null;
 
   var i = p + 3, cifre = [], k, q, c;
@@ -3985,6 +4021,9 @@ function leggiEAN8(run, p) {
     c = cifraDa(q, EAN_L);
     if (c < 0) return null;
     cifre.push(c); i += 4;
+  }
+  for (k = 0; k < 3; k++) {
+    if (Math.abs(run[i + k] - unita) > unita * 0.75) return null;
   }
   if (cifre.length !== 8 || !eanValido(cifre)) return null;
   return cifre.join('');
@@ -4037,13 +4076,19 @@ function decodificaRiga(lum, larg) {
    provano parecchie righe orizzontali sparse nella fascia centrale, che e'
    dove sta il mirino. Un codice storto viene preso da una delle righe. */
 var TELA = null, TELA_CTX = null;
-function decodificaFotogramma(video, righe) {
-  var vw = video.videoWidth, vh = video.videoHeight;
-  if (!vw || !vh) return null;
 
-  /* si lavora al massimo su 640 px di larghezza: piu' risoluzione non aiuta
-     e rallenta parecchio su un telefono */
-  var larg = Math.min(vw, 640);
+/* Legge da qualunque sorgente disegnabile: il video in diretta oppure una
+   fotografia scattata con la fotocamera di sistema. `largMax` permette di
+   lavorare piu' in grande su una foto ferma, dove il tempo non e' un problema. */
+function decodificaFotogramma(sorgente, righe, largMax) {
+  var vw = sorgente.videoWidth || sorgente.naturalWidth || sorgente.width;
+  var vh = sorgente.videoHeight || sorgente.naturalHeight || sorgente.height;
+  if (!vw || !vh) return null;
+  var video = sorgente;
+
+  /* sul video in diretta si sta a 640 px: piu' risoluzione non aiuta e
+     rallenta parecchio su un telefono. Su una foto si puo' alzare. */
+  var larg = Math.min(vw, largMax || 640);
   var alt = Math.round(vh * larg / vw);
 
   if (!TELA) {
@@ -4072,7 +4117,16 @@ function decodificaFotogramma(video, righe) {
   try { dati = ctx.getImageData(0, y0, larg, altezzaBanda).data; }
   catch (e) { return null; }
 
+  /* NON ci si ferma alla prima riga che decodifica.
+     Una riga sola puo' comporre per caso una sequenza che supera perfino la
+     cifra di controllo: misurato, capitava circa una volta ogni tremila righe
+     di rumore — in scansione continua sarebbe un codice sbagliato ogni
+     cinquanta secondi, cioe' il prodotto sbagliato nel diario.
+     Un codice vero invece si legge su PIU' righe, perche' le barre sono alte.
+     Quindi si leggono tutte le righe e si tiene il valore che compare piu'
+     volte, con il suo numero di conferme: decide chi chiama. */
   var lum = new Uint8Array(larg);
+  var conteggi = {}, migliore = null, meglio = 0;
   for (var y = 0; y < altezzaBanda; y += passo) {
     var base = y * larg * 4;
     for (var x = 0, j = base; x < larg; x++, j += 4) {
@@ -4080,9 +4134,51 @@ function decodificaFotogramma(video, righe) {
       lum[x] = (dati[j] * 77 + dati[j + 1] * 150 + dati[j + 2] * 29) >> 8;
     }
     var ean = decodificaRiga(lum, larg);
-    if (ean) return ean;
+    if (!ean) continue;
+    conteggi[ean] = (conteggi[ean] || 0) + 1;
+    if (conteggi[ean] > meglio) { meglio = conteggi[ean]; migliore = ean; }
+    if (meglio >= 2) break;        /* due righe d'accordo bastano */
   }
-  return null;
+  return migliore ? { ean: migliore, conferme: meglio } : null;
+}
+
+
+/* ---------- lettura da una FOTOGRAFIA ----------
+   E' la via che non richiede nessun permesso alla pagina: `<input type=file
+   capture=environment>` apre la fotocamera di SISTEMA, che il suo permesso ce
+   l'ha gia'. Serve quando Chrome ha bloccato la fotocamera per questo sito e
+   `getUserMedia` viene rifiutata senza nemmeno chiedere niente.
+   Su una foto ferma si puo' lavorare piu' in grande e su piu' righe: non c'e'
+   nessun tempo reale da rispettare. Se a una risoluzione non si legge, si
+   riprova con un'altra: un codice fotografato da lontano ha barre sottili. */
+function decodificaFile(file, quando) {
+  if (!file) { quando(null, 'Nessuna immagine.'); return; }
+  var url = URL.createObjectURL(file);
+  var img = new Image();
+  img.onload = function () {
+    /* Su una foto ferma si puo' insistere: piu' righe e piu' risoluzioni.
+       Si accetta solo un risultato confermato da almeno due righe, oppure lo
+       stesso identico codice trovato a due risoluzioni diverse. */
+    var ean = null, visto = null;
+    var scale = [1600, 1000, 640, 2200];
+    for (var i = 0; i < scale.length && !ean; i++) {
+      var r = null;
+      try { r = decodificaFotogramma(img, 40, scale[i]); } catch (e) { r = null; }
+      if (!r) continue;
+      if (r.conferme >= 2) { ean = r.ean; break; }
+      if (visto === r.ean) { ean = r.ean; break; }
+      visto = r.ean;
+    }
+    URL.revokeObjectURL(url);
+    quando(ean, ean ? null : 'Non sono riuscito a leggere il codice in questa foto. ' +
+      'Riprova tenendo il telefono <b>parallelo</b> alla confezione, con le barre ' +
+      '<b>orizzontali</b> e che riempiano bene l\'inquadratura.');
+  };
+  img.onerror = function () {
+    URL.revokeObjectURL(url);
+    quando(null, 'Non riesco ad aprire questa immagine.');
+  };
+  img.src = url;
 }
 
 
@@ -4144,6 +4240,14 @@ function scansionaAvvia(quando) {
         '<div class="scan-mirino"></div></div>' +
       '<button class="primary scan-on" id="scan-on" hidden>Attiva la fotocamera</button>' +
       '<div class="scan-stato" id="scan-s">Avvio della fotocamera…</div>' +
+      /* la via che non chiede permessi alla pagina: apre la fotocamera di
+         sistema, che il permesso ce l'ha gia' */
+      '<label class="scan-foto" id="scan-foto-l">' +
+        '<input type="file" accept="image/*" capture="environment" id="scan-foto">' +
+        '<svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4' +
+        'a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>' +
+        '<span><b>Scatta una foto del codice</b>' +
+        '<i>usa la fotocamera del telefono, senza permessi da dare</i></span></label>' +
       '<div class="scan-man">' +
         '<label>Oppure digita il codice stampato sotto le barre</label>' +
         '<div class="riga-libera">' +
@@ -4188,12 +4292,28 @@ function scansionaAvvia(quando) {
     if (ev.key === 'Enter') n.querySelector('#scan-ok').click();
   };
 
+  /* foto scattata con la fotocamera di sistema: nessun permesso da dare */
+  var campoFoto = n.querySelector('#scan-foto');
+  campoFoto.onchange = function () {
+    var f = campoFoto.files && campoFoto.files[0];
+    if (!f) return;
+    dire('Sto leggendo la foto…');
+    decodificaFile(f, function (ean, errore) {
+      if (ean) { consegna(ean); return; }
+      dire('<b>' + errore + '</b>');
+      campoFoto.value = '';
+    });
+  };
+
+  /* NIENTE `focus()` automatico sul campo del codice.
+     Su Android il focus apre la tastiera, che copre mezzo schermo — cioe'
+     proprio la spiegazione appena scritta e il pulsante per rimediare. Si e'
+     visto in una registrazione dell'utente: leggeva le istruzioni con la
+     tastiera sopra. Il campo lo tocca lui quando gli serve. */
   function rinuncia(messaggio, riprovabile) {
     if (riquadro) riquadro.style.display = 'none';
     dire(messaggio);
     if (riprovabile) mostraBottone('Riprova ad attivare la fotocamera');
-    var campo = n.querySelector('#scan-ean');
-    if (campo) campo.focus();
   }
 
   var d = diagnosiFotocamera();
@@ -4214,15 +4334,29 @@ function scansionaAvvia(quando) {
     try { lettore = new BarcodeDetector({ formats: formati }); } catch (e) { lettore = null; }
   });
 
+  /* Conferma anche fra un fotogramma e il successivo: se una riga sola ha
+     letto un codice, lo si accetta soltanto quando il fotogramma dopo dice la
+     stessa identica cosa. Il lettore di sistema, quando c'e', e' gia' affidabile
+     di suo e non ha bisogno di conferme. */
+  var candidato = null;
+  function nostraLettura() {
+    var r = decodificaFotogramma(video);
+    if (!r) { candidato = null; return null; }
+    if (r.conferme >= 2) return r.ean;
+    if (candidato === r.ean) return r.ean;
+    candidato = r.ean;
+    return null;
+  }
+
   function leggiFotogramma(dopo) {
     if (lettore) {
       lettore.detect(video).then(function (codici) {
         if (codici && codici.length) { dopo(codici[0].rawValue); return; }
-        dopo(decodificaFotogramma(video));
-      }).catch(function () { dopo(decodificaFotogramma(video)); });
+        dopo(nostraLettura());
+      }).catch(function () { dopo(nostraLettura()); });
       return;
     }
-    dopo(decodificaFotogramma(video));
+    dopo(nostraLettura());
   }
 
   function partiIlCiclo() {
