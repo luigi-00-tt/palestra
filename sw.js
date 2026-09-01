@@ -1,7 +1,7 @@
 /* Service worker: cache-first sull'app, che e' un file solo.
    Il nome della cache cambia a ogni build, quindi una versione nuova
    sostituisce sempre la precedente invece di restare in coda. */
-var CACHE = 'palestra-vmtj5dz5o';
+var CACHE = 'palestra-vmtj6agz0';
 var FILE = ['./', './index.html', './manifest.webmanifest', './icona-192.png', './icona-512.png'];
 
 self.addEventListener('install', function (e) {
@@ -22,12 +22,17 @@ self.addEventListener('fetch', function (e) {
      l'app possa proporre l'inserimento a mano. */
   if (u.origin !== location.origin) return;
   if (e.request.method !== 'GET') return;
+  /* Si cerca dentro LA cache di questa versione, non fra tutte quelle
+     dell'origine: caches.match() senza nome guarda ovunque, e finche' le
+     vecchie non sono state cancellate risponderebbe con la pagina di ieri. */
   e.respondWith(
-    caches.match(e.request).then(function (hit) {
-      return hit || fetch(e.request).then(function (r) {
-        var copia = r.clone();
-        caches.open(CACHE).then(function (c) { c.put(e.request, copia); }).catch(function () {});
-        return r;
+    caches.open(CACHE).then(function (c) {
+      return c.match(e.request).then(function (hit) {
+        return hit || fetch(e.request).then(function (r) {
+          var copia = r.clone();
+          c.put(e.request, copia).catch(function () {});
+          return r;
+        });
       });
     })
   );

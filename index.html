@@ -4643,6 +4643,13 @@ if (false) module.exports = {
 
 var KEY = 'palestra_v1';
 
+/* Sigla della build, riscritta da build.js: e' l'unico modo per rispondere
+   alla domanda «il telefono ha davvero la versione nuova?». Compare in fondo
+   a Impostazioni ed e' la stessa che nomina la cache del service worker.
+   Il marcatore sotto serve a build.js: non toglierlo. */
+/*__BUILD__*/
+var BUILD = 'vmtj6agz0';
+
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
    sito pubblico (`sito/index.html`), dove i dati personali non devono comparire:
@@ -4743,6 +4750,27 @@ function chiediPersistenza(quando) {
     ARCHIVIO.persistente = 'non supportato';
     if (quando) quando();
   });
+}
+
+/* ---------- aggiornamento dell'app ----------
+   Il service worker tiene la pagina in cache, ed e' quello che la fa
+   funzionare senza rete. Il rovescio della medaglia e' che, se non gli si dice
+   niente, continua a servire la versione vecchia: l'app sul telefono resta
+   indietro anche quando il sito e' gia' aggiornato da un pezzo.
+   Qui si forza il controllo. Chi ricarica davvero la pagina e' l'ascoltatore
+   di `controllerchange` messo su in fondo alla pagina dal codice che registra
+   il worker: quando quello nuovo prende il controllo, la pagina si rilegge da
+   sola. Questo pulsante serve a non dover aspettare. */
+function cercaAggiornamento(quando) {
+  if (!('serviceWorker' in navigator)) { quando('non-serve'); return; }
+  navigator.serviceWorker.getRegistration().then(function (reg) {
+    if (!reg) { quando('non-serve'); return; }
+    return reg.update().then(function () {
+      /* se c'e' un worker in installazione o gia' in attesa, la versione nuova
+         c'e' davvero e la pagina si ricarichera' da sola fra un istante */
+      quando(reg.installing || reg.waiting ? 'trovato' : 'aggiornata');
+    });
+  }).catch(function () { quando('errore'); });
 }
 
 function oggi() {
@@ -6648,6 +6676,31 @@ function vImpostazioni() {
   h += '<div class="note">Il ripristino <b>sostituisce</b> quello che c\'è adesso. Se stai ' +
        'passando da un indirizzo all\'altro fallo <b>prima</b> di registrare allenamenti nuovi, ' +
        'altrimenti li perdi.</div>';
+  /* ---------- aggiornamenti ----------
+     Serve perche' l'app installata vive di cache: senza un posto dove leggere
+     la sigla della build non c'e' modo di sapere se il telefono ha la versione
+     nuova o una di tre settimane fa. */
+  h += '<h2>Aggiornamenti</h2>';
+  h += '<div class="card"><table class="hist">' +
+    '<tr><td>Versione sul telefono</td><td class="num"><b>' + esc(BUILD) + '</b></td></tr>' +
+    '</table></div>';
+  var ag = S.ctx.aggiorn;
+  h += '<button class="ghost" id="cerca-agg"' + (ag === 'controllo' ? ' disabled' : '') + '>' +
+       (ag === 'controllo' ? 'Controllo in corso…' : 'Controlla se c\'è una versione nuova') +
+       '</button>';
+  h += '<div class="note">' + (
+    ag === 'trovato' ? '<b>Versione nuova trovata.</b> La sto scaricando: fra un istante la pagina ' +
+                       'si ricarica da sola. Quello che hai registrato resta dov\'&egrave;.' :
+    ag === 'aggiornata' ? '<b>Sei gi&agrave; all\'ultima versione</b> (' + esc(BUILD) + ').' :
+    ag === 'non-serve' ? 'Questa copia dell\'app non passa dalla cache di un sito: si aggiorna ' +
+                         'quando la riapri, senza bisogno di controlli.' :
+    ag === 'errore' ? 'Non sono riuscito a controllare: probabilmente non c\'&egrave; rete. ' +
+                      'Riprova pi&ugrave; tardi.' :
+    'L\'app si aggiorna da sola quando la riapri, ma passa dalla cache del telefono e ogni tanto ' +
+    'ci mette un giro in pi&ugrave;. Questo pulsante forza il controllo: se trova qualcosa, la ' +
+    'pagina si ricarica da sola.'
+  ) + '</div>';
+
   h += '<h2>Azzeramento</h2>';
   h += '<button class="ghost danger" id="azzera">Cancella tutti i dati</button>';
   h += '<div class="note">Versione ' + SCHEDA.versione + ' — scheda e contenuti nutrizionali generati dalla rassegna ' +
@@ -7172,6 +7225,16 @@ function collegaImpostazioni() {
     toast('Ripristinati ' + c3.sedute + ' allenamenti e ' + c3.serie + ' serie');
     vai('home');
   };
+  /* L'esito passa da S.ctx e si ridisegna la vista, invece di scrivere dentro
+     un nodo tenuto da parte: fra il tocco e la risposta puo' benissimo esserci
+     stato un altro render, e quel nodo non sarebbe piu' quello a schermo. */
+  var ca = document.getElementById('cerca-agg');
+  if (ca) ca.onclick = function () {
+    S.ctx.aggiorn = 'controllo';
+    render();
+    cercaAggiornamento(function (r) { S.ctx.aggiorn = r; render(); });
+  };
+
   var a = document.getElementById('azzera');
   if (a) a.onclick = function () {
     if (a.dataset.sure) {
@@ -7205,10 +7268,36 @@ save();
 </script>
 <script>
 /* Il service worker tiene la pagina in cache: dopo la prima apertura l'app
-   funziona senza rete, esattamente come il file locale. */
+   funziona senza rete, esattamente come il file locale.
+   Il rovescio della medaglia e' che, lasciato a se stesso, continua a
+   servire la versione vecchia. Le tre righe che seguono esistono per
+   questo, e ognuna copre un pezzo del problema:
+     updateViaCache 'none' — GitHub Pages manda sw.js con max-age=600, e
+       senza questo per dieci minuti il browser non si accorge nemmeno che
+       il worker e' cambiato;
+     update() a ogni apertura e a ogni ritorno in primo piano — l'app
+       installata spesso non viene mai chiusa davvero, resta sospesa;
+     controllerchange — quando il worker nuovo prende il controllo, l'HTML
+       gia' disegnato e' ancora quello vecchio, e va riletto. Si ricarica
+       una volta sola, e mai al primo avvio in assoluto (li' il controllo
+       passa da nessuno al primo worker, e non c'e' niente di vecchio a
+       schermo da sostituire). */
 if ('serviceWorker' in navigator) {
+  var eraControllata = !!navigator.serviceWorker.controller;
+  var ricaricato = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (!eraControllata || ricaricato) return;
+    ricaricato = true;
+    location.reload();
+  });
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').catch(function () {});
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then(function (reg) {
+        reg.update();
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) reg.update();
+        });
+      }).catch(function () {});
   });
 }
 </script>
