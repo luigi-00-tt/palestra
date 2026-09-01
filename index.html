@@ -728,6 +728,9 @@ span.att { color: var(--warm); font-size: 11.5px; }
 .ko-v { color: var(--warm); }
 .scan-stato a { color: var(--accent); }
 .scan-stato code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+
+/* pulsante esplicito per accendere la fotocamera nel pannello di scansione */
+.scan-on { width: 100%; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -3593,9 +3596,9 @@ function calcolaAlimento(a, gr) {
         funziona ovunque, e comunque il prodotto finisce nell'archivio e non lo
         si riscrive mai piu'.
 
-   La scansione usa BarcodeDetector, che e' un'API del browser (Chrome su
-   Android ce l'ha): nessuna libreria da caricare, l'app resta un file solo
-   senza dipendenze. Dove manca, l'overlay chiede di digitare il codice.
+   La scansione prova prima BarcodeDetector, il lettore del sistema operativo,
+   e se non c'e' usa il decodificatore EAN-13/EAN-8 scritto piu' in basso in
+   questo file. Nessuna libreria esterna in nessuno dei due casi.
 
    Nota sui valori: le etichette europee dichiarano l'energia in kJ e kcal e i
    nutrienti per 100 g. Open Food Facts riporta gli stessi campi con il suffisso
@@ -3693,7 +3696,8 @@ function spiegaFotocamera(d, err) {
       '&rarr; Fotocamera.';
   }
   if (nome === 'NotFoundError' || nome === 'OverconstrainedError') {
-    return '<b>Non trovo una fotocamera utilizzabile</b> su questo dispositivo.';
+    return '<b>Non trovo una fotocamera utilizzabile</b> su questo dispositivo. ' +
+      'Puoi digitare il codice qui sotto.';
   }
   if (nome === 'NotReadableError' || nome === 'AbortError') {
     return '<b>La fotocamera è occupata da un\'altra app.</b> Chiudi l\'app della fotocamera ' +
@@ -3806,7 +3810,271 @@ function eliminaProdotto(ean) {
   save();
 }
 
-/* ---------- overlay di scansione ---------- */
+
+function scansionaChiudi() {
+  SCAN.attivo = false;
+  if (SCAN.tick) { clearInterval(SCAN.tick); SCAN.tick = null; }
+  if (SCAN.stream) {
+    SCAN.stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+    SCAN.stream = null;
+  }
+  var n = document.querySelector('.scan');
+  if (n) n.remove();
+}
+
+/* `quando(ean)` viene chiamata una volta sola, con il codice letto o digitato. */
+
+/* ============================================================
+   DECODIFICATORE EAN-13 / EAN-8 SCRITTO QUI
+
+   Perche' esiste. La lettura dei codici a barre nel browser la fa
+   `BarcodeDetector`, che pero' non e' del browser: e' un pezzo del sistema
+   operativo. C'e' su ChromeOS e su Android con i servizi Google aggiornati,
+   NON c'e' su Windows, e su parecchi Android risponde con un elenco di formati
+   vuoto. Dipendere solo da quello vuol dire un'app che non scansiona e non sa
+   spiegare perche'.
+
+   Questo lettore lavora sui pixel del fotogramma e non chiede niente a nessuno.
+   Resta la regola del progetto: nessuna libreria esterna, tutto dentro il file.
+
+   Come funziona, in breve. Un EAN-13 e' fatto di 95 moduli della stessa
+   larghezza: guardia (3), sei cifre da 7 moduli, guardia centrale (5), altre
+   sei cifre, guardia finale (3). Ogni cifra e' quattro barre/spazi alternati
+   la cui somma fa 7. Quindi non serve misurare i pixel in assoluto: basta
+   leggere una riga orizzontale, contare quanti pixel dura ogni striscia dello
+   stesso colore, e confrontare le PROPORZIONI con le tabelle. Le cifre di
+   sinistra sono codificate in due modi (L e G) e la loro alternanza codifica
+   la prima cifra, che di barre non ne ha.
+   ============================================================ */
+
+/* Lunghezze delle quattro strisce di ogni cifra, in moduli.
+   Le cifre a destra (R) hanno le stesse lunghezze di L, con i colori
+   invertiti: siccome qui si contano strisce e non colori, la tabella e' una. */
+var EAN_L = [[3,2,1,1],[2,2,2,1],[2,1,2,2],[1,4,1,1],[1,1,3,2],
+             [1,2,3,1],[1,1,1,4],[1,3,1,2],[1,2,1,3],[3,1,1,2]];
+var EAN_G = [[1,1,2,3],[1,2,2,2],[2,2,1,2],[1,1,4,1],[2,3,1,1],
+             [1,3,2,1],[4,1,1,1],[2,1,3,1],[3,1,2,1],[2,1,1,3]];
+/* Quale combinazione di L e G nelle sei cifre di sinistra corrisponde alla
+   prima cifra del codice (0 = L, 1 = G). */
+var EAN_PARITA = ['000000','001011','001101','001110','010011',
+                  '011001','011100','010101','010110','011010'];
+
+/* Quanto una sequenza di strisce assomiglia a un modello, 0 = identica.
+   Le strisce si normalizzano sulla loro somma, cosi' la misura non dipende
+   da quanto e' grande il codice nell'inquadratura. */
+function scartoCifra(strisce, modello, moduli) {
+  var somma = 0, i;
+  for (i = 0; i < strisce.length; i++) somma += strisce[i];
+  if (somma <= 0) return 1e9;
+  var unita = somma / moduli;
+  /* una striscia piu' sottile di mezzo pixel non e' misurabile */
+  if (unita < 0.6) return 1e9;
+  var scarto = 0;
+  for (i = 0; i < strisce.length; i++) {
+    var atteso = modello[i] * unita;
+    var d = Math.abs(strisce[i] - atteso) / unita;
+    if (d > 0.7) return 1e9;            /* troppo lontano: non e' quella cifra */
+    scarto += d * d;
+  }
+  return scarto;
+}
+
+function cifraDa(strisce, tabella) {
+  var best = -1, bestScarto = 0.6;      /* soglia: oltre, si rinuncia */
+  for (var c = 0; c < 10; c++) {
+    var s = scartoCifra(strisce, tabella[c], 7);
+    if (s < bestScarto) { bestScarto = s; best = c; }
+  }
+  return best;
+}
+
+/* La cifra di controllo dell'EAN.
+   I pesi 3 e 1 si alternano CONTANDO DA DESTRA: la cifra subito a sinistra di
+   quella di controllo pesa 3, la successiva 1, e cosi' via. Contarli da
+   sinistra sembra uguale ma non lo e', perche' EAN-13 ed EAN-8 hanno un numero
+   diverso di cifre e la sequenza si ribalta: su EAN-13 la prima cifra pesa 1,
+   su EAN-8 pesa 3. Da qui si parte dalla distanza dalla cifra di controllo. */
+function eanValido(cifre) {
+  var n = cifre.length, somma = 0;
+  for (var i = 0; i < n - 1; i++) {
+    var distanza = (n - 1) - i;
+    var peso = (distanza % 2 === 1) ? 3 : 1;
+    somma += cifre[i] * peso;
+  }
+  return ((10 - (somma % 10)) % 10) === cifre[n - 1];
+}
+
+/* Da una riga di pixel (chiaro/scuro gia' deciso) alle lunghezze delle
+   strisce, con il colore della prima. */
+function strisceDaRiga(scuro) {
+  var run = [], corrente = scuro[0], lung = 0;
+  for (var i = 0; i < scuro.length; i++) {
+    if (scuro[i] === corrente) { lung++; }
+    else { run.push(lung); corrente = scuro[i]; lung = 1; }
+  }
+  run.push(lung);
+  return { run: run, primoScuro: scuro[0] };
+}
+
+/* Prova a leggere un EAN-13 a partire dalla striscia `p` di `run`.
+   `run[p]` deve essere la prima barra della guardia iniziale. */
+function leggiEAN13(run, p) {
+  /* servono 59 strisce: 3 guardia + 24 + 5 guardia centrale + 24 + 3 */
+  if (p + 59 > run.length) return null;
+
+  /* la guardia iniziale sono tre strisce larghe un modulo */
+  var unita = (run[p] + run[p + 1] + run[p + 2]) / 3;
+  if (unita < 0.8) return null;
+  if (Math.abs(run[p] - unita) > unita * 0.6) return null;
+  if (Math.abs(run[p + 1] - unita) > unita * 0.6) return null;
+  if (Math.abs(run[p + 2] - unita) > unita * 0.6) return null;
+
+  var i = p + 3, cifre = [], parita = '', k, q;
+
+  for (k = 0; k < 6; k++) {
+    q = [run[i], run[i + 1], run[i + 2], run[i + 3]];
+    var cL = cifraDa(q, EAN_L), cG = cifraDa(q, EAN_G);
+    var sL = cL < 0 ? 1e9 : scartoCifra(q, EAN_L[cL], 7);
+    var sG = cG < 0 ? 1e9 : scartoCifra(q, EAN_G[cG], 7);
+    if (sL === 1e9 && sG === 1e9) return null;
+    if (sL <= sG) { cifre.push(cL); parita += '0'; }
+    else { cifre.push(cG); parita += '1'; }
+    i += 4;
+  }
+
+  /* guardia centrale: cinque strisce da un modulo */
+  for (k = 0; k < 5; k++) {
+    if (Math.abs(run[i + k] - unita) > unita * 0.75) return null;
+  }
+  i += 5;
+
+  for (k = 0; k < 6; k++) {
+    q = [run[i], run[i + 1], run[i + 2], run[i + 3]];
+    var c = cifraDa(q, EAN_L);      /* a destra le lunghezze sono quelle di L */
+    if (c < 0) return null;
+    cifre.push(c);
+    i += 4;
+  }
+
+  var prima = EAN_PARITA.indexOf(parita);
+  if (prima < 0) return null;
+  cifre.unshift(prima);
+
+  if (cifre.length !== 13 || !eanValido(cifre)) return null;
+  return cifre.join('');
+}
+
+/* Prova a leggere un EAN-8: 3 + 4 cifre + 5 + 4 cifre + 3 = 43 strisce. */
+function leggiEAN8(run, p) {
+  if (p + 43 > run.length) return null;
+  var unita = (run[p] + run[p + 1] + run[p + 2]) / 3;
+  if (unita < 0.8) return null;
+  for (var g = 0; g < 3; g++) if (Math.abs(run[p + g] - unita) > unita * 0.6) return null;
+
+  var i = p + 3, cifre = [], k, q, c;
+  for (k = 0; k < 4; k++) {
+    q = [run[i], run[i + 1], run[i + 2], run[i + 3]];
+    c = cifraDa(q, EAN_L);
+    if (c < 0) return null;
+    cifre.push(c); i += 4;
+  }
+  for (k = 0; k < 5; k++) if (Math.abs(run[i + k] - unita) > unita * 0.75) return null;
+  i += 5;
+  for (k = 0; k < 4; k++) {
+    q = [run[i], run[i + 1], run[i + 2], run[i + 3]];
+    c = cifraDa(q, EAN_L);
+    if (c < 0) return null;
+    cifre.push(c); i += 4;
+  }
+  if (cifre.length !== 8 || !eanValido(cifre)) return null;
+  return cifre.join('');
+}
+
+/* Legge una riga di luminanza e prova tutte le partenze plausibili, nei due
+   versi: il codice puo' essere inquadrato capovolto. */
+function decodificaRiga(lum, larg) {
+  /* soglia: media fra il piu' chiaro e il piu' scuro della riga. Semplice, ma
+     su una riga sola e' piu' robusta di una soglia fissa, e regge le foto
+     poco illuminate. */
+  var min = 255, max = 0, i;
+  for (i = 0; i < larg; i++) {
+    var v = lum[i];
+    if (v < min) min = v;
+    if (v > max) max = v;
+  }
+  if (max - min < 40) return null;        /* riga piatta: niente barre */
+  var soglia = (min + max) / 2;
+
+  var scuro = new Uint8Array(larg);
+  for (i = 0; i < larg; i++) scuro[i] = lum[i] < soglia ? 1 : 0;
+
+  var s = strisceDaRiga(scuro);
+  var run = s.run;
+  /* le strisce scure sono quelle in posizione pari se la riga comincia scura */
+  var primoIndiceScuro = s.primoScuro ? 0 : 1;
+
+  var versi = [run, run.slice().reverse()];
+  for (var d = 0; d < 2; d++) {
+    var r = versi[d];
+    /* la guardia iniziale e' una barra SCURA: nel verso rovesciato la parita'
+       degli indici cambia se il numero di strisce e' pari */
+    var partenzaScura = (d === 0)
+      ? primoIndiceScuro
+      : ((run.length - 1 - primoIndiceScuro) % 2 === 0 ? 0 : 1);
+    for (var p = partenzaScura; p + 59 <= r.length; p += 2) {
+      var ean = leggiEAN13(r, p);
+      if (ean) return ean;
+    }
+    for (var p8 = partenzaScura; p8 + 43 <= r.length; p8 += 2) {
+      var e8 = leggiEAN8(r, p8);
+      if (e8) return e8;
+    }
+  }
+  return null;
+}
+
+/* Cerca un codice dentro un fotogramma. Non si legge tutta l'immagine: si
+   provano parecchie righe orizzontali sparse nella fascia centrale, che e'
+   dove sta il mirino. Un codice storto viene preso da una delle righe. */
+var TELA = null;
+function decodificaFotogramma(video, righe) {
+  var vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !vh) return null;
+
+  /* si lavora al massimo su 640 px di larghezza: piu' risoluzione non aiuta
+     e rallenta parecchio su un telefono */
+  var larg = Math.min(vw, 640);
+  var alt = Math.round(vh * larg / vw);
+
+  if (!TELA) TELA = document.createElement('canvas');
+  if (TELA.width !== larg || TELA.height !== alt) { TELA.width = larg; TELA.height = alt; }
+  var ctx = TELA.getContext('2d', { willReadFrequently: true });
+  try { ctx.drawImage(video, 0, 0, larg, alt); }
+  catch (e) { return null; }
+
+  righe = righe || 15;
+  var y0 = Math.round(alt * 0.28), y1 = Math.round(alt * 0.72);
+  var passo = Math.max(1, Math.round((y1 - y0) / righe));
+  var lum = new Uint8Array(larg);
+
+  for (var y = y0; y <= y1; y += passo) {
+    var dati;
+    try { dati = ctx.getImageData(0, y, larg, 1).data; }
+    catch (e) { return null; }
+    for (var x = 0, j = 0; x < larg; x++, j += 4) {
+      /* luminanza approssimata: pesi interi, nessuna moltiplicazione in virgola */
+      lum[x] = (dati[j] * 77 + dati[j + 1] * 150 + dati[j + 2] * 29) >> 8;
+    }
+    var ean = decodificaRiga(lum, larg);
+    if (ean) return ean;
+  }
+  return null;
+}
+
+
+/* ============================================================
+   OVERLAY DI SCANSIONE
+   ============================================================ */
 
 var SCAN = { stream: null, tick: null, attivo: false };
 
@@ -3821,7 +4089,17 @@ function scansionaChiudi() {
   if (n) n.remove();
 }
 
-/* `quando(ean)` viene chiamata una volta sola, con il codice letto o digitato. */
+/* `quando(ean)` viene chiamata una volta sola, con il codice letto o digitato.
+
+   ORDINE DELLE OPERAZIONI, ed e' la parte che conta.
+   La richiesta della fotocamera va fatta SUBITO, nello stesso giro in cui
+   l'utente ha toccato il pulsante. Chrome su Android concede il permesso solo
+   se la chiamata avviene mentre il tocco e' ancora "valido": se prima si
+   aspetta anche solo una promessa — come faceva la versione precedente, che
+   chiedeva i formati del decodificatore — l'attivazione decade e la richiesta
+   di autorizzazione NON COMPARE PIU'. Nessun messaggio, nessun errore: la
+   fotocamera semplicemente non parte. Era questo il difetto.
+   Quindi: prima la fotocamera, il resto dopo. */
 function scansiona(quando) {
   scansionaChiudi();
   SCAN.attivo = true;
@@ -3832,6 +4110,7 @@ function scansiona(quando) {
         '<button class="scan-x" id="scan-x" aria-label="Chiudi">&times;</button></div>' +
       '<div class="scan-video"><video id="scan-v" playsinline muted autoplay></video>' +
         '<div class="scan-mirino"></div></div>' +
+      '<button class="primary scan-on" id="scan-on" hidden>Attiva la fotocamera</button>' +
       '<div class="scan-stato" id="scan-s">Avvio della fotocamera…</div>' +
       '<div class="scan-man">' +
         '<label>Oppure digita il codice stampato sotto le barre</label>' +
@@ -3844,8 +4123,23 @@ function scansiona(quando) {
   document.body.appendChild(n);
 
   var stato = n.querySelector('#scan-s');
-  function dire(t) { if (stato) stato.innerHTML = t; }
+  var bottone = n.querySelector('#scan-on');
+  var riquadro = n.querySelector('.scan-video');
+  var video = n.querySelector('#scan-v');
 
+  /* Queste due vanno messe come PROPRIETA', non come attributi nell'HTML:
+     scritte nel markup, Chrome non sempre le considera, e senza `muted` la
+     riproduzione automatica viene bloccata e il riquadro resta nero. */
+  video.muted = true;
+  video.playsInline = true;
+  video.setAttribute('playsinline', '');
+
+  function dire(t) { if (stato) stato.innerHTML = t; }
+  function mostraBottone(testo) {
+    if (!bottone) return;
+    bottone.textContent = testo || 'Attiva la fotocamera';
+    bottone.hidden = false;
+  }
   function consegna(ean) {
     if (!SCAN.attivo) return;
     scansionaChiudi();
@@ -3862,97 +4156,116 @@ function scansiona(quando) {
     if (ev.key === 'Enter') n.querySelector('#scan-ok').click();
   };
 
-  function rinuncia(messaggio) {
-    var v = n.querySelector('.scan-video');
-    if (v) v.style.display = 'none';
+  function rinuncia(messaggio, riprovabile) {
+    if (riquadro) riquadro.style.display = 'none';
     dire(messaggio);
+    if (riprovabile) mostraBottone('Riprova ad attivare la fotocamera');
     var campo = n.querySelector('#scan-ean');
     if (campo) campo.focus();
   }
 
-  /* ---------- si guarda cosa c'e' PRIMA di chiedere il permesso ---------- */
   var d = diagnosiFotocamera();
 
-  if (d.inCornice && d.permessaDalFrame === false) { rinuncia(spiegaFotocamera(d, null)); return; }
-  if (d.sicuro === false) { rinuncia(spiegaFotocamera(d, null)); return; }
+  /* Questi tre casi si sanno prima e non c'e' niente da chiedere. */
+  if (d.inCornice && d.permessaDalFrame === false) { rinuncia(spiegaFotocamera(d, null), false); return; }
+  if (d.sicuro === false) { rinuncia(spiegaFotocamera(d, null), false); return; }
   if (!d.api) {
     rinuncia('<b>Questo browser non dà accesso alla fotocamera.</b> Su Android usa <b>Chrome</b>. ' +
-             'Intanto puoi digitare il codice qui sotto.');
+             'Intanto puoi digitare il codice qui sotto.', false);
     return;
   }
 
-  /* Il lettore di codici su Android lo fornisce Google Play Services: puo'
-     esistere l'oggetto e non esserci nessun formato leggibile. Va chiesto. */
+  /* ---------- il lettore: quello del sistema se c'e', altrimenti il nostro ---------- */
+  var lettore = null;                 /* BarcodeDetector, quando disponibile */
   formatiDisponibili(function (formati) {
-    if (!SCAN.attivo) return;
-    if (!d.lettore || !formati) {
-      rinuncia('<b>Questo telefono non sa decodificare i codici a barre.</b> È una funzione del ' +
-               'sistema (arriva con i servizi Google) e non posso aggiungerla dall\'app. ' +
-               'Scrivi il numero stampato sotto le barre: il resto funziona identico, e il ' +
-               'prodotto viene salvato lo stesso.');
+    if (!formati) return;             /* si usera' il decodificatore interno */
+    try { lettore = new BarcodeDetector({ formats: formati }); } catch (e) { lettore = null; }
+  });
+
+  function leggiFotogramma(dopo) {
+    if (lettore) {
+      lettore.detect(video).then(function (codici) {
+        if (codici && codici.length) { dopo(codici[0].rawValue); return; }
+        dopo(decodificaFotogramma(video));
+      }).catch(function () { dopo(decodificaFotogramma(video)); });
       return;
     }
+    dopo(decodificaFotogramma(video));
+  }
 
-    var det;
-    try { det = new BarcodeDetector({ formats: formati }); }
-    catch (e) {
-      rinuncia('<b>Non riesco ad avviare il lettore di codici.</b> Digita il numero qui sotto.');
-      return;
-    }
+  function partiIlCiclo() {
+    var tentativi = 0;
+    SCAN.tick = setInterval(function () {
+      if (!SCAN.attivo || video.readyState < 2 || !video.videoWidth) return;
+      tentativi++;
+      if (tentativi === 25) {
+        dire('Non l\'ho ancora preso. <b>Allontana il telefono</b> di qualche centimetro, tieni ' +
+             'il codice dritto e ben illuminato. Se non ne vuole sapere, digitalo qui sotto.');
+      }
+      leggiFotogramma(function (ean) {
+        if (ean) consegna(ean);
+      });
+    }, 250);
+  }
 
-    var video = n.querySelector('#scan-v');
-    /* Queste due vanno messe come PROPRIETA', non come attributi nell'HTML:
-       scritte nel markup, Chrome non sempre le considera, e senza `muted`
-       la riproduzione automatica viene bloccata e il video resta nero. */
-    video.muted = true;
-    video.playsInline = true;
-    video.setAttribute('playsinline', '');
-
-    /* Prima si chiede la fotocamera posteriore; se il dispositivo non ce l'ha,
-       si riprova senza pretese invece di arrendersi. */
-    function chiedi(vincoli, ultimo) {
-      navigator.mediaDevices.getUserMedia(vincoli).then(function (s) {
-        if (!SCAN.attivo) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
-        SCAN.stream = s;
-        video.srcObject = s;
-        var avviato = video.play();
-        if (avviato && avviato.catch) {
-          avviato.catch(function () {
-            /* alcune versioni rifiutano la riproduzione automatica: si offre
-               all'utente di farla partire lui con un tocco */
-            dire('Tocca il riquadro per accendere l\'anteprima.');
-            n.querySelector('.scan-video').onclick = function () { video.play(); };
-          });
-        }
-        dire('Tieni il codice <b>dentro il riquadro</b>, a un palmo di distanza, ben illuminato. ' +
-             'Se non lo prende, allontana un po\' il telefono.');
-        var tentativi = 0;
-        SCAN.tick = setInterval(function () {
-          if (!SCAN.attivo) return;
-          if (video.readyState < 2) return;
-          tentativi++;
-          if (tentativi === 40) {
-            dire('Non riesco a leggerlo. Prova a <b>allontanare</b> il telefono di qualche ' +
-                 'centimetro, o a mettere il codice più in luce. Oppure digitalo qui sotto.');
-          }
-          det.detect(video).then(function (codici) {
-            if (codici && codici.length) consegna(codici[0].rawValue);
-          }).catch(function () { /* un fotogramma illeggibile non e' un errore */ });
-        }, 300);
-      }).catch(function (err) {
-        var riprovabile = err && (err.name === 'OverconstrainedError' || err.name === 'NotFoundError');
-        if (riprovabile && !ultimo) { chiedi({ video: true, audio: false }, true); return; }
-        rinuncia(spiegaFotocamera(d, err));
+  function avviaVideo(s) {
+    if (!SCAN.attivo) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+    SCAN.stream = s;
+    if (riquadro) riquadro.style.display = '';
+    if (bottone) bottone.hidden = true;
+    video.srcObject = s;
+    var avviato = video.play();
+    if (avviato && avviato.catch) {
+      avviato.catch(function () {
+        dire('Tocca il riquadro per accendere l\'anteprima.');
+        riquadro.onclick = function () { video.play(); };
       });
     }
+    dire('Tieni il codice <b>dentro il riquadro</b>, orizzontale e ben illuminato, ' +
+         'a una decina di centimetri.');
+    partiIlCiclo();
+  }
 
+  /* `gesto` dice se la chiamata avviene ancora dentro il tocco dell'utente:
+     e' la condizione perche' Android mostri la richiesta di autorizzazione. */
+  function chiediFotocamera(vincoli, ultimo) {
+    navigator.mediaDevices.getUserMedia(vincoli).then(avviaVideo).catch(function (err) {
+      var riprovabile = err && (err.name === 'OverconstrainedError' || err.name === 'NotFoundError');
+      if (riprovabile && !ultimo) { chiediFotocamera({ video: true, audio: false }, true); return; }
+      var negato = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
+      rinuncia(spiegaFotocamera(d, err), !negato);
+      if (negato) mostraBottone('Richiedi di nuovo il permesso');
+    });
+  }
+
+  /* Il pulsante esplicito: serve sia come ritentativo sia come secondo tocco
+     nel caso in cui il primo non fosse valido per il sistema. */
+  bottone.onclick = function () {
+    bottone.hidden = true;
+    if (riquadro) riquadro.style.display = '';
     dire('Chiedo il permesso per la fotocamera…');
-    chiedi({ video: { facingMode: { ideal: 'environment' } }, audio: false }, false);
-  });
+    chiediFotocamera({ video: { facingMode: { ideal: 'environment' } }, audio: false }, false);
+  };
+
+  dire('Chiedo il permesso per la fotocamera…');
+  chiediFotocamera({ video: { facingMode: { ideal: 'environment' } }, audio: false }, false);
+
+  /* Se dopo qualche secondo non e' successo niente — niente anteprima e niente
+     errore — quasi sempre vuol dire che la richiesta non e' mai comparsa.
+     Si offre il pulsante, che riparte da un tocco vero. */
+  setTimeout(function () {
+    if (SCAN.attivo && !SCAN.stream && bottone && bottone.hidden) {
+      mostraBottone('Attiva la fotocamera');
+      dire('Se non è comparsa nessuna richiesta di autorizzazione, tocca qui sopra: ' +
+           'il permesso viene chiesto solo su un tocco diretto.');
+    }
+  }, 3500);
 }
 
+
 if (false) module.exports = {
-  mappaOFF: mappaOFF, cercaProdotto: cercaProdotto, salvaProdotto: salvaProdotto
+  mappaOFF: mappaOFF, cercaProdotto: cercaProdotto, salvaProdotto: salvaProdotto,
+  decodificaRiga: decodificaRiga, leggiEAN13: leggiEAN13, eanValido: eanValido
 };
 
 
@@ -5750,8 +6063,9 @@ function vImpostazioni() {
     (dc.inCornice
       ? '<tr><td>La pagina è dentro una cornice che lo permette</td><td class="num">' +
         segno(dc.permessaDalFrame) + '</td></tr>' : '') +
-    '<tr><td>Questo dispositivo sa decodificare i codici</td><td class="num">' +
+    '<tr><td>Lettore del sistema (più veloce)</td><td class="num">' +
       segno(lettoreVero) + '</td></tr>' +
+    '<tr><td>Lettore interno dell\'app (di riserva)</td><td class="num">' + si + '</td></tr>' +
     '</table></div>';
 
   if (dc.inCornice && dc.permessaDalFrame === false) {
@@ -5765,10 +6079,10 @@ function vImpostazioni() {
       'a una pagina non sicura. Apri <a href="' + SITO_URL + '" target="_blank" rel="noopener">' +
       SITO_URL + '</a>.</div>';
   } else if (lettoreVero === false) {
-    h += '<div class="hint warm"><b>Questo dispositivo non sa decodificare i codici a barre.</b> ' +
-      'Non è un difetto dell\'app: la decodifica la fa il sistema operativo, ed è presente su ' +
-      '<b>Android</b> e ChromeOS ma non su Windows. Sul telefono funziona; da computer no. ' +
-      'Il campo per digitare il numero c\'è comunque, e salva il prodotto allo stesso modo.</div>';
+    h += '<div class="hint"><b>Questo dispositivo non ha il lettore di sistema</b> (lo forniscono ' +
+      'Android e ChromeOS, non Windows), quindi si usa il <b>decodificatore interno dell\'app</b>: ' +
+      'legge EAN-13 ed EAN-8, cioè i codici delle confezioni del supermercato. Funziona lo stesso, ' +
+      'può solo volerci qualche istante in più. Tieni il codice dritto e ben illuminato.</div>';
   } else if (lettoreVero === null) {
     h += '<div class="hint">Sto controllando cosa sa fare questo dispositivo…</div>';
   } else {
