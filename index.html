@@ -4036,7 +4036,7 @@ function decodificaRiga(lum, larg) {
 /* Cerca un codice dentro un fotogramma. Non si legge tutta l'immagine: si
    provano parecchie righe orizzontali sparse nella fascia centrale, che e'
    dove sta il mirino. Un codice storto viene preso da una delle righe. */
-var TELA = null;
+var TELA = null, TELA_CTX = null;
 function decodificaFotogramma(video, righe) {
   var vw = video.videoWidth, vh = video.videoHeight;
   if (!vw || !vh) return null;
@@ -4046,22 +4046,36 @@ function decodificaFotogramma(video, righe) {
   var larg = Math.min(vw, 640);
   var alt = Math.round(vh * larg / vw);
 
-  if (!TELA) TELA = document.createElement('canvas');
+  if (!TELA) {
+    TELA = document.createElement('canvas');
+    /* il contesto si crea UNA volta: ricrearlo a ogni fotogramma perde
+       l'ottimizzazione `willReadFrequently` e rallenta parecchio */
+    TELA_CTX = TELA.getContext('2d', { willReadFrequently: true });
+  }
   if (TELA.width !== larg || TELA.height !== alt) { TELA.width = larg; TELA.height = alt; }
-  var ctx = TELA.getContext('2d', { willReadFrequently: true });
+  var ctx = TELA_CTX;
+  if (!ctx) return null;
   try { ctx.drawImage(video, 0, 0, larg, alt); }
   catch (e) { return null; }
 
   righe = righe || 15;
   var y0 = Math.round(alt * 0.28), y1 = Math.round(alt * 0.72);
-  var passo = Math.max(1, Math.round((y1 - y0) / righe));
-  var lum = new Uint8Array(larg);
+  var altezzaBanda = y1 - y0 + 1;
+  var passo = Math.max(1, Math.round(altezzaBanda / righe));
 
-  for (var y = y0; y <= y1; y += passo) {
-    var dati;
-    try { dati = ctx.getImageData(0, y, larg, 1).data; }
-    catch (e) { return null; }
-    for (var x = 0, j = 0; x < larg; x++, j += 4) {
+  /* UNA sola lettura dei pixel, non una per riga.
+     `getImageData` costringe a riportare l'immagine dalla scheda grafica alla
+     memoria: farlo quindici volte per fotogramma, quattro volte al secondo,
+     bloccava l'interfaccia sul telefono. Si prende la fascia centrale in un
+     colpo solo e poi si scorrono le righe dentro quella. */
+  var dati;
+  try { dati = ctx.getImageData(0, y0, larg, altezzaBanda).data; }
+  catch (e) { return null; }
+
+  var lum = new Uint8Array(larg);
+  for (var y = 0; y < altezzaBanda; y += passo) {
+    var base = y * larg * 4;
+    for (var x = 0, j = base; x < larg; x++, j += 4) {
       /* luminanza approssimata: pesi interi, nessuna moltiplicazione in virgola */
       lum[x] = (dati[j] * 77 + dati[j + 1] * 150 + dati[j + 2] * 29) >> 8;
     }
@@ -4076,15 +4090,20 @@ function decodificaFotogramma(video, righe) {
    OVERLAY DI SCANSIONE
    ============================================================ */
 
-var SCAN = { stream: null, tick: null, attivo: false };
+var SCAN = { stream: null, tick: null, attivo: false, inCorso: false };
 
 function scansionaChiudi() {
   SCAN.attivo = false;
+  SCAN.inCorso = false;
   if (SCAN.tick) { clearInterval(SCAN.tick); SCAN.tick = null; }
   if (SCAN.stream) {
     SCAN.stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
     SCAN.stream = null;
   }
+  /* il video va staccato dalla sorgente prima di buttare via il nodo: senza
+     questo, su Android la fotocamera puo' restare accesa per qualche secondo */
+  var v = document.getElementById('scan-v');
+  if (v) { try { v.pause(); v.srcObject = null; } catch (e) {} }
   var n = document.querySelector('.scan');
   if (n) n.remove();
 }
@@ -4101,6 +4120,19 @@ function scansionaChiudi() {
    fotocamera semplicemente non parte. Era questo il difetto.
    Quindi: prima la fotocamera, il resto dopo. */
 function scansiona(quando) {
+  try { scansionaAvvia(quando); }
+  catch (e) {
+    /* Un errore qui lasciava il pannello aperto e morto — «si bugga», visto da
+       fuori. Meglio dire cosa e' successo e lasciare l'inserimento a mano. */
+    var s = document.getElementById('scan-s');
+    var messaggio = 'Errore all\'avvio della scansione: <code>' +
+      ((e && e.message) ? e.message : String(e)) + '</code>. Digita il codice qui sotto.';
+    if (s) { s.innerHTML = messaggio; }
+    else { try { toast('Errore nella scansione: ' + ((e && e.message) || e)); } catch (e2) {} }
+  }
+}
+
+function scansionaAvvia(quando) {
   scansionaChiudi();
   SCAN.attivo = true;
 
@@ -4194,23 +4226,44 @@ function scansiona(quando) {
   }
 
   function partiIlCiclo() {
-    var tentativi = 0;
+    /* un ciclo solo: due `setInterval` in parallelo consumerebbero il doppio e
+       il primo resterebbe acceso dopo la chiusura, perche' SCAN.tick ne tiene
+       uno solo. Succedeva toccando il pulsante mentre la prima richiesta era
+       ancora in corso. */
+    if (SCAN.tick) return;
+    var tentativi = 0, occupato = false;
     SCAN.tick = setInterval(function () {
-      if (!SCAN.attivo || video.readyState < 2 || !video.videoWidth) return;
+      if (!SCAN.attivo || occupato || video.readyState < 2 || !video.videoWidth) return;
       tentativi++;
       if (tentativi === 25) {
         dire('Non l\'ho ancora preso. <b>Allontana il telefono</b> di qualche centimetro, tieni ' +
              'il codice dritto e ben illuminato. Se non ne vuole sapere, digitalo qui sotto.');
       }
-      leggiFotogramma(function (ean) {
-        if (ean) consegna(ean);
-      });
+      /* se una lettura e' ancora in corso non se ne accoda un'altra: su un
+         telefono lento le chiamate si sommerebbero fino a bloccare la pagina */
+      occupato = true;
+      try {
+        leggiFotogramma(function (ean) {
+          occupato = false;
+          if (ean) consegna(ean);
+        });
+      } catch (e) {
+        occupato = false;
+        dire('Errore durante la lettura: <code>' + (e && e.message ? e.message : e) + '</code>. ' +
+             'Puoi digitare il codice qui sotto.');
+      }
     }, 250);
   }
 
   function avviaVideo(s) {
     if (!SCAN.attivo) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+    /* se per qualche motivo era gia' partita un'altra fotocamera, si spegne:
+       altrimenti resta accesa in sottofondo con la spia del telefono attiva */
+    if (SCAN.stream && SCAN.stream !== s) {
+      SCAN.stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+    }
     SCAN.stream = s;
+    SCAN.inCorso = false;
     if (riquadro) riquadro.style.display = '';
     if (bottone) bottone.hidden = true;
     video.srcObject = s;
@@ -4226,13 +4279,27 @@ function scansiona(quando) {
     partiIlCiclo();
   }
 
-  /* `gesto` dice se la chiamata avviene ancora dentro il tocco dell'utente:
-     e' la condizione perche' Android mostri la richiesta di autorizzazione. */
+  /* `spiegato` diventa vero appena si e' detto all'utente qualcosa di preciso:
+     serve a impedire che l'invito automatico piu' in basso cancelli un
+     messaggio giusto (per esempio «il permesso e' stato negato») sostituendolo
+     con uno generico. */
+  var spiegato = false;
+
   function chiediFotocamera(vincoli, ultimo) {
-    navigator.mediaDevices.getUserMedia(vincoli).then(avviaVideo).catch(function (err) {
+    /* una richiesta alla volta: toccando il pulsante mentre la prima e' ancora
+       aperta si finiva con due fotocamere accese e due cicli di lettura */
+    if (SCAN.inCorso || SCAN.stream) return;
+    SCAN.inCorso = true;
+    navigator.mediaDevices.getUserMedia(vincoli).then(function (s) {
+      SCAN.inCorso = false;
+      avviaVideo(s);
+    }).catch(function (err) {
+      SCAN.inCorso = false;
+      if (!SCAN.attivo) return;
       var riprovabile = err && (err.name === 'OverconstrainedError' || err.name === 'NotFoundError');
       if (riprovabile && !ultimo) { chiediFotocamera({ video: true, audio: false }, true); return; }
       var negato = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
+      spiegato = true;
       rinuncia(spiegaFotocamera(d, err), !negato);
       if (negato) mostraBottone('Richiedi di nuovo il permesso');
     });
@@ -4241,7 +4308,10 @@ function scansiona(quando) {
   /* Il pulsante esplicito: serve sia come ritentativo sia come secondo tocco
      nel caso in cui il primo non fosse valido per il sistema. */
   bottone.onclick = function () {
+    if (SCAN.inCorso) { dire('Sto già chiedendo il permesso, un attimo…'); return; }
+    if (SCAN.stream) { dire('La fotocamera è già accesa: inquadra il codice.'); return; }
     bottone.hidden = true;
+    spiegato = false;
     if (riquadro) riquadro.style.display = '';
     dire('Chiedo il permesso per la fotocamera…');
     chiediFotocamera({ video: { facingMode: { ideal: 'environment' } }, audio: false }, false);
@@ -4250,11 +4320,12 @@ function scansiona(quando) {
   dire('Chiedo il permesso per la fotocamera…');
   chiediFotocamera({ video: { facingMode: { ideal: 'environment' } }, audio: false }, false);
 
-  /* Se dopo qualche secondo non e' successo niente — niente anteprima e niente
-     errore — quasi sempre vuol dire che la richiesta non e' mai comparsa.
-     Si offre il pulsante, che riparte da un tocco vero. */
+  /* Se dopo qualche secondo non e' successo niente — niente anteprima, nessun
+     errore e nessuna spiegazione gia' data — quasi sempre vuol dire che la
+     richiesta non e' mai comparsa. Si offre il pulsante, che riparte da un
+     tocco vero. */
   setTimeout(function () {
-    if (SCAN.attivo && !SCAN.stream && bottone && bottone.hidden) {
+    if (SCAN.attivo && !SCAN.stream && !SCAN.inCorso && !spiegato && bottone && bottone.hidden) {
       mostraBottone('Attiva la fotocamera');
       dire('Se non è comparsa nessuna richiesta di autorizzazione, tocca qui sopra: ' +
            'il permesso viene chiesto solo su un tocco diretto.');
