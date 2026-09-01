@@ -1,7 +1,7 @@
 /* Service worker: cache-first sull'app, che e' un file solo.
    Il nome della cache cambia a ogni build, quindi una versione nuova
    sostituisce sempre la precedente invece di restare in coda. */
-var CACHE = 'palestra-vmtiyrfpx';
+var CACHE = 'palestra-vmtiz3ci7';
 var FILE = ['./', './index.html', './manifest.webmanifest', './icona-192.png', './icona-512.png'];
 
 self.addEventListener('install', function (e) {

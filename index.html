@@ -722,6 +722,12 @@ span.att { color: var(--warm); font-size: 11.5px; }
 
 /* avviso rosso: usato solo quando il salvataggio non funziona davvero */
 .hint.danger-h { background: rgba(255, 90, 90, .13); border-left-color: #ff5a5a; }
+
+/* diagnosi della fotocamera: sì/no leggibili a colpo d'occhio */
+.ok-v { color: var(--good); }
+.ko-v { color: var(--warm); }
+.scan-stato a { color: var(--accent); }
+.scan-stato code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -3605,6 +3611,99 @@ var OFF_TIMEOUT = 7000;
    servono, e allargare i formati rallenta il riconoscimento. */
 var BC_FORMATI = ['ean_13', 'ean_8', 'upc_a', 'upc_e'];
 
+/* Indirizzo della copia dell'app che puo' usare la fotocamera. Serve a
+   mandarci l'utente quando sta usando una copia che non puo'. */
+var SITO_URL = 'https://luigi-00-tt.github.io/palestra/';
+
+/* ---------- perche' la fotocamera non parte ----------
+   Le cause sono parecchie e producono tutte lo stesso sintomo («non si apre»).
+   Vanno distinte, perche' il rimedio e' diverso per ognuna. Questa funzione
+   guarda tutto quello che si puo' sapere PRIMA di chiedere il permesso. */
+function diagnosiFotocamera() {
+  var d = {
+    sicuro: null,        // contesto sicuro (https o file locale)?
+    inCornice: false,    // dentro un iframe?
+    permessaDalFrame: null, // la cornice concede la fotocamera?
+    api: false,          // getUserMedia esiste?
+    lettore: false,      // BarcodeDetector esiste?
+    formati: null        // formati che il lettore sa davvero leggere
+  };
+
+  try { d.sicuro = (typeof isSecureContext !== 'undefined') ? !!isSecureContext : null; } catch (e) {}
+  try { d.inCornice = window.top !== window.self; } catch (e) { d.inCornice = true; }
+
+  /* Se l'app gira dentro una cornice (l'Artifact su claude.ai), la fotocamera
+     e' concessa solo se la cornice lo permette esplicitamente. Questa e' la
+     domanda giusta da fare, e si puo' fare senza chiedere niente all'utente. */
+  var pol = document.featurePolicy || document.permissionsPolicy;
+  if (pol && typeof pol.allowsFeature === 'function') {
+    try { d.permessaDalFrame = pol.allowsFeature('camera'); } catch (e) {}
+  }
+
+  d.api = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  d.lettore = (typeof BarcodeDetector === 'function');
+  return d;
+}
+
+/* I formati che questo dispositivo sa leggere DAVVERO.
+   Attenzione: `typeof BarcodeDetector === 'function'` non basta e mente. Su
+   Chrome per Windows l'oggetto esiste ma `getSupportedFormats()` risponde con
+   un elenco vuoto, perche' manca il pezzo di sistema che fa il lavoro: il
+   lettore c'e' su Android e ChromeOS, non su Windows. Va chiesto l'elenco. */
+var CAM = { formati: undefined };   // undefined = non ancora chiesto, null = nessuno
+
+function formatiDisponibili(quando) {
+  if (CAM.formati !== undefined) { quando(CAM.formati); return; }
+  if (typeof BarcodeDetector !== 'function' ||
+      typeof BarcodeDetector.getSupportedFormats !== 'function') {
+    CAM.formati = null;
+    quando(null);
+    return;
+  }
+  BarcodeDetector.getSupportedFormats().then(function (tutti) {
+    var utili = BC_FORMATI.filter(function (f) { return tutti.indexOf(f) >= 0; });
+    CAM.formati = utili.length ? utili : null;
+    quando(CAM.formati);
+  }).catch(function () { CAM.formati = null; quando(null); });
+}
+
+/* Messaggio da mostrare quando il permesso viene rifiutato, scelto in base al
+   motivo vero. `err` e' l'errore di getUserMedia, se c'e' stato. */
+function spiegaFotocamera(d, err) {
+  var nome = err && err.name ? err.name : '';
+
+  if (d.inCornice && d.permessaDalFrame === false) {
+    return '<b>Questa copia dell\'app non può usare la fotocamera.</b> Stai usando la versione ' +
+      'che gira dentro Claude, e quella non ha il permesso: non è una cosa che posso sbloccare ' +
+      'da qui.<br><br>Apri invece <a href="' + SITO_URL + '" target="_blank" rel="noopener">' +
+      'la tua app sul sito</a> e aggiungila alla schermata Home: lì la fotocamera funziona. ' +
+      'Nel frattempo puoi digitare il codice qui sotto.';
+  }
+  if (d.sicuro === false) {
+    return '<b>La pagina non è su un indirizzo sicuro.</b> I browser danno la fotocamera solo ' +
+      'alle pagine <b>https</b>. Apri <a href="' + SITO_URL + '" target="_blank" rel="noopener">' +
+      SITO_URL + '</a>.';
+  }
+  if (nome === 'NotAllowedError' || nome === 'SecurityError') {
+    return '<b>Il permesso per la fotocamera è stato negato.</b> Si rimette così: tocca ' +
+      'l\'<b>icona a sinistra dell\'indirizzo</b> (il lucchetto o i due cursori) &rarr; ' +
+      '<b>Autorizzazioni</b> &rarr; <b>Fotocamera</b> &rarr; <b>Consenti</b>, poi ricarica la ' +
+      'pagina.<br><br>Se hai aperto l\'app dalla schermata Home e non vedi la barra ' +
+      'dell\'indirizzo: Impostazioni di Android &rarr; App &rarr; Chrome &rarr; Autorizzazioni ' +
+      '&rarr; Fotocamera.';
+  }
+  if (nome === 'NotFoundError' || nome === 'OverconstrainedError') {
+    return '<b>Non trovo una fotocamera utilizzabile</b> su questo dispositivo.';
+  }
+  if (nome === 'NotReadableError' || nome === 'AbortError') {
+    return '<b>La fotocamera è occupata da un\'altra app.</b> Chiudi l\'app della fotocamera ' +
+      '(o quella che la sta usando) e riprova.';
+  }
+  return '<b>Non riesco ad accendere la fotocamera.</b>' +
+    (nome ? ' Il telefono risponde: <code>' + nome + '</code>.' : '') +
+    ' Puoi digitare il codice qui sotto.';
+}
+
 /* ---------- lettura dei valori di Open Food Facts ---------- */
 
 /* Un prodotto e' utilizzabile solo se ha almeno le calorie e le proteine:
@@ -3763,49 +3862,93 @@ function scansiona(quando) {
     if (ev.key === 'Enter') n.querySelector('#scan-ok').click();
   };
 
-  /* Senza BarcodeDetector o senza fotocamera resta l'inserimento a mano, che e'
-     comunque piu' veloce che cercare il prodotto per nome. */
-  if (typeof BarcodeDetector !== 'function' ||
-      !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    n.querySelector('.scan-video').style.display = 'none';
-    dire('Questo browser non sa leggere i codici a barre dalla fotocamera. ' +
-         'Scrivi il numero stampato sotto le barre: funziona uguale.');
-    n.querySelector('#scan-ean').focus();
+  function rinuncia(messaggio) {
+    var v = n.querySelector('.scan-video');
+    if (v) v.style.display = 'none';
+    dire(messaggio);
+    var campo = n.querySelector('#scan-ean');
+    if (campo) campo.focus();
+  }
+
+  /* ---------- si guarda cosa c'e' PRIMA di chiedere il permesso ---------- */
+  var d = diagnosiFotocamera();
+
+  if (d.inCornice && d.permessaDalFrame === false) { rinuncia(spiegaFotocamera(d, null)); return; }
+  if (d.sicuro === false) { rinuncia(spiegaFotocamera(d, null)); return; }
+  if (!d.api) {
+    rinuncia('<b>Questo browser non dà accesso alla fotocamera.</b> Su Android usa <b>Chrome</b>. ' +
+             'Intanto puoi digitare il codice qui sotto.');
     return;
   }
 
-  var det;
-  try { det = new BarcodeDetector({ formats: BC_FORMATI }); }
-  catch (e) {
-    n.querySelector('.scan-video').style.display = 'none';
-    dire('La lettura dei codici non è disponibile qui. Digita il numero qui sotto.');
-    return;
-  }
+  /* Il lettore di codici su Android lo fornisce Google Play Services: puo'
+     esistere l'oggetto e non esserci nessun formato leggibile. Va chiesto. */
+  formatiDisponibili(function (formati) {
+    if (!SCAN.attivo) return;
+    if (!d.lettore || !formati) {
+      rinuncia('<b>Questo telefono non sa decodificare i codici a barre.</b> È una funzione del ' +
+               'sistema (arriva con i servizi Google) e non posso aggiungerla dall\'app. ' +
+               'Scrivi il numero stampato sotto le barre: il resto funziona identico, e il ' +
+               'prodotto viene salvato lo stesso.');
+      return;
+    }
 
-  var video = n.querySelector('#scan-v');
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
-    .then(function (s) {
-      if (!SCAN.attivo) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
-      SCAN.stream = s;
-      video.srcObject = s;
-      video.play();
-      dire('Tieni il codice dentro il riquadro, a un palmo di distanza.');
-      SCAN.tick = setInterval(function () {
-        if (!SCAN.attivo || video.readyState < 2) return;
-        det.detect(video).then(function (codici) {
-          if (codici && codici.length) consegna(codici[0].rawValue);
-        }).catch(function () { /* un fotogramma illeggibile non e' un errore */ });
-      }, 350);
-    })
-    .catch(function (err) {
-      n.querySelector('.scan-video').style.display = 'none';
-      var negato = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
-      dire(negato
-        ? 'Non hai dato il permesso alla fotocamera (o la pagina non è su un indirizzo sicuro). ' +
-          'Puoi digitare il codice qui sotto.'
-        : 'Fotocamera non disponibile. Digita il codice qui sotto.');
-      n.querySelector('#scan-ean').focus();
-    });
+    var det;
+    try { det = new BarcodeDetector({ formats: formati }); }
+    catch (e) {
+      rinuncia('<b>Non riesco ad avviare il lettore di codici.</b> Digita il numero qui sotto.');
+      return;
+    }
+
+    var video = n.querySelector('#scan-v');
+    /* Queste due vanno messe come PROPRIETA', non come attributi nell'HTML:
+       scritte nel markup, Chrome non sempre le considera, e senza `muted`
+       la riproduzione automatica viene bloccata e il video resta nero. */
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+
+    /* Prima si chiede la fotocamera posteriore; se il dispositivo non ce l'ha,
+       si riprova senza pretese invece di arrendersi. */
+    function chiedi(vincoli, ultimo) {
+      navigator.mediaDevices.getUserMedia(vincoli).then(function (s) {
+        if (!SCAN.attivo) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+        SCAN.stream = s;
+        video.srcObject = s;
+        var avviato = video.play();
+        if (avviato && avviato.catch) {
+          avviato.catch(function () {
+            /* alcune versioni rifiutano la riproduzione automatica: si offre
+               all'utente di farla partire lui con un tocco */
+            dire('Tocca il riquadro per accendere l\'anteprima.');
+            n.querySelector('.scan-video').onclick = function () { video.play(); };
+          });
+        }
+        dire('Tieni il codice <b>dentro il riquadro</b>, a un palmo di distanza, ben illuminato. ' +
+             'Se non lo prende, allontana un po\' il telefono.');
+        var tentativi = 0;
+        SCAN.tick = setInterval(function () {
+          if (!SCAN.attivo) return;
+          if (video.readyState < 2) return;
+          tentativi++;
+          if (tentativi === 40) {
+            dire('Non riesco a leggerlo. Prova a <b>allontanare</b> il telefono di qualche ' +
+                 'centimetro, o a mettere il codice più in luce. Oppure digitalo qui sotto.');
+          }
+          det.detect(video).then(function (codici) {
+            if (codici && codici.length) consegna(codici[0].rawValue);
+          }).catch(function () { /* un fotogramma illeggibile non e' un errore */ });
+        }, 300);
+      }).catch(function (err) {
+        var riprovabile = err && (err.name === 'OverconstrainedError' || err.name === 'NotFoundError');
+        if (riprovabile && !ultimo) { chiedi({ video: true, audio: false }, true); return; }
+        rinuncia(spiegaFotocamera(d, err));
+      });
+    }
+
+    dire('Chiedo il permesso per la fotocamera…');
+    chiedi({ video: { facingMode: { ideal: 'environment' } }, audio: false }, false);
+  });
 }
 
 if (false) module.exports = {
@@ -5238,6 +5381,17 @@ function vDiario() {
       '<path d="M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>' +
       '<span><b>Scansiona un prodotto</b><i>codice a barre della confezione</i></span></button>';
 
+    /* Se gia' si sa che la fotocamera qui non partira', meglio dirlo prima che
+       dopo: il pulsante resta, ma con l'avviso e il rimando al sito. */
+    var dc = diagnosiFotocamera();
+    if (dc.inCornice && dc.permessaDalFrame === false) {
+      h += '<div class="hint warm">In questa copia dell\'app la fotocamera <b>non è ' +
+        'disponibile</b>: la pagina gira dentro Claude, che non concede il permesso. ' +
+        'Il pulsante funziona lo stesso, ma ti chiederà di digitare il codice.<br><br>' +
+        'Per scansionare davvero apri <a href="' + SITO_URL + '" target="_blank" ' +
+        'rel="noopener">la tua app sul sito</a> e aggiungila alla schermata Home.</div>';
+    }
+
     /* esito della scansione: prodotto sconosciuto da compilare a mano */
     if (S.ctx.nuovoEan) h += pannelloNuovoProdotto(S.ctx.nuovoEan, S.ctx.nuovoMotivo || '');
 
@@ -5578,6 +5732,51 @@ function vImpostazioni() {
   h += '<div class="note">Restano su questo telefono, dentro il browser. L\'app non ha un ' +
        'server e non manda niente a nessuno: se cambi telefono o indirizzo, si riparte da qui ' +
        '(o si incolla il backup più in basso).</div>';
+
+  /* ---------- fotocamera ----------
+     «Non mi si apre la fotocamera» ha almeno cinque cause diverse e lo stesso
+     sintomo. Qui sono elencate tutte, con lo stato vero di questo telefono. */
+  var dc = diagnosiFotocamera();
+  /* Il lettore va giudicato sui formati che sa leggere, non sull'esistenza
+     dell'oggetto: su Windows esiste e non legge niente. L'elenco arriva in
+     modo asincrono, quindi finche' non c'e' si dice «sto controllando». */
+  var lettoreVero = CAM.formati === undefined ? null : (CAM.formati !== null);
+  var si = '<b class="ok-v">sì</b>', no = '<b class="ko-v">no</b>', boh = '<b class="dim">controllo…</b>';
+  var segno = function (v) { return v === true ? si : v === false ? no : boh; };
+  h += '<h2>Fotocamera e codice a barre</h2>';
+  h += '<div class="card"><table class="hist">' +
+    '<tr><td>Indirizzo sicuro (https)</td><td class="num">' + segno(dc.sicuro) + '</td></tr>' +
+    '<tr><td>Il browser dà accesso alla fotocamera</td><td class="num">' + segno(dc.api) + '</td></tr>' +
+    (dc.inCornice
+      ? '<tr><td>La pagina è dentro una cornice che lo permette</td><td class="num">' +
+        segno(dc.permessaDalFrame) + '</td></tr>' : '') +
+    '<tr><td>Questo dispositivo sa decodificare i codici</td><td class="num">' +
+      segno(lettoreVero) + '</td></tr>' +
+    '</table></div>';
+
+  if (dc.inCornice && dc.permessaDalFrame === false) {
+    h += '<div class="hint warm"><b>Qui la fotocamera non può funzionare.</b> Stai usando la copia ' +
+      'dell\'app che gira dentro Claude: la pagina è ospitata in una cornice che non concede il ' +
+      'permesso, e non è una cosa che io possa sbloccare dal codice.<br><br>' +
+      'Apri <a href="' + SITO_URL + '" target="_blank" rel="noopener">' + SITO_URL + '</a> ' +
+      'con Chrome e aggiungilo alla schermata Home: è la stessa app, ma lì la scansione funziona.</div>';
+  } else if (dc.sicuro === false) {
+    h += '<div class="hint warm">La pagina non è su <b>https</b>: nessun browser dà la fotocamera ' +
+      'a una pagina non sicura. Apri <a href="' + SITO_URL + '" target="_blank" rel="noopener">' +
+      SITO_URL + '</a>.</div>';
+  } else if (lettoreVero === false) {
+    h += '<div class="hint warm"><b>Questo dispositivo non sa decodificare i codici a barre.</b> ' +
+      'Non è un difetto dell\'app: la decodifica la fa il sistema operativo, ed è presente su ' +
+      '<b>Android</b> e ChromeOS ma non su Windows. Sul telefono funziona; da computer no. ' +
+      'Il campo per digitare il numero c\'è comunque, e salva il prodotto allo stesso modo.</div>';
+  } else if (lettoreVero === null) {
+    h += '<div class="hint">Sto controllando cosa sa fare questo dispositivo…</div>';
+  } else {
+    h += '<div class="hint good">Tutto a posto per la scansione. Se al primo tentativo Chrome ' +
+      'chiede il permesso, rispondi <b>Consenti</b>: se rispondi no, se lo ricorda e va rimesso ' +
+      'a mano dal lucchetto accanto all\'indirizzo.</div>';
+  }
+  h += '<button class="ghost" id="prova-cam">Prova la fotocamera adesso</button>';
 
   h += '<h2>Mettere l\'app nella schermata Home</h2>';
   h += '<div class="card"><div class="passo"><i>1</i><div>Apri questa pagina con <b>Chrome</b> ' +
@@ -6078,6 +6277,15 @@ function collegaImpostazioni() {
     render();
   };
 
+  /* prova della fotocamera: apre lo stesso pannello della scansione, ma il
+     codice letto serve solo a dire che ha funzionato */
+  var pc = document.getElementById('prova-cam');
+  if (pc) pc.onclick = function () {
+    scansiona(function (ean) {
+      toast(ean ? 'Funziona: letto il codice ' + ean : 'Prova chiusa');
+    });
+  };
+
   var ro = document.getElementById('riparti-oggi');
   if (ro) ro.onclick = function () {
     riparti_da_oggi();
@@ -6110,6 +6318,10 @@ function collegaImpostazioni() {
      ridisegna la schermata perche' mostri la risposta vera */
   if (ARCHIVIO.persistente === null) {
     chiediPersistenza(function () { if (S.vista === 'impostazioni') render(); });
+  }
+  /* idem per i formati che il lettore di codici sa davvero leggere */
+  if (CAM.formati === undefined) {
+    formatiDisponibili(function () { if (S.vista === 'impostazioni') render(); });
   }
 
   /* Scarica il backup come file. Dentro un Artifact i download sono bloccati
