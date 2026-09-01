@@ -4765,6 +4765,53 @@ function vEsercizio() {
   return h;
 }
 
+/* ---------- salvare un file, nei due posti in cui gira l'app ----------
+   Sul sito https il modo normale funziona: un link con `download` e un blob.
+   Dentro un Artifact NO: la piattaforma non concede il permesso di scaricare e
+   il click non fa niente, in silenzio — l'app direbbe «salvato» senza aver
+   salvato. La' esiste pero' un canale apposta, la capability `downloads`, che
+   mostra all'utente una conferma e poi salva davvero.
+   Si prova quello e si ricade sull'altro: lo stesso file funziona in entrambi. */
+var SCARICO = { canale: null };   // 'claude' | 'browser' | 'no'
+
+function preparaScarico() {
+  if (typeof window.claude === 'object' && window.claude && typeof window.claude.use === 'function') {
+    window.claude.use('downloads').then(function (d) {
+      SCARICO.canale = d ? 'claude' : 'browser';
+      SCARICO.api = d || null;
+      if (S.vista === 'impostazioni') render();
+    }).catch(function () { SCARICO.canale = 'browser'; });
+  } else {
+    SCARICO.canale = 'browser';
+  }
+}
+
+/* `esito(ok, messaggio)` viene chiamata una volta sola. */
+function salvaFile(nome, testo, esito) {
+  if (SCARICO.canale === 'claude' && SCARICO.api) {
+    SCARICO.api.save({ filename: nome, data: testo }).then(function () {
+      esito(true, 'Salvato: ' + nome);
+    }).catch(function (err) {
+      var c = (err && err.code) || 'unavailable';
+      esito(false, c === 'declined' ? 'Salvataggio annullato.'
+        : 'Non sono riuscito a salvare il file qui: usa il copia e incolla.');
+    });
+    return;
+  }
+  try {
+    var blob = new Blob([testo], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 4000);
+    esito(true, 'Salvato in Download: ' + nome);
+  } catch (e) {
+    esito(false, 'Il download è bloccato qui: usa il copia e incolla qui sotto.');
+  }
+}
+
 /* Quanto storico c'e' davvero: serve a far vedere all'utente cosa perderebbe. */
 function contaDati() {
   var c = { sedute: 0, serie: 0, diario: 0, prodotti: 0, primo: null };
@@ -6069,23 +6116,14 @@ function collegaImpostazioni() {
      dalla piattaforma, quindi si dichiara e si rimanda al copia-incolla. */
   var sb = document.getElementById('scarica-bk');
   if (sb) sb.onclick = function () {
-    var testo = JSON.stringify(datiDaSalvare());
-    var nome = 'palestra-backup-' + oggi() + '.json';
-    try {
-      var blob = new Blob([testo], { type: 'application/json' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url; a.download = nome;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 4000);
-      S.profilo.ultimoBackup = oggi();
-      save();
-      toast('Salvato in Download: ' + nome);
-      setTimeout(render, 800);
-    } catch (e) {
-      toast('Il download è bloccato qui: usa il copia e incolla qui sotto.');
-    }
+    sb.disabled = true;
+    salvaFile('palestra-backup-' + oggi() + '.json', JSON.stringify(datiDaSalvare()),
+      function (ok, messaggio) {
+        sb.disabled = false;
+        toast(messaggio);
+        /* la data si segna solo se il file e' uscito davvero */
+        if (ok) { S.profilo.ultimoBackup = oggi(); save(); setTimeout(render, 900); }
+      });
   };
 
   var fb = document.getElementById('file-bk');
@@ -6142,6 +6180,11 @@ render();
    cosi' non li butta per fare spazio. Da PWA installata il permesso arriva da
    solo, senza domande all'utente. Se non si puo', l'app funziona uguale. */
 chiediPersistenza(function () { if (S.vista === 'impostazioni') render(); });
+
+/* Si guarda subito da che parte passera' il salvataggio del file di backup:
+   la capability degli Artifact risponde con calma, e quando l'utente arriva
+   sul pulsante la risposta c'e' gia'. */
+preparaScarico();
 
 /* Un salvataggio che fallisce non deve piu' passare inosservato: si prova a
    scrivere subito, cosi' l'avviso compare all'avvio e non dopo un'ora di
