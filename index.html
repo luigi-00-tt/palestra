@@ -537,6 +537,28 @@ tr.tot td { border-top: 1px solid var(--line); }
   background: none; border: 0; color: var(--text-faint); font-size: 19px;
   cursor: pointer; padding: 0 4px; line-height: 1;
 }
+/* Il nome di una voce registrata e' un pulsante: si tocca per correggere i
+   grammi. Deve sembrare testo normale, con la matita a suggerire il tocco. */
+.voce-mod {
+  display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--text); font-family: var(--font); font-size: 13.5px; line-height: 1.35;
+}
+.voce-mod .matita {
+  width: 13px; height: 13px; flex: none; fill: none; stroke: var(--text-faint);
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.voce-mod:active { color: var(--accent); }
+.voce-mod:active .matita { stroke: var(--accent); }
+table.hist tr.sel-mod td { background: var(--accent-soft); }
+table.hist tr.sel-mod .voce-mod, table.hist tr.sel-mod .matita { color: var(--accent); stroke: var(--accent); }
+
+/* pannello aperto in correzione: stessa scheda, ma si vede che agisce su
+   qualcosa di gia' registrato invece di aggiungere una riga nuova */
+.calc.in-mod { margin-top: -6px; }
+.tolgi { display: block; margin: 10px auto 0; }
+.mod-libera .riga-libera { grid-template-columns: 1fr 76px 68px; margin-top: 12px; }
+
 .riga-libera { display: grid; grid-template-columns: 1fr 68px 62px 44px; gap: 6px; }
 .riga-libera input {
   height: 44px; border-radius: 10px; padding: 0 10px; min-width: 0;
@@ -3178,6 +3200,12 @@ if (false) module.exports = { PASTI: PASTI, CIBO: CIBO };
 
    Il diario calcola tutto in proporzione: 50 g di pomodori più 50 g di
    mozzarella danno la somma esatta di kcal, proteine, carboidrati e grassi.
+
+   Criterio di cosa sta qui dentro: tutto quello che il codice a barre NON
+   risolve. Carne e pesce del banco, frutta e verdura pesate alla cassa,
+   formaggi freschi, uova, piatti cucinati in casa: niente etichetta, niente
+   EAN, quindi devono essere cercabili per nome. I confezionati con il codice
+   si leggono invece con la fotocamera e finiscono in S.prodotti.
    ============================================================ */
 
 var ALIMENTI = [
@@ -3237,6 +3265,45 @@ var ALIMENTI = [
   { n: 'Salame', g: 'Carne e salumi', k: 425, pr: 26, c: 1, f: 35, fi: 0, u: 50, fodmap: 'alto', reflusso: 'attenzione' },
   { n: 'Wurstel', g: 'Carne e salumi', k: 270, pr: 12, c: 2, f: 24, fi: 0, u: 100, fodmap: 'alto', reflusso: 'attenzione' },
   { n: 'Salsiccia', g: 'Carne e salumi', k: 300, pr: 16, c: 1, f: 26, fi: 0, u: 150, fodmap: 'alto', reflusso: 'attenzione' },
+  { n: 'Salsiccia di pollo o tacchino', g: 'Carne e salumi', k: 170, pr: 18, c: 1, f: 11, fi: 0, u: 150, fodmap: 'attenzione', reflusso: 'attenzione' },
+
+  /* --- dal banco della macelleria: niente codice a barre, si pesano --- */
+  { n: 'Petto di pollo (ai ferri)', g: 'Carne e salumi', k: 165, pr: 31, c: 0, f: 3.6, fi: 0, u: 180, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Bocconcini di pollo', g: 'Carne e salumi', k: 108, pr: 22, c: 0, f: 2, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Bocconcini di tacchino', g: 'Carne e salumi', k: 110, pr: 23, c: 0, f: 2, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Straccetti di pollo', g: 'Carne e salumi', k: 110, pr: 22, c: 0, f: 2.5, fi: 0, u: 180, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Sovracoscia di pollo (con pelle)', g: 'Carne e salumi', k: 216, pr: 17, c: 0, f: 16, fi: 0, u: 200, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Alette di pollo', g: 'Carne e salumi', k: 203, pr: 19, c: 0, f: 14, fi: 0, u: 200, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Pollo arrosto', g: 'Carne e salumi', k: 190, pr: 25, c: 0, f: 10, fi: 0, u: 250, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Cotoletta di pollo impanata', g: 'Carne e salumi', k: 260, pr: 19, c: 13, f: 15, fi: 0.8, u: 180, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Coscia di tacchino', g: 'Carne e salumi', k: 140, pr: 20, c: 0, f: 6.5, fi: 0, u: 200, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Arrosto di tacchino (a fette)', g: 'Carne e salumi', k: 110, pr: 19, c: 1, f: 3, fi: 0, u: 80, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Fettina di vitello', g: 'Carne e salumi', k: 107, pr: 21, c: 0, f: 2.5, fi: 0, u: 180, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Bistecca di manzo (controfiletto)', g: 'Carne e salumi', k: 180, pr: 22, c: 0, f: 10, fi: 0, u: 200, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Filetto di manzo', g: 'Carne e salumi', k: 145, pr: 21, c: 0, f: 6.5, fi: 0, u: 180, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Tagliata di manzo', g: 'Carne e salumi', k: 175, pr: 23, c: 0, f: 9, fi: 0, u: 200, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Costata o entrecôte', g: 'Carne e salumi', k: 250, pr: 19, c: 0, f: 19, fi: 0, u: 250, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Hamburger di manzo (crudo)', g: 'Carne e salumi', k: 215, pr: 19, c: 0, f: 15, fi: 0, u: 200, ux: '1 hamburger ≈ 100 g', fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Hamburger magro di manzo', g: 'Carne e salumi', k: 137, pr: 21, c: 0, f: 5, fi: 0, u: 200, ux: '1 hamburger ≈ 100 g', fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Hamburger di pollo o tacchino', g: 'Carne e salumi', k: 145, pr: 19, c: 2, f: 7, fi: 0, u: 200, ux: '1 hamburger ≈ 100 g', fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Spezzatino di manzo', g: 'Carne e salumi', k: 150, pr: 20, c: 0, f: 8, fi: 0, u: 200, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Spezzatino di maiale', g: 'Carne e salumi', k: 160, pr: 20, c: 0, f: 9, fi: 0, u: 200, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Filetto di maiale', g: 'Carne e salumi', k: 143, pr: 21, c: 0, f: 6, fi: 0, u: 180, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Braciola o costine di maiale', g: 'Carne e salumi', k: 250, pr: 18, c: 0, f: 20, fi: 0, u: 200, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Arrosticini di pecora', g: 'Carne e salumi', k: 250, pr: 18, c: 0, f: 20, fi: 0, u: 150, ux: '1 arrosticino ≈ 25 g', fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Spiedini di carne mista', g: 'Carne e salumi', k: 200, pr: 19, c: 1, f: 14, fi: 0, u: 200, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Polpette di carne', g: 'Carne e salumi', k: 215, pr: 15, c: 8, f: 14, fi: 0.5, u: 200, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Polpettone', g: 'Carne e salumi', k: 200, pr: 15, c: 7, f: 13, fi: 0.5, u: 200, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Cotoletta alla milanese', g: 'Carne e salumi', k: 280, pr: 20, c: 12, f: 17, fi: 0.7, u: 180, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Agnello', g: 'Carne e salumi', k: 200, pr: 18, c: 0, f: 14, fi: 0, u: 180, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Coniglio', g: 'Carne e salumi', k: 118, pr: 21, c: 0, f: 4, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Fegato di vitello', g: 'Carne e salumi', k: 130, pr: 20, c: 2, f: 4.5, fi: 0, u: 150, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Trippa', g: 'Carne e salumi', k: 108, pr: 15, c: 0, f: 5, fi: 0, u: 200, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Speck', g: 'Carne e salumi', k: 195, pr: 28, c: 0.5, f: 9, fi: 0, u: 60, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Mortadella', g: 'Carne e salumi', k: 317, pr: 15, c: 1, f: 28, fi: 0, u: 60, fodmap: 'alto', reflusso: 'attenzione' },
+  { n: 'Coppa o capocollo', g: 'Carne e salumi', k: 340, pr: 24, c: 0, f: 27, fi: 0, u: 50, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Porchetta', g: 'Carne e salumi', k: 300, pr: 20, c: 0, f: 25, fi: 0, u: 100, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Pancetta', g: 'Carne e salumi', k: 380, pr: 14, c: 0, f: 36, fi: 0, u: 40, fodmap: 'ok', reflusso: 'attenzione' },
 
   /* ---------- pesce ---------- */
   { n: 'Merluzzo o nasello', g: 'Pesce', k: 71, pr: 17, c: 0, f: 0.3, fi: 0, u: 250, fodmap: 'ok', reflusso: 'ok' },
@@ -3249,6 +3316,26 @@ var ALIMENTI = [
   { n: 'Sgombro al naturale', g: 'Pesce', k: 170, pr: 19, c: 0, f: 10, fi: 0, u: 120, fodmap: 'ok', reflusso: 'attenzione' },
   { n: 'Gamberi', g: 'Pesce', k: 71, pr: 13, c: 0, f: 0.6, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
   { n: 'Vongole o cozze', g: 'Pesce', k: 72, pr: 12, c: 2, f: 1, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
+
+  /* --- dal banco della pescheria: si pesano, non hanno etichetta --- */
+  { n: 'Sogliola', g: 'Pesce', k: 83, pr: 16, c: 0, f: 1.5, fi: 0, u: 250, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Trota', g: 'Pesce', k: 119, pr: 21, c: 0, f: 3.5, fi: 0, u: 250, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Ricciola', g: 'Pesce', k: 120, pr: 21, c: 0, f: 4, fi: 0, u: 250, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Cernia', g: 'Pesce', k: 82, pr: 18, c: 0, f: 1, fi: 0, u: 250, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Pesce spada', g: 'Pesce', k: 121, pr: 20, c: 0, f: 4.5, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Tonno fresco', g: 'Pesce', k: 144, pr: 23, c: 0, f: 5, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Sgombro fresco', g: 'Pesce', k: 170, pr: 17, c: 0, f: 11, fi: 0, u: 180, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Alici o sardine fresche', g: 'Pesce', k: 110, pr: 19, c: 0, f: 4, fi: 0, u: 180, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Baccalà o stoccafisso (ammollato)', g: 'Pesce', k: 95, pr: 21, c: 0, f: 0.9, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Salmone al forno', g: 'Pesce', k: 210, pr: 25, c: 0, f: 12, fi: 0, u: 180, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Calamari', g: 'Pesce', k: 68, pr: 12.6, c: 1, f: 1.7, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Seppie', g: 'Pesce', k: 72, pr: 14, c: 1, f: 1.5, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Polpo', g: 'Pesce', k: 57, pr: 11, c: 1, f: 1, fi: 0, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Capesante', g: 'Pesce', k: 69, pr: 12, c: 3, f: 0.5, fi: 0, u: 150, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Frittura mista di pesce', g: 'Pesce', k: 250, pr: 15, c: 12, f: 16, fi: 0.5, u: 200, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Bastoncini di pesce', g: 'Pesce', k: 200, pr: 12, c: 17, f: 9, fi: 1, u: 150, ux: '1 bastoncino ≈ 25 g', fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Surimi', g: 'Pesce', k: 99, pr: 8, c: 15, f: 1, fi: 0, u: 100, ux: '1 bastoncino ≈ 17 g', fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Alici sott\'olio', g: 'Pesce', k: 210, pr: 26, c: 0, f: 12, fi: 0, u: 30, fodmap: 'ok', reflusso: 'attenzione' },
 
   /* ---------- uova e latticini ---------- */
   { n: 'Uovo intero', g: 'Uova e latticini', k: 128, pr: 12.4, c: 0.6, f: 8.7, fi: 0, u: 110, ux: '1 uovo medio ≈ 55 g', fodmap: 'ok', reflusso: 'ok' },
@@ -3271,6 +3358,29 @@ var ALIMENTI = [
   { n: 'Pecorino', g: 'Uova e latticini', k: 387, pr: 26, c: 0, f: 32, fi: 0, u: 30, fodmap: 'ok', reflusso: 'attenzione' },
   { n: 'Provolone o emmental', g: 'Uova e latticini', k: 370, pr: 26, c: 1, f: 29, fi: 0, u: 50, fodmap: 'ok', reflusso: 'attenzione' },
 
+  /* --- uova cucinate e roba del banco frigo, che si compra a peso --- */
+  { n: 'Uova strapazzate', g: 'Uova e latticini', k: 155, pr: 11, c: 1, f: 12, fi: 0, u: 130, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Frittata', g: 'Uova e latticini', k: 180, pr: 12, c: 1, f: 14, fi: 0, u: 130, ux: 'con 2 uova ≈ 130 g', fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Tuorlo', g: 'Uova e latticini', k: 325, pr: 16, c: 0.6, f: 29, fi: 0, u: 35, ux: '1 tuorlo ≈ 17 g', fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Bocconcini di mozzarella (ciliegine)', g: 'Uova e latticini', k: 253, pr: 18.7, c: 0.7, f: 19.5, fi: 0, u: 100, ux: '1 ciliegina ≈ 10 g', fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Mozzarella light', g: 'Uova e latticini', k: 185, pr: 20, c: 1, f: 11, fi: 0, u: 125, fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Fiordilatte per pizza', g: 'Uova e latticini', k: 280, pr: 19, c: 1, f: 22, fi: 0, u: 100, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Burrata', g: 'Uova e latticini', k: 300, pr: 12, c: 2, f: 27, fi: 0, u: 100, ux: '1 burrata ≈ 100 g', fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Scamorza', g: 'Uova e latticini', k: 334, pr: 25, c: 1, f: 26, fi: 0, u: 80, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Scamorza affumicata', g: 'Uova e latticini', k: 340, pr: 25, c: 1, f: 27, fi: 0, u: 80, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Caciotta', g: 'Uova e latticini', k: 350, pr: 25, c: 1, f: 27, fi: 0, u: 60, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Asiago o fontina', g: 'Uova e latticini', k: 380, pr: 25, c: 1, f: 31, fi: 0, u: 50, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Feta', g: 'Uova e latticini', k: 264, pr: 14, c: 4, f: 21, fi: 0, u: 60, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Gorgonzola', g: 'Uova e latticini', k: 324, pr: 19, c: 1, f: 27, fi: 0, u: 50, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Brie o camembert', g: 'Uova e latticini', k: 334, pr: 21, c: 0.5, f: 28, fi: 0, u: 50, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Robiola', g: 'Uova e latticini', k: 310, pr: 15, c: 2, f: 27, fi: 0, u: 60, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Mascarpone', g: 'Uova e latticini', k: 450, pr: 4, c: 3, f: 47, fi: 0, u: 30, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Yogurt greco intero', g: 'Uova e latticini', k: 97, pr: 9, c: 4, f: 5, fi: 0, u: 170, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Kefir', g: 'Uova e latticini', k: 55, pr: 3.3, c: 4.5, f: 2, fi: 0, u: 250, fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Latte scremato', g: 'Uova e latticini', k: 34, pr: 3.4, c: 5, f: 0.2, fi: 0, u: 250, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Bevanda di mandorla', g: 'Uova e latticini', k: 24, pr: 0.5, c: 3, f: 1.1, fi: 0.4, u: 250, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Bevanda di avena', g: 'Uova e latticini', k: 45, pr: 0.8, c: 7, f: 1.5, fi: 0.8, u: 250, fodmap: 'attenzione', reflusso: 'ok' },
+
   /* ---------- legumi ---------- */
   { n: 'Ceci lessati', g: 'Legumi', k: 120, pr: 7, c: 19, f: 2.4, fi: 6, u: 150, fodmap: 'alto', reflusso: 'ok' },
   { n: 'Lenticchie lessate', g: 'Legumi', k: 116, pr: 9, c: 20, f: 0.4, fi: 8, u: 150, fodmap: 'alto', reflusso: 'ok' },
@@ -3279,6 +3389,9 @@ var ALIMENTI = [
   { n: 'Fagiolini', g: 'Legumi', k: 18, pr: 2, c: 2.4, f: 0.1, fi: 3, u: 200, fodmap: 'ok', reflusso: 'ok' },
   { n: 'Tofu', g: 'Legumi', k: 76, pr: 8, c: 2, f: 4.8, fi: 1, u: 150, fodmap: 'ok', reflusso: 'ok' },
   { n: 'Hummus', g: 'Legumi', k: 166, pr: 8, c: 14, f: 10, fi: 6, u: 60, fodmap: 'alto', reflusso: 'attenzione' },
+  { n: 'Fagioli cannellini lessati', g: 'Legumi', k: 118, pr: 8, c: 20, f: 0.5, fi: 7, u: 150, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Fave fresche', g: 'Legumi', k: 41, pr: 5, c: 4.5, f: 0.4, fi: 5, u: 150, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Edamame', g: 'Legumi', k: 121, pr: 12, c: 9, f: 5, fi: 5, u: 100, fodmap: 'attenzione', reflusso: 'ok' },
 
   /* ---------- verdura ---------- */
   { n: 'Pomodori', g: 'Verdura', k: 18, pr: 0.9, c: 3.5, f: 0.2, fi: 1.2, u: 150, fodmap: 'ok', reflusso: 'attenzione' },
@@ -3303,6 +3416,31 @@ var ALIMENTI = [
   { n: 'Sedano', g: 'Verdura', k: 16, pr: 0.7, c: 3, f: 0.2, fi: 1.6, u: 100, fodmap: 'attenzione', reflusso: 'ok' },
   { n: 'Mais dolce in scatola', g: 'Verdura', k: 86, pr: 3, c: 19, f: 1.2, fi: 2.5, u: 100, fodmap: 'attenzione', reflusso: 'ok' },
   { n: 'Olive verdi', g: 'Verdura', k: 145, pr: 1, c: 4, f: 15, fi: 3, u: 30, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Olive nere', g: 'Verdura', k: 235, pr: 1.6, c: 3, f: 25, fi: 3.5, u: 30, fodmap: 'ok', reflusso: 'attenzione' },
+
+  /* --- dal banco dell'ortofrutta: si pesano alla cassa --- */
+  { n: 'Asparagi', g: 'Verdura', k: 24, pr: 3, c: 2, f: 0.2, fi: 2, u: 200, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Carciofi', g: 'Verdura', k: 47, pr: 2.7, c: 5, f: 0.2, fi: 5.5, u: 200, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Cavoletti di Bruxelles', g: 'Verdura', k: 43, pr: 3.4, c: 5, f: 0.5, fi: 3.8, u: 200, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Verza o cavolo cappuccio', g: 'Verdura', k: 25, pr: 1.3, c: 4.5, f: 0.2, fi: 2.6, u: 200, fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Cavolo nero', g: 'Verdura', k: 33, pr: 3.3, c: 3, f: 0.6, fi: 3.5, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Cime di rapa', g: 'Verdura', k: 32, pr: 3, c: 2, f: 0.3, fi: 2.9, u: 200, fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Bietola', g: 'Verdura', k: 19, pr: 1.8, c: 2, f: 0.2, fi: 1.6, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Cicoria o catalogna', g: 'Verdura', k: 23, pr: 1.4, c: 2, f: 0.3, fi: 3.6, u: 200, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Scarola', g: 'Verdura', k: 19, pr: 1.3, c: 1.7, f: 0.2, fi: 3, u: 150, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Songino (valerianella)', g: 'Verdura', k: 21, pr: 2, c: 1.5, f: 0.4, fi: 1.5, u: 80, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Indivia belga', g: 'Verdura', k: 17, pr: 0.9, c: 2, f: 0.1, fi: 3, u: 150, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Insalata mista in busta', g: 'Verdura', k: 17, pr: 1.4, c: 2, f: 0.2, fi: 1.7, u: 100, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Ravanelli', g: 'Verdura', k: 16, pr: 0.7, c: 2, f: 0.1, fi: 1.6, u: 100, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Barbabietola rossa', g: 'Verdura', k: 43, pr: 1.6, c: 9.6, f: 0.2, fi: 2.8, u: 150, fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Porro', g: 'Verdura', k: 61, pr: 1.5, c: 14, f: 0.3, fi: 1.8, u: 50, fodmap: 'alto', reflusso: 'attenzione' },
+  { n: 'Germogli di soia', g: 'Verdura', k: 30, pr: 3, c: 3, f: 0.2, fi: 1.8, u: 100, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Funghi porcini', g: 'Verdura', k: 26, pr: 3.9, c: 1, f: 0.7, fi: 2.5, u: 150, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Verdure grigliate miste', g: 'Verdura', k: 60, pr: 1.4, c: 4, f: 4, fi: 2, u: 200, fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Pomodori secchi', g: 'Verdura', k: 258, pr: 14, c: 43, f: 3, fi: 12, u: 30, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Peperoncino fresco', g: 'Verdura', k: 40, pr: 2, c: 7, f: 0.4, fi: 1.5, u: 5, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Zenzero fresco', g: 'Verdura', k: 80, pr: 1.8, c: 15, f: 0.8, fi: 2, u: 5, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Basilico e prezzemolo', g: 'Verdura', k: 22, pr: 3, c: 1.5, f: 0.6, fi: 1.8, u: 5, fodmap: 'ok', reflusso: 'ok' },
 
   /* ---------- frutta ---------- */
   { n: 'Mela', g: 'Frutta', k: 52, pr: 0.3, c: 14, f: 0.2, fi: 2.4, u: 180, ux: '1 mela media ≈ 180 g', fodmap: 'alto', reflusso: 'ok' },
@@ -3319,6 +3457,28 @@ var ALIMENTI = [
   { n: 'Anguria', g: 'Frutta', k: 30, pr: 0.6, c: 7.6, f: 0.2, fi: 0.4, u: 300, fodmap: 'alto', reflusso: 'ok' },
   { n: 'Melone', g: 'Frutta', k: 34, pr: 0.8, c: 8, f: 0.2, fi: 0.9, u: 250, fodmap: 'attenzione', reflusso: 'ok' },
   { n: 'Avocado', g: 'Frutta', k: 160, pr: 2, c: 8.5, f: 15, fi: 6.7, u: 100, fodmap: 'attenzione', reflusso: 'attenzione' },
+
+  /* --- frutta di stagione, quella che si pesa alla cassa --- */
+  { n: 'Albicocche', g: 'Frutta', k: 28, pr: 0.4, c: 6.5, f: 0.1, fi: 1.5, u: 150, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Susine (prugne)', g: 'Frutta', k: 42, pr: 0.6, c: 10, f: 0.2, fi: 1.4, u: 150, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Ciliegie', g: 'Frutta', k: 63, pr: 1, c: 15, f: 0.2, fi: 1.3, u: 150, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Lamponi', g: 'Frutta', k: 52, pr: 1.2, c: 6, f: 0.6, fi: 6.5, u: 100, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'More', g: 'Frutta', k: 43, pr: 1.4, c: 5, f: 0.5, fi: 5.3, u: 100, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Frutti di bosco misti', g: 'Frutta', k: 45, pr: 1, c: 7, f: 0.4, fi: 4, u: 100, fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Fichi', g: 'Frutta', k: 74, pr: 0.8, c: 16, f: 0.3, fi: 2.9, u: 100, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Cachi', g: 'Frutta', k: 70, pr: 0.6, c: 16, f: 0.2, fi: 2.5, u: 150, fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Melagrana', g: 'Frutta', k: 83, pr: 1.7, c: 14, f: 1.2, fi: 4, u: 150, fodmap: 'attenzione', reflusso: 'attenzione' },
+  { n: 'Nespole', g: 'Frutta', k: 47, pr: 0.4, c: 12, f: 0.2, fi: 1.7, u: 150, fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Mango', g: 'Frutta', k: 60, pr: 0.8, c: 14, f: 0.4, fi: 1.6, u: 150, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Papaya', g: 'Frutta', k: 43, pr: 0.5, c: 10, f: 0.3, fi: 1.7, u: 150, fodmap: 'ok', reflusso: 'ok' },
+  { n: 'Pompelmo', g: 'Frutta', k: 42, pr: 0.8, c: 9, f: 0.1, fi: 1.6, u: 200, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Limone (succo)', g: 'Frutta', k: 22, pr: 0.4, c: 6, f: 0.2, fi: 0.3, u: 10, ux: '1 cucchiaio ≈ 10 ml', fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Cocco fresco', g: 'Frutta', k: 354, pr: 3.3, c: 6, f: 33, fi: 9, u: 40, fodmap: 'ok', reflusso: 'attenzione' },
+  { n: 'Macedonia di frutta fresca', g: 'Frutta', k: 50, pr: 0.6, c: 12, f: 0.2, fi: 1.8, u: 200, fodmap: 'attenzione', reflusso: 'ok' },
+  { n: 'Datteri', g: 'Frutta', k: 282, pr: 2.5, c: 68, f: 0.4, fi: 8, u: 40, ux: '1 dattero ≈ 8 g', fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Uva passa', g: 'Frutta', k: 299, pr: 3, c: 71, f: 0.5, fi: 4, u: 30, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Albicocche secche', g: 'Frutta', k: 241, pr: 3.4, c: 53, f: 0.5, fi: 7, u: 30, fodmap: 'alto', reflusso: 'ok' },
+  { n: 'Prugne secche', g: 'Frutta', k: 240, pr: 2.2, c: 57, f: 0.4, fi: 7, u: 30, fodmap: 'alto', reflusso: 'ok' },
 
   /* ---------- frutta secca e semi ---------- */
   { n: 'Mandorle', g: 'Frutta secca', k: 579, pr: 21, c: 22, f: 50, fi: 12.5, u: 30, fodmap: 'attenzione', reflusso: 'attenzione' },
@@ -5763,22 +5923,45 @@ function catalogo() {
   return out;
 }
 
+/* Da una voce gia' registrata nella giornata si risale ai valori per 100 g:
+   servono per rifare il conto quando si cambiano i grammi.
+     1. si cerca nel catalogo per nome — e' la via esatta, e riporta anche i
+        tag fodmap/reflusso e l'etichetta del pezzo;
+     2. se la voce non c'e' piu' (prodotto tolto dall'archivio, nome cambiato)
+        si ricavano dividendo il registrato per i grammi: stesso numero, con
+        dentro l'arrotondamento gia' fatto — un grammo o due di scarto;
+     3. senza grammi non c'e' nessuna proporzione da rifare: torna null e la
+        voce si corregge nei suoi kcal, non nei suoi grammi. */
+function baseCentograni(c) {
+  var trovata = null;
+  catalogo().forEach(function (v) { if (!trovata && v.a.n === c.n) trovata = v.a; });
+  if (trovata) return trovata;
+  if (!c.q) return null;
+  var r = function (x) { return Math.round((x || 0) * 100 / c.q * 10) / 10; };
+  return { n: c.n, g: 'Altro', k: r(c.k), pr: r(c.pr), c: r(c.c), f: r(c.f), fi: r(c.fi),
+           u: c.q, fodmap: 'ok', reflusso: 'ok' };
+}
+
 /* Pannello con cui si sceglie quanti grammi: il calcolo e' in proporzione,
-   quindi 50 g di pomodori piu' 50 g di mozzarella danno la somma esatta. */
-function pannelloQuantita(a, i) {
+   quindi 50 g di pomodori piu' 50 g di mozzarella danno la somma esatta.
+   Con `mod` lo stesso pannello serve a correggere una voce gia' registrata:
+   cambia solo cosa fa il pulsante in fondo, il conto e' identico. */
+function pannelloQuantita(a, i, mod) {
   var q = S.ctx.qta !== undefined ? S.ctx.qta : (a.u || 100);
   var v = calcolaAlimento(a, q);
   var avv = a.fodmap === 'alto' ? 'Alto in FODMAP: con l\'IBS meglio poca quantit&agrave;.' :
             a.fodmap === 'attenzione' ? 'FODMAP moderati: tollerabile in porzioni piccole.' :
             a.reflusso === 'attenzione' ? 'Grasso o acido: pu&ograve; alimentare il reflusso, meglio non a cena.' : '';
-  return '<div class="card calc" data-i="' + esc(i) + '">' +
+  return '<div class="card calc' + (mod ? ' in-mod' : '') + '" data-i="' + esc(i) + '">' +
     '<div class="calc-top"><b>' + esc(a.n) + '</b>' +
     '<button class="chiudi" id="calc-x" aria-label="chiudi">&times;</button></div>' +
     '<div class="dim">' + a.k + ' kcal &middot; ' + a.pr + ' g di proteine per 100 g' +
     (a.ux ? ' &middot; ' + esc(a.ux) : '') + '</div>' +
     /* i prodotti scansionati portano marca, formato e codice: servono a capire
-       che si sta aggiungendo proprio quella confezione e non un'altra */
-    (a.ean ? '<div class="dim prod-id">' + (a.marca ? '<b>' + esc(a.marca) + '</b> &middot; ' : '') +
+       che si sta aggiungendo proprio quella confezione e non un'altra.
+       In correzione no: li' la confezione e' gia' scelta, e il collegamento
+       per svuotare l'archivio non c'entra niente con i grammi di oggi. */
+    (a.ean && !mod ? '<div class="dim prod-id">' + (a.marca ? '<b>' + esc(a.marca) + '</b> &middot; ' : '') +
       (a.porzione ? esc(a.porzione) + ' &middot; ' : '') + 'codice ' + esc(a.ean) +
       ' &middot; <button class="link-x" data-elimina="' + esc(a.ean) + '">togli dall\'archivio</button></div>' : '') +
     '<div class="calc-q">' +
@@ -5787,7 +5970,28 @@ function pannelloQuantita(a, i) {
       '<button data-dq="10">+10</button></div>' +
     '<div id="calc-out">' + pastiglieMacro(v) + '</div>' +
     (avv ? '<div class="dim att-r">' + avv + '</div>' : '') +
-    '<button class="primary" id="calc-add">Aggiungi alla giornata</button></div>';
+    '<button class="primary" id="calc-add">' +
+      (mod ? 'Aggiorna la quantit&agrave;' : 'Aggiungi alla giornata') + '</button>' +
+    (mod ? '<button class="link-x tolgi" id="calc-del">Togli dalla giornata</button>' : '') +
+    '</div>';
+}
+
+/* Le voci scritte a mano nella riga libera non hanno grammi: sono un nome e
+   due numeri. Non c'e' proporzione da rifare, quindi si correggono quelli. */
+function pannelloVoceLibera(c, i) {
+  return '<div class="card calc in-mod mod-libera" data-i="L' + i + '">' +
+    '<div class="calc-top"><b>' + esc(c.n) + '</b>' +
+    '<button class="chiudi" id="calc-x" aria-label="chiudi">&times;</button></div>' +
+    '<div class="dim">Questa voce l\'hai scritta a mano, senza grammi: non c\'&egrave; una ' +
+    'proporzione da rifare, quindi qui si correggono direttamente il nome, le calorie ' +
+    'e le proteine.</div>' +
+    '<div class="riga-libera">' +
+      '<input type="text" id="mod-nome" value="' + esc(c.n) + '">' +
+      '<input type="number" inputmode="numeric" id="mod-kcal" value="' + (c.k || 0) + '">' +
+      '<input type="number" inputmode="numeric" id="mod-prot" value="' + (c.pr || 0) + '">' +
+    '</div>' +
+    '<button class="primary" id="mod-salva">Aggiorna</button>' +
+    '<button class="link-x tolgi" id="calc-del">Togli dalla giornata</button></div>';
 }
 
 /* Scheda con cui si inseriscono a mano i valori dell'etichetta, quando il
@@ -5877,15 +6081,31 @@ function vDiario() {
     } else {
       h += '<div class="card"><table class="hist">';
       g.cibo.forEach(function (c, i) {
-        h += '<tr><td>' + esc(c.n) +
+        /* il nome e' un pulsante: la quantita' si sbaglia spesso, e riscrivere
+           tutta la voce per venti grammi in piu' sarebbe assurdo */
+        h += '<tr' + (S.ctx.modifica === i ? ' class="sel-mod"' : '') + '>' +
+             '<td><button class="voce-mod" data-modifica="' + i + '">' + esc(c.n) +
              (c.q ? ' <span class="dim">(' + c.q + ' g)</span>' :
-              c.p ? ' <span class="dim">(' + esc(c.p) + ')</span>' : '') + '</td>' +
+              c.p ? ' <span class="dim">(' + esc(c.p) + ')</span>' : '') +
+             '<svg class="matita" viewBox="0 0 24 24" aria-hidden="true">' +
+             '<path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/></svg></button></td>' +
              '<td class="num">' + c.k + ' kcal</td><td class="num">' + c.pr + ' g</td>' +
              '<td class="num"><button class="rimuovi" data-rimuovi="' + i + '">×</button></td></tr>';
       });
       h += '<tr class="tot"><td><b>Totale</b></td><td class="num"><b>' + t.k + ' kcal</b></td>' +
            '<td class="num"><b>' + t.p + ' g</b></td><td></td></tr>';
       h += '</table></div>';
+
+      /* correzione della voce toccata, subito sotto l'elenco */
+      var vm = g.cibo[S.ctx.modifica];
+      if (vm) {
+        var baseM = baseCentograni(vm);
+        h += baseM ? pannelloQuantita(baseM, 'M' + S.ctx.modifica, true)
+                   : pannelloVoceLibera(vm, S.ctx.modifica);
+      } else {
+        h += '<div class="dim" style="margin:-6px 0 12px">Hai sbagliato la quantit&agrave;? ' +
+             'Tocca il nome di una voce qui sopra e cambiala: kcal e macro si rifanno da soli.</div>';
+      }
     }
 
     /* aggiunta: si cerca l'alimento, si scrivono i grammi, il calcolo e' automatico */
@@ -5919,8 +6139,10 @@ function vDiario() {
          esc(S.ctx.qcibo || '') + '">' +
          ((S.ctx.qcibo || '') ? '<button id="qc-x">×</button>' : '') + '</div>';
 
+    /* i due pannelli usano gli stessi id: non possono stare aperti insieme,
+       e quello della correzione ha la precedenza perche' l'hai appena toccato */
     var sel = S.ctx.alim;
-    var selVoce = sel !== undefined ? voceCatalogo(sel) : null;
+    var selVoce = (sel !== undefined && !g.cibo[S.ctx.modifica]) ? voceCatalogo(sel) : null;
     if (selVoce) h += pannelloQuantita(selVoce, sel);
 
     var bottone = function (a, chiave) {
@@ -5970,8 +6192,9 @@ function vDiario() {
          'o acidi): non sono vietati, servono a farti vedere il legame con i sintomi. ' +
          'Fonte dei valori: tabelle CREA di composizione degli alimenti; per i prodotti scansionati, ' +
          'l\'etichetta della confezione tramite Open Food Facts.<br><br>' +
-         'Il codice a barre serve ai <b>confezionati</b>. Quello che non ce l\'ha — pane, pasta, ' +
-         'carne, verdura, frutta — è già qui dentro: sono 158 voci, cercale per nome.</div>';
+         'Il codice a barre serve ai <b>confezionati</b>. Quello che non ce l\'ha — la carne e il ' +
+         'pesce del banco, la frutta e la verdura pesate alla cassa, mozzarelle e formaggi freschi, ' +
+         'pane e pasta — è già qui dentro: sono ' + ALIMENTI.length + ' voci, cercale per nome.</div>';
 
     h += '<h2>Altro</h2>';
     h += '<div class="riga-libera">' +
@@ -6616,9 +6839,23 @@ function collegaDiario() {
   document.querySelectorAll('[data-alim]').forEach(function (b) {
     b.onclick = function () {
       var i = b.dataset.alim;
+      S.ctx.modifica = undefined;
       S.ctx.alim = (S.ctx.alim === i) ? undefined : i;
       var voce = voceCatalogo(i);
       S.ctx.qta = (voce && voce.u) || 100;
+      render();
+    };
+  });
+
+  /* tocco su una voce gia' registrata: riapre lo stesso pannello, stavolta
+     partendo dai grammi che ci sono adesso */
+  document.querySelectorAll('[data-modifica]').forEach(function (b) {
+    b.onclick = function () {
+      var i = +b.dataset.modifica;
+      S.ctx.alim = undefined;
+      S.ctx.nuovoEan = undefined;
+      S.ctx.modifica = (S.ctx.modifica === i) ? undefined : i;
+      S.ctx.qta = (g.cibo[i] && g.cibo[i].q) || 100;
       render();
     };
   });
@@ -6693,10 +6930,13 @@ function collegaDiario() {
     };
   });
 
-  /* pannello della quantita': il calcolo si aggiorna mentre scrivi */
+  /* pannello della quantita': il calcolo si aggiorna mentre scrivi.
+     Lo stesso pannello serve sia ad aggiungere sia a correggere: cambia solo
+     da dove arrivano i valori per 100 g e cosa succede quando confermi. */
+  var vMod = g.cibo[S.ctx.modifica];
   var gr = document.getElementById('q-gr');
   if (gr) {
-    var a = voceCatalogo(S.ctx.alim);
+    var a = vMod ? baseCentograni(vMod) : voceCatalogo(S.ctx.alim);
     var aggiorna = function () {
       var q = Math.max(0, parseInt(gr.value, 10) || 0);
       S.ctx.qta = q;
@@ -6709,21 +6949,62 @@ function collegaDiario() {
         aggiorna();
       };
     });
-    document.getElementById('calc-x').onclick = function () { S.ctx.alim = undefined; render(); };
     document.getElementById('calc-add').onclick = function () {
       var q = Math.max(0, parseInt(gr.value, 10) || 0);
       if (!q) return;
       var v = calcolaAlimento(a, q);
-      g.cibo.push({ n: a.n, q: q, k: v.k, pr: v.pr, c: v.c, f: v.f, fi: v.fi });
+      if (vMod) {
+        /* si riscrive la voce al suo posto: resta dov'era nell'elenco, e il
+           nome resta quello registrato anche se il catalogo nel frattempo
+           l'avesse cambiato */
+        g.cibo[S.ctx.modifica] = { n: vMod.n, q: q, k: v.k, pr: v.pr, c: v.c, f: v.f, fi: v.fi };
+        toast(vMod.n + ': ora ' + q + ' g, ' + v.k + ' kcal');
+        S.ctx.modifica = undefined;
+      } else {
+        g.cibo.push({ n: a.n, q: q, k: v.k, pr: v.pr, c: v.c, f: v.f, fi: v.fi });
+        toast(a.n + ': ' + q + ' g, ' + v.k + ' kcal');
+        S.ctx.alim = undefined;
+      }
       save();
-      toast(a.n + ': ' + q + ' g, ' + v.k + ' kcal');
-      S.ctx.alim = undefined;
       render();
     };
   }
 
+  /* correzione di una voce libera: nome, kcal e proteine a mano */
+  var ms = document.getElementById('mod-salva');
+  if (ms && vMod) ms.onclick = function () {
+    var n = document.getElementById('mod-nome').value.trim();
+    if (!n) return;
+    vMod.n = n;
+    vMod.k = Math.max(0, parseInt(document.getElementById('mod-kcal').value, 10) || 0);
+    vMod.pr = Math.max(0, parseInt(document.getElementById('mod-prot').value, 10) || 0);
+    save();
+    toast(n + ' aggiornato');
+    S.ctx.modifica = undefined;
+    render();
+  };
+
+  /* la × in alto chiude il pannello qualunque dei due sia aperto */
+  var cx = document.getElementById('calc-x');
+  if (cx) cx.onclick = function () {
+    S.ctx.alim = undefined; S.ctx.modifica = undefined; render();
+  };
+
+  var cd = document.getElementById('calc-del');
+  if (cd) cd.onclick = function () {
+    g.cibo.splice(S.ctx.modifica, 1);
+    S.ctx.modifica = undefined;
+    save(); toast('Voce tolta'); render();
+  };
+
   document.querySelectorAll('[data-rimuovi]').forEach(function (b) {
-    b.onclick = function () { g.cibo.splice(+b.dataset.rimuovi, 1); save(); render(); };
+    b.onclick = function () {
+      /* togliendo una riga gli indici sotto scalano: il pannello aperto
+         punterebbe alla voce sbagliata, quindi si chiude */
+      g.cibo.splice(+b.dataset.rimuovi, 1);
+      S.ctx.modifica = undefined;
+      save(); render();
+    };
   });
 
   var add = document.getElementById('lib-add');
