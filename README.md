@@ -37,9 +37,19 @@ immagini non lasciano il dispositivo: vengono analizzate dal browser e basta.
 
 ## Licenza e crediti
 
-- Le fotografie degli esercizi vengono da
+- Le **animazioni degli esercizi** vengono dal dataset
+  [hasaneyldrm/exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset): i dati sono
+  MIT, le immagini sono **© Gym visual** ([gymvisual.com](https://gymvisual.com/)) e la licenza
+  del dataset ne consente la ridistribuzione a 180×180 px con attribuzione. Sono incorporate nel
+  file con il numero di fotogrammi ridotto, la dimensione invariata.
+- Le **fotografie dei piatti** vengono da **Wikimedia Commons**, solo con licenze che ne
+  permettono la ridistribuzione (pubblico dominio, CC0, CC BY, CC BY-SA). Autore e licenza di
+  ogni singola foto sono elencati dentro l'app, in *Impostazioni → Da dove vengono le immagini*.
+- Le ricette sono **scritte per questo progetto**: nessun testo è ripreso da siti o libri di
+  cucina. I valori nutrizionali sono calcolati sommando gli ingredienti con le tabelle CREA.
+- Le fotografie degli esercizi usate fino alla versione 9 venivano da
   [free-exercise-db](https://github.com/yuhonas/free-exercise-db), pubblico dominio
-  (licenza Unlicense), ridimensionate e incorporate nel file.
+  (licenza Unlicense); il file è ancora nel progetto ma non fa più parte dell'app.
 - I valori nutrizionali degli alimenti sfusi vengono dalle tabelle di composizione degli
   alimenti del **CREA**, integrate con USDA FoodData Central; quelli dei prodotti confezionati
   da **Open Food Facts** (Open Database License).
