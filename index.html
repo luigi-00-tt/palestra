@@ -782,6 +782,59 @@ span.att { color: var(--warm); font-size: 11.5px; }
 }
 .scan-foto b { display: block; font-size: 14px; font-weight: 600; }
 .scan-foto i { font-style: normal; font-size: 11.5px; color: var(--text-dim); }
+
+/* ---------- bagno e integratori (v10) ----------
+   Ogni passaggio in bagno e' una riga che si apre: ora, scala di Bristol con
+   la descrizione a parole (i numeri da soli non li ricorda nessuno), dolore
+   dopo e urgenza. */
+.bagno { display: flex; flex-direction: column; gap: 6px; }
+.bagno-vuoto { margin: 2px 0 4px; }
+.bagno-r {
+  position: relative; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); overflow: hidden;
+}
+.bagno-r.aperto { border-color: var(--accent-line); }
+.bagno-cap {
+  width: 100%; text-align: left; background: none; border: 0; color: var(--text);
+  padding: 10px 40px 10px 12px; cursor: pointer;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+}
+.bagno-h { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.bagno-b { font-size: 12px; color: var(--text-dim); }
+.bagno-x {
+  position: absolute; top: 6px; right: 6px; width: 30px; height: 30px;
+  border: 0; border-radius: 8px; background: none; color: var(--text-faint);
+  font-size: 19px; line-height: 1; cursor: pointer;
+}
+.bagno-x:active { background: var(--surface-2); color: var(--text); }
+.bagno-mod { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.bagno-mod .mini { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-dim); }
+.bagno-mod input[type=time] {
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
+  border-radius: 8px; padding: 7px 9px; font: inherit; font-size: 14px;
+}
+.mini-t { font-size: 12.5px; color: var(--text-dim); }
+.seg.bristol button { font-variant-numeric: tabular-nums; }
+.bristol-leg { margin: -2px 0 0; min-height: 15px; }
+.bagno-si { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill {
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--text-dim);
+  border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 12.5px; cursor: pointer;
+}
+.pill.on { border-color: var(--accent-line); color: var(--text); background: var(--surface); font-weight: 650; }
+.agg {
+  border: 1px dashed var(--line); background: none; color: var(--accent);
+  border-radius: var(--radius); padding: 11px; font: inherit; font-size: 14px;
+  font-weight: 650; cursor: pointer; width: 100%;
+}
+.agg:active { background: var(--surface-2); }
+.integr { display: flex; flex-direction: column; gap: 6px; }
+.integr-r {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); padding: 9px 40px 9px 12px; font-size: 13.5px;
+}
+.integr-agg { display: flex; flex-wrap: wrap; gap: 7px; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -4533,7 +4586,7 @@ var KEY = 'palestra_v1';
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmu37jjul';
+var BUILD = 'vmu37oty3';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -4549,7 +4602,7 @@ var PROFILO_DEFAULT = { nascita: null, peso: null, altezza: null, attivita: 1.55
 var S = {
   profilo: PROFILO_DEFAULT,
   log: {},        // { 'AAAA-MM-GG': { giorno:'A', serie: { 'panca-piana': [{kg,rip,fatto,t}] } } }
-  diario: {},     // { 'AAAA-MM-GG': { dolore, reflusso, bristol, note } }
+  diario: {},     // { 'AAAA-MM-GG': { dolore, reflusso, note, bagno: [{h,b,d,u}], integratori: [{id,n,h}] } }
   ultimo: {},     // { 'panca-piana': [{kg,rip}] } ultima prestazione per esercizio
   prodotti: {},   // { '8000500310427': {n,marca,k,pr,c,f,fi,u,ean} } archivio dei codici a barre
   vista: 'home', ctx: {}
@@ -4573,13 +4626,48 @@ function load() {
       }
     }
   } catch (e) { /* private browsing o storage disabilitato: si continua in memoria */ }
+  migraDiario();
+}
+
+/* ---------- migrazione del diario (versione 10) ----------
+   Fino alla v9 una giornata aveva UN solo valore di Bristol e un sì/no per il
+   dolore dopo il bagno. Ma in una giornata si va di corpo due o tre volte, e
+   la consistenza cambia fra una volta e l'altra: ora ogni passaggio in bagno è
+   un episodio suo.
+
+   I campi vecchi (`bristol`, `postDef`, `gaviscon`) NON si cancellano: se una
+   build venisse riportata indietro, o se si ricaricasse un backup vecchio, i
+   dati devono essere ancora leggibili. Costano pochi byte al giorno.
+   `m` segna la giornata come già migrata, così girare due volte non duplica
+   niente. */
+var VERSIONE_DATI = 10;
+
+function migraDiario() {
+  var cambiato = false;
+  for (var d in S.diario) {
+    var g = S.diario[d];
+    if (!g || g.m === VERSIONE_DATI) continue;
+    if (!g.bagno) {
+      g.bagno = [];
+      if (g.bristol !== undefined && g.bristol !== null) {
+        g.bagno.push({ h: null, b: g.bristol, d: g.postDef ? 1 : 0, u: 0, v9: true });
+      }
+    }
+    if (!g.integratori) {
+      g.integratori = [];
+      if (g.gaviscon) g.integratori.push({ id: 'gaviscon', n: 'Gaviscon', h: null });
+    }
+    g.m = VERSIONE_DATI;
+    cambiato = true;
+  }
+  return cambiato;
 }
 /* Tutto quello che va conservato, in un posto solo: se qui manca qualcosa,
    manca anche dal salvataggio E dalla copia di sicurezza. E' successo con
    `prodotti`, aggiunto nella v9 e dimenticato nel backup. */
 function datiDaSalvare() {
   return {
-    v: 9,
+    v: VERSIONE_DATI,
     profilo: S.profilo,
     log: S.log,
     diario: S.diario,
@@ -5585,8 +5673,123 @@ function applicaBackup(testo) {
   /* backup fatti prima della v9 non hanno i prodotti: meglio un archivio vuoto
      che lasciare `undefined` in giro */
   if (!S.prodotti) S.prodotti = {};
+  if (!S.extra) S.extra = {};
+  /* un backup della v9 arriva col diario vecchio: va migrato qui come
+     all'avvio, altrimenti chi ripristina resta indietro senza accorgersene */
+  migraDiario();
   save();
   return null;
+}
+
+/* ---------- bagno e integratori (versione 10) ----------
+   Fino alla v9 il diario aveva un solo Bristol al giorno. Ma lui ci va due o
+   tre volte, e la consistenza cambia fra una volta e l'altra: "prima buona e
+   poi no" è esattamente l'andamento che un valore solo cancella. Qui ogni
+   passaggio in bagno è una riga con la sua ora. */
+
+var BRISTOL = [
+  null,
+  ['1', 'palline dure, separate'],
+  ['2', 'a salsiccia, bozzoluta'],
+  ['3', 'a salsiccia, con crepe'],
+  ['4', 'liscia e morbida'],
+  ['5', 'pezzi morbidi, bordi netti'],
+  ['6', 'pezzi molli, bordi sfilacciati'],
+  ['7', 'liquida, senza pezzi solidi']
+];
+
+function oraAdesso() {
+  var d = new Date();
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
+/* Bristol peggiore della giornata, cioè il più lontano dal 4.
+   Serve a due cose: tenere aggiornato il vecchio campo `bristol` per il codice
+   che lo legge ancora, e riassumere la giornata in una riga in Andamento. */
+function bristolPeggiore(g) {
+  var v = (g.bagno || []).map(function (e) { return e.b; }).filter(function (b) { return b; });
+  if (!v.length) return null;
+  return v.sort(function (a, b) { return Math.abs(b - 4) - Math.abs(a - 4); })[0];
+}
+
+/* I campi della v9 restano allineati a quello che si vede: se un giorno si
+   torna indietro con una build vecchia, il diario continua a dire la verità. */
+function allineaVecchiCampi(g) {
+  var p = bristolPeggiore(g);
+  if (p) g.bristol = p;
+  g.postDef = (g.bagno || []).some(function (e) { return e.d; }) ? 1 : 0;
+  g.gaviscon = (g.integratori || []).some(function (i) { return i.id === 'gaviscon'; }) ? 1 : 0;
+}
+
+function bloccoBagno(g) {
+  if (!g.bagno) g.bagno = [];
+  var h = '<div class="field"><span>Quante volte sei andato in bagno oggi</span>';
+  h += '<div class="bagno">';
+  if (!g.bagno.length) {
+    h += '<p class="dim bagno-vuoto">Nessuna volta registrata. Se oggi ci sei andato, ' +
+         'aggiungi una riga: conta anche <b>com\'era ogni volta</b>, non solo quante.</p>';
+  }
+  g.bagno.forEach(function (e, i) {
+    var b = BRISTOL[e.b] || ['?', 'non indicata'];
+    h += '<div class="bagno-r' + (S.ctx.bagnoAperto === i ? ' aperto' : '') + '">' +
+      '<button class="bagno-cap" data-bagno-apri="' + i + '">' +
+        '<span class="bagno-h">' + esc(e.h || 'ora non segnata') + '</span>' +
+        '<span class="bagno-b">Bristol ' + b[0] + ' &middot; ' + esc(b[1]) + '</span>' +
+        (e.d ? '<span class="tag warm">dolore dopo</span>' : '') +
+        (e.u ? '<span class="tag">urgenza</span>' : '') +
+      '</button>' +
+      '<button class="bagno-x" data-bagno-via="' + i + '" aria-label="Togli">&times;</button>';
+    if (S.ctx.bagnoAperto === i) {
+      h += '<div class="bagno-mod">' +
+        '<label class="mini"><span>Ora</span><input type="time" id="bagno-ora" value="' +
+          esc(e.h || '') + '"></label>' +
+        '<span class="mini-t">Com\'era (scala di Bristol)</span>' +
+        '<div class="seg bristol" data-bagno-b="' + i + '">' +
+          [1, 2, 3, 4, 5, 6, 7].map(function (n) {
+            return '<button data-v="' + n + '" class="' + (e.b === n ? 'on' : '') + '" ' +
+                   'title="' + esc(BRISTOL[n][1]) + '">' + n + '</button>';
+          }).join('') + '</div>' +
+        '<p class="dim bristol-leg">' + (e.b ? esc(BRISTOL[e.b][1]) :
+          '1-2 stitichezza &middot; 3-4-5 normale &middot; 6-7 diarrea') + '</p>' +
+        '<div class="bagno-si">' +
+          '<button class="pill' + (e.d ? ' on' : '') + '" data-bagno-d="' + i + '">Dolore dopo</button>' +
+          '<button class="pill' + (e.u ? ' on' : '') + '" data-bagno-u="' + i + '">Urgenza</button>' +
+        '</div></div>';
+    }
+    h += '</div>';
+  });
+  h += '<button class="agg" id="bagno-piu">+ Ci sono andato adesso</button>';
+  h += '</div></div>';
+  return h;
+}
+
+/* Gaviscon, fermenti e vitamina D stavano in tre posti diversi (uno era un
+   sì/no, gli altri da nessuna parte). Qui sono una lista sola con l'ora:
+   serve per rispondere a "i fermenti mi fanno qualcosa?" guardando i dati. */
+var INTEGRATORI_RAPIDI = [
+  ['fermenti', 'Fermenti (Biofil)'],
+  ['gaviscon', 'Gaviscon'],
+  ['vitd', 'Vitamina D (Dibase)']
+];
+
+function bloccoIntegratori(g) {
+  if (!g.integratori) g.integratori = [];
+  var h = '<div class="field"><span>Fermenti, Gaviscon, vitamina D</span><div class="integr">';
+  g.integratori.forEach(function (it, i) {
+    h += '<div class="integr-r"><b>' + esc(it.n) + '</b>' +
+      '<span class="dim">' + esc(it.h || 'ora non segnata') + '</span>' +
+      '<button class="bagno-x" data-int-via="' + i + '" aria-label="Togli">&times;</button></div>';
+  });
+  h += '<div class="integr-agg">' + INTEGRATORI_RAPIDI.map(function (r) {
+    var gia = g.integratori.some(function (x) { return x.id === r[0]; });
+    return '<button class="pill' + (gia ? ' on' : '') + '" data-int="' + r[0] + '">' +
+           (gia ? '✓ ' : '+ ') + esc(r[1]) + '</button>';
+  }).join('') + '</div>';
+  h += '<p class="dim">L\'ora la mette da sola. Se vuoi sapere se i fermenti ti stanno ' +
+       'facendo qualcosa, <a href="#" data-go-scheda="fermenti">leggi prima come si fa una prova ' +
+       'che voglia dire qualcosa</a>.</p>';
+  h += '</div></div>';
+  return h;
 }
 
 /* Cartellino che compare al posto dei numeri finché il profilo non c'è. */
@@ -6139,16 +6342,8 @@ function vDiario() {
          [0, 1, 2, 3].map(function (n) {
            return '<button data-v="' + n + '" class="' + (g.reflusso === n ? 'on' : '') + '">' +
                   ['nessuno', 'lieve', 'medio', 'forte'][n] + '</button>'; }).join('') + '</div></label>';
-    h += '<label class="field"><span>Hai preso il Gaviscon?</span><div class="seg" id="s-gaviscon">' +
-         '<button data-v="0" class="' + (!g.gaviscon ? 'on' : '') + '">no</button>' +
-         '<button data-v="1" class="' + (g.gaviscon ? 'on' : '') + '">sì</button></div></label>';
-    h += '<label class="field"><span>Consistenza delle feci (scala di Bristol, 1 dura → 7 liquida)</span>' +
-         '<div class="seg" id="s-bristol">' + [1, 2, 3, 4, 5, 6, 7].map(function (n) {
-           return '<button data-v="' + n + '" class="' + (g.bristol === n ? 'on' : '') + '">' + n + '</button>'; }).join('') +
-         '</div></label>';
-    h += '<label class="field"><span>Dolore dopo essere andato in bagno</span><div class="seg" id="s-post">' +
-         '<button data-v="0" class="' + (!g.postDef ? 'on' : '') + '">no</button>' +
-         '<button data-v="1" class="' + (g.postDef ? 'on' : '') + '">sì</button></div></label>';
+    h += bloccoBagno(g);
+    h += bloccoIntegratori(g);
     h += '<label class="field"><span>Note</span>' +
          '<textarea id="d-note" placeholder="stress, sonno, orari dei pasti, altro...">' +
          esc(g.note || '') + '</textarea></label>';
@@ -6162,23 +6357,180 @@ function vDiario() {
   return h;
 }
 
+/* ---------- intestino: quante volte, e com'era ----------
+   Fino alla v9 questi dati si registravano e poi non li guardava nessuno:
+   Andamento correlava solo il reflusso. Ora l'intestino ha la sua parte, ed e'
+   quella che gli interessa davvero.
+
+   La regola di prudenza resta la stessa del resto della scheda: sotto una
+   soglia di giorni non si mostra nessuna correlazione, si dichiara che i dati
+   non bastano. */
+
+function giorniConBagno() {
+  return Object.keys(S.diario).filter(function (d) {
+    var g = S.diario[d];
+    return g && g.bagno && g.bagno.length;
+  }).sort();
+}
+
+/* Una giornata storta: tre o piu' scariche, oppure almeno una da 6-7.
+   Sono i due modi in cui una giornata IBS-D va male; tenerli separati
+   moltiplicherebbe le tabelle senza aggiungere niente. */
+function giornataStorta(g) {
+  if (!g || !g.bagno || !g.bagno.length) return false;
+  if (g.bagno.length >= 3) return true;
+  return g.bagno.some(function (e) { return e.b >= 6; });
+}
+
+/* Quante volte, nello stesso giorno, la consistenza e' peggiorata fra una
+   volta e l'altra: e' esattamente quello che ha descritto lui
+   («prima la cacca e' buona e poi no»). */
+function giorniPeggiorati() {
+  return giorniConBagno().filter(function (d) {
+    var b = S.diario[d].bagno.filter(function (e) { return e.b; });
+    for (var i = 1; i < b.length; i++) {
+      if (Math.abs(b[i].b - 4) > Math.abs(b[i - 1].b - 4)) return true;
+    }
+    return false;
+  });
+}
+
+function vIntestino() {
+  var date = giorniConBagno();
+  if (date.length < 5) {
+    return '<h2>Intestino</h2><div class="hint">Hai segnato i passaggi in bagno di <b>' +
+      date.length + (date.length === 1 ? ' giorno' : ' giorni') + '</b>. Da <b>5 in su</b> ' +
+      'comincio a incrociarli con quello che mangi: prima di allora qualunque legame ' +
+      'sarebbe inventato.</div>';
+  }
+
+  var tot = 0, bris = 0, nb = 0, conDolore = 0, conUrgenza = 0;
+  date.forEach(function (d) {
+    var b = S.diario[d].bagno;
+    tot += b.length;
+    b.forEach(function (e) {
+      if (e.b) { bris += e.b; nb++; }
+      if (e.d) conDolore++;
+      if (e.u) conUrgenza++;
+    });
+  });
+  var storte = date.filter(function (d) { return giornataStorta(S.diario[d]); });
+  var peggio = giorniPeggiorati();
+
+  var h = '<h2>Intestino</h2>';
+  h += '<div class="stats">' +
+    '<div class="stat"><b>' + (tot / date.length).toFixed(1).replace('.', ',') + '</b>' +
+      '<span>volte al giorno, in media</span></div>' +
+    '<div class="stat"><b>' + (nb ? (bris / nb).toFixed(1).replace('.', ',') : '—') + '</b>' +
+      '<span>Bristol medio (4 è il centro)</span></div>' +
+    '<div class="stat"><b>' + storte.length + '</b><span>giornate storte su ' + date.length + '</span></div>' +
+    '<div class="stat"><b>' + peggio.length + '</b><span>giorni in cui è peggiorata strada facendo</span></div>' +
+    '</div>';
+
+  if (conDolore) {
+    h += '<div class="hint">Il dolore dopo essere andato in bagno l\'hai segnato <b>' + conDolore +
+      (conDolore === 1 ? ' volta' : ' volte') + '</b> su ' + tot + '. È il sintomo che hai portato ' +
+      'dal gastroenterologo: questi numeri servono a lui più che a te, portaglieli.</div>';
+  }
+  if (conUrgenza) {
+    h += '<p class="dim">Urgenza segnata ' + conUrgenza + ' volte su ' + tot + '.</p>';
+  }
+
+  /* Alimenti piu' frequenti nelle giornate storte, con la stessa meccanica
+     gia' usata per il reflusso: differenza di frequenza, non conteggio
+     assoluto, altrimenti vince sempre quello che mangia tutti i giorni. */
+  var buone = date.filter(function (d) { return !giornataStorta(S.diario[d]); });
+  if (storte.length >= 3 && buone.length >= 2) {
+    var freq = {};
+    function conta(lista, campo) {
+      lista.forEach(function (d) {
+        var visti = {};
+        (S.diario[d].cibo || []).forEach(function (c) {
+          if (visti[c.n]) return; visti[c.n] = 1;
+          freq[c.n] = freq[c.n] || { storte: 0, buone: 0 };
+          freq[c.n][campo]++;
+        });
+      });
+    }
+    conta(storte, 'storte'); conta(buone, 'buone');
+    var righe = Object.keys(freq).map(function (n) {
+      var f = freq[n];
+      return { n: n, storte: f.storte, diff: f.storte / storte.length - f.buone / buone.length };
+    }).filter(function (r) { return r.storte >= 2 && r.diff > 0.2; })
+      .sort(function (a, b) { return b.diff - a.diff; }).slice(0, 6);
+
+    if (righe.length) {
+      h += '<h2>Cosa compare nelle giornate storte</h2>';
+      h += '<div class="hint">Non è una prova: è un indizio da verificare togliendo <b>una</b> ' +
+           'cosa alla volta per una settimana, non tutte insieme.</div>';
+      h += '<table class="hist">' + righe.map(function (r) {
+        return '<tr><td>' + esc(r.n) + '</td><td class="num">' + r.storte + ' su ' + storte.length + '</td></tr>';
+      }).join('') + '</table>';
+    }
+
+    /* I tag FODMAP erano gia' su tutte le voci degli alimenti e non li usava
+       nessuno: qui servono davvero. */
+    function fodmapAlti(d) {
+      var n = 0;
+      (S.diario[d].cibo || []).forEach(function (c) {
+        var b = baseCentograni(c);
+        if (b && b.fodmap === 'alto') n++;
+      });
+      return n;
+    }
+    var mStorte = storte.reduce(function (a, d) { return a + fodmapAlti(d); }, 0) / storte.length;
+    var mBuone = buone.reduce(function (a, d) { return a + fodmapAlti(d); }, 0) / buone.length;
+    if (mStorte || mBuone) {
+      h += '<h2>FODMAP</h2><p class="dim">Nelle giornate storte hai mangiato in media <b>' +
+        mStorte.toFixed(1).replace('.', ',') + '</b> alimenti ad alto FODMAP, nelle altre <b>' +
+        mBuone.toFixed(1).replace('.', ',') + '</b>.' +
+        (mStorte > mBuone + 0.5 ? ' La differenza c\'è: vale la pena provare a ridurli per due settimane.' :
+         ' Differenza piccola: nel tuo caso i FODMAP non sembrano la leva principale.') + '</p>';
+    }
+  }
+
+  /* Fermenti: confronto onesto, con la soglia dichiarata. */
+  var conF = date.filter(function (d) {
+    return (S.diario[d].integratori || []).some(function (i) { return i.id === 'fermenti'; });
+  });
+  var senzaF = date.filter(function (d) { return conF.indexOf(d) < 0; });
+  if (conF.length >= 7 && senzaF.length >= 7) {
+    function mediaScariche(l) { return l.reduce(function (a, d) { return a + S.diario[d].bagno.length; }, 0) / l.length; }
+    h += '<h2>Fermenti</h2><p class="dim">Nei <b>' + conF.length + '</b> giorni in cui li hai presi: ' +
+      mediaScariche(conF).toFixed(1).replace('.', ',') + ' volte al giorno. Negli altri <b>' +
+      senzaF.length + '</b>: ' + mediaScariche(senzaF).toFixed(1).replace('.', ',') + '. ' +
+      'È un confronto fra giorni diversi, non una prova: per sapere se funzionano davvero serve ' +
+      'prenderli tutti i giorni per il periodo intero, come spiegato nella scheda dei fermenti.</p>';
+  } else if (conF.length) {
+    h += '<h2>Fermenti</h2><p class="dim">Li hai segnati in ' + conF.length +
+      (conF.length === 1 ? ' giorno' : ' giorni') + '. Per dire qualcosa servono almeno <b>7 giorni ' +
+      'con e 7 senza</b>: sotto quella soglia il confronto direbbe solo caso.</p>';
+  }
+
+  return h;
+}
+
 /* Incrocia sintomi, cibo, acqua e allenamenti dei giorni registrati.
    Con pochi giorni i numeri non dicono nulla: lo si dichiara invece di
    mostrare correlazioni inventate. */
 function vAndamento() {
+  /* Conta anche chi compila soltanto il bagno: prima una giornata con tre
+     episodi segnati e nessun voto al reflusso non esisteva, per questa vista. */
   var date = Object.keys(S.diario).filter(function (d) {
     var g = S.diario[d];
-    return g.reflusso !== undefined || g.dolore !== undefined;
+    return g.reflusso !== undefined || g.dolore !== undefined || (g.bagno && g.bagno.length);
   }).sort();
 
   var h = '';
   if (date.length < 5) {
     h += '<div class="hint">Servono almeno <b>5 giorni</b> compilati per tirare fuori qualcosa di ' +
-         'sensato. Ne hai ' + date.length + '. Continua a segnare sintomi e cibo: i legami si vedono ' +
-         'solo con un po\' di dati, e da lì escono i <b>tuoi</b> trigger, che nessuna lista generica ' +
-         'può indovinare.</div>';
+         'sensato. Ne hai ' + date.length + '. Continua a segnare sintomi, bagno e cibo: i legami si ' +
+         'vedono solo con un po\' di dati, e da lì escono i <b>tuoi</b> trigger, che nessuna lista ' +
+         'generica può indovinare.</div>';
+    h += vIntestino();
     return h;
   }
+  h += vIntestino();
 
   /* giorni con e senza reflusso */
   var conR = date.filter(function (d) { return (S.diario[d].reflusso || 0) >= 2; });
@@ -6968,8 +7320,7 @@ function collegaDiario() {
   };
 
   /* sintomi */
-  [['dolore', 's-dolore'], ['reflusso', 's-reflusso'], ['bristol', 's-bristol'],
-   ['gaviscon', 's-gaviscon'], ['postDef', 's-post']].forEach(function (par) {
+  [['dolore', 's-dolore'], ['reflusso', 's-reflusso']].forEach(function (par) {
     var box = document.getElementById(par[1]);
     if (!box) return;
     box.querySelectorAll('button').forEach(function (b) {
@@ -6982,11 +7333,100 @@ function collegaDiario() {
     });
   });
 
+  /* --- bagno: ogni riga si apre, si corregge e si toglie ---
+     Ogni tocco passa da render(), come il resto del diario: lo stato di quale
+     riga è aperta sta in S.ctx.bagnoAperto, non nel DOM, altrimenti il primo
+     ridisegno se lo porterebbe via. */
+  var piu = document.getElementById('bagno-piu');
+  if (piu) piu.onclick = function () {
+    g.bagno.push({ h: oraAdesso(), b: 4, d: 0, u: 0 });
+    S.ctx.bagnoAperto = g.bagno.length - 1;
+    allineaVecchiCampi(g); save(); render();
+  };
+
+  document.querySelectorAll('[data-bagno-apri]').forEach(function (b) {
+    b.onclick = function () {
+      var i = +b.dataset.bagnoApri;
+      /* l'ora eventualmente modificata non deve perdersi chiudendo la riga */
+      salvaOraBagno(g);
+      S.ctx.bagnoAperto = (S.ctx.bagnoAperto === i) ? null : i;
+      render();
+    };
+  });
+
+  document.querySelectorAll('[data-bagno-via]').forEach(function (b) {
+    b.onclick = function () {
+      var i = +b.dataset.bagnoVia;
+      g.bagno.splice(i, 1);
+      /* tolta una riga gli indici sotto scalano: la riga aperta non è più
+         quella di prima, quindi si chiude */
+      S.ctx.bagnoAperto = null;
+      allineaVecchiCampi(g); save(); toast('Tolta'); render();
+    };
+  });
+
+  document.querySelectorAll('[data-bagno-b]').forEach(function (box) {
+    var i = +box.dataset.bagnoB;
+    box.querySelectorAll('button').forEach(function (b) {
+      b.onclick = function () {
+        salvaOraBagno(g);
+        g.bagno[i].b = +b.dataset.v;
+        allineaVecchiCampi(g); save(); render();
+      };
+    });
+  });
+
+  [['data-bagno-d', 'd'], ['data-bagno-u', 'u']].forEach(function (par) {
+    document.querySelectorAll('[' + par[0] + ']').forEach(function (b) {
+      b.onclick = function () {
+        var i = +b.getAttribute(par[0]);
+        salvaOraBagno(g);
+        g.bagno[i][par[1]] = g.bagno[i][par[1]] ? 0 : 1;
+        allineaVecchiCampi(g); save(); render();
+      };
+    });
+  });
+
+  
+/* L'ora sta in un <input type=time> che vive solo finche' la riga e' aperta:
+   prima di qualunque ridisegno va riportata nello stato, altrimenti si perde
+   proprio mentre la si sta scrivendo. */
+function salvaOraBagno(g) {
+  var i = S.ctx.bagnoAperto;
+  var c = document.getElementById('bagno-ora');
+  if (c && i !== null && i !== undefined && g.bagno && g.bagno[i]) g.bagno[i].h = c.value || null;
+}
+
+/* --- integratori --- */
+  document.querySelectorAll('[data-int]').forEach(function (b) {
+    b.onclick = function () {
+      var id = b.dataset.int;
+      var r = INTEGRATORI_RAPIDI.filter(function (x) { return x[0] === id; })[0];
+      var gia = g.integratori.map(function (x) { return x.id; }).indexOf(id);
+      if (gia >= 0) g.integratori.splice(gia, 1);
+      else g.integratori.push({ id: id, n: r[1], h: oraAdesso() });
+      allineaVecchiCampi(g); save(); render();
+    };
+  });
+  document.querySelectorAll('[data-int-via]').forEach(function (b) {
+    b.onclick = function () {
+      g.integratori.splice(+b.dataset.intVia, 1);
+      allineaVecchiCampi(g); save(); render();
+    };
+  });
+  var lk = document.querySelector('[data-go-scheda="fermenti"]');
+  if (lk) lk.onclick = function (ev) {
+    ev.preventDefault();
+    S.vista = 'nutrizione'; S.ctx = { scheda: 'fermenti' }; render();
+  };
+
   var sv = document.getElementById('salva-diario');
   if (sv) sv.onclick = function () {
     var n = document.getElementById('d-note');
     if (n) g.note = n.value;
-    save(); toast('Giornata salvata'); S.ctx.sez = 'storico'; render();
+    salvaOraBagno(g);
+    allineaVecchiCampi(g);
+    save(); toast('Giornata salvata'); S.ctx.sez = 'storico'; S.ctx.bagnoAperto = null; render();
   };
 }
 
