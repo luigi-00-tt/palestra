@@ -835,6 +835,48 @@ span.att { color: var(--warm); font-size: 11.5px; }
   background: var(--surface); padding: 9px 40px 9px 12px; font-size: 13.5px;
 }
 .integr-agg { display: flex; flex-wrap: wrap; gap: 7px; }
+
+/* ---------- libreria degli esercizi (v10) ---------- */
+.cerca {
+  width: 100%; background: var(--surface-2); border: 1px solid var(--line);
+  color: var(--text); border-radius: var(--radius); padding: 12px 13px;
+  font: inherit; font-size: 15px; margin-bottom: 10px;
+}
+.filtri { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+.lib-ris { display: flex; flex-direction: column; gap: 7px; }
+.lib-r {
+  text-align: left; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 11px 12px; color: var(--text);
+  cursor: pointer; display: block; width: 100%;
+}
+.lib-r:active { border-color: var(--accent-line); }
+.lib-r b { display: block; font-size: 14.5px; font-weight: 650; }
+.lib-r i { display: block; font-size: 11.5px; color: var(--text-faint); font-style: normal; margin: 1px 0 6px; }
+.en-nome { margin: -4px 0 8px; }
+/* animazione che arriva dalla rete e non e' arrivata */
+.movimento figure.senza-rete img { display: none; }
+.movimento figure.senza-rete .serve-rete { color: var(--warm, #e0a87a); }
+.pannello {
+  position: fixed; inset: 0; z-index: 70; background: rgba(6, 8, 11, .72);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.pan-in {
+  background: var(--surface); border-top: 1px solid var(--line);
+  border-radius: 16px 16px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  width: 100%; max-width: 560px;
+}
+.pan-in > b { font-size: 16px; }
+.pan-riga { display: flex; gap: 8px; margin: 12px 0 14px; }
+.pan-riga label { flex: 1; font-size: 11.5px; color: var(--text-dim); display: block; }
+.pan-riga input {
+  width: 100%; background: var(--surface-2); border: 1px solid var(--line);
+  color: var(--text); border-radius: 9px; padding: 10px; font: inherit; font-size: 15px;
+  margin-top: 4px;
+}
+.link {
+  background: none; border: 0; color: var(--text-faint); font: inherit; font-size: 13px;
+  text-decoration: underline; cursor: pointer; padding: 10px; width: 100%;
+}
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -961,6 +1003,1386 @@ var GIF_NOTA = {
 var GIF_CREDITO = 'Animazioni: \u00a9 Gym visual (gymvisual.com), ridistribuite a 180\u00d7180 px con attribuzione come consente la licenza del dataset hasaneyldrm/exercises-dataset. I dati testuali sono MIT.';
 
 if (false) module.exports = { GIF: GIF, GIF_FONTE: GIF_FONTE, GIF_NOTA: GIF_NOTA, GIF_CREDITO: GIF_CREDITO };
+
+
+/* ===== libreria.js ===== */
+/* libreria.js - i 1324 esercizi del dataset, per aggiungerne uno alla seduta.
+
+   Generato da app/genera_libreria.py: non si modifica a mano.
+
+   Ogni voce e' [media, nome italiano, nome inglese, attrezzo, muscolo], dove
+   `media` e' anche il nome del file dell'animazione sul CDN. Qui non ci sono
+   ne' immagini ne' istruzioni: sarebbero 128 MB di GIF e 658 kB di testo.
+   L'animazione si scarica quando serve (e resta in cache); cercare, scegliere
+   e registrare le serie funziona comunque senza rete.
+
+   Fonte: hasaneyldrm/exercises-dataset (dati MIT, media Gym visual). */
+
+var LIB = [
+['0001-2gPfomN','Sit-up 3/4','3/4 sit-up','corpo libero','addome'],
+['0002-Hy9D21L','Flessioni laterali 45°','45° side bend','corpo libero','addome'],
+['0003-1ZFqTDN','Air bike','air bike','corpo libero','addome'],
+['0006-qaZVsGk','Alternato heel touchers','alternate heel touchers','corpo libero','addome'],
+['0007-4IKbhHV','Lat machine alternato laterale','alternate lateral pulldown','cavi','dorso (gran dorsale)'],
+['0009-PAgTVaK','Dip alle parallele petto in ginocchio assistito','assisted chest dip (kneeling)','macchina','petto'],
+['0010-8K0w2yA','Sollevamento appeso ginocchio throw down assistito','assisted hanging knee raise with throw down','assistito','addome'],
+['0011-03lzqwk','Sollevamento appeso ginocchio assistito','assisted hanging knee raise','assistito','addome'],
+['0012-UGhRD1A','Sollevamento gambe sdraiato laterale throw down assistito','assisted lying leg raise with lateral throw down','assistito','addome'],
+['0013-VX5YKR5','Sollevamento gambe sdraiato throw down assistito','assisted lying leg raise with throw down','assistito','addome'],
+['0014-r7cT9YD','Russian twist motion assistito','assisted motion russian twist','palla medica','addome'],
+['0015-vrhHa6D','Trazioni parallel presa stretta assistito','assisted parallel close grip pull-up','macchina','dorso (gran dorsale)'],
+['0016-VedGSby','A pancia in giù hamstring assistito','assisted prone hamstring','assistito','femorali'],
+['0017-kiJ4Z2K','Trazioni assistito','assisted pull-up','macchina','dorso (gran dorsale)'],
+['0018-7HcfMBP','Estensioni per i tricipiti in piedi towel assistito','assisted standing triceps extension (with towel)','assistito','tricipiti'],
+['0019-J60bN17','Dip alle parallele tricipiti in ginocchio assistito','assisted triceps dip (kneeling)','macchina','tricipiti'],
+['0020-xAySMB0','Balance board','balance board','corpo libero','quadricipiti'],
+['0022-znLogoF','Pullover press con il bilanciere','barbell pullover to press','bilanciere','dorso (gran dorsale)'],
+['0023-Yza7XrQ','Curl alternato bicipiti con il bilanciere','barbell alternate biceps curl','bilanciere','bicipiti'],
+['0024-Y7YcmIJ','Front squat su panca con il bilanciere','barbell bench front squat','bilanciere','quadricipiti'],
+['0025-EIeI8Vf','Distensioni su panca con il bilanciere','barbell bench press','bilanciere','petto'],
+['0026-W9pFVv1','Squat su panca con il bilanciere','barbell bench squat','bilanciere','quadricipiti'],
+['0027-eZyBC3j','Rematore busto piegato con il bilanciere','barbell bent over row','bilanciere','dorso (alto)'],
+['0028-SGY8Zui','Distensioni clean con il bilanciere','barbell clean and press','bilanciere','quadricipiti'],
+['0029-qi996YS','Front squat clean-grip con il bilanciere','barbell clean-grip front squat','bilanciere','glutei'],
+['0030-J6Dx1Mu','Distensioni su panca presa stretta con il bilanciere','barbell close-grip bench press','bilanciere','tricipiti'],
+['0031-25GPyDY','Curl con il bilanciere','barbell curl','bilanciere','bicipiti'],
+['0032-ila4NZS','Stacco da terra con il bilanciere','barbell deadlift','bilanciere','glutei'],
+['0033-GrO65fd','Distensioni su panca su panca declinata con il bilanciere','barbell decline bench press','bilanciere','petto'],
+['0034-hMEptv0','Pullover su panca declinata piegato braccio con il bilanciere','barbell decline bent arm pullover','bilanciere','dorso (gran dorsale)'],
+['0035-LMGXZn8','Distensioni su panca declinata skull presa stretta con il bilanciere','barbell decline close grip to skull press','bilanciere','tricipiti'],
+['0036-hl8DUh8','Distensioni su panca declinata presa larga con il bilanciere','barbell decline wide-grip press','bilanciere','petto'],
+['0037-Hj4FOCd','Pullover su panca declinata presa larga con il bilanciere','barbell decline wide-grip pullover','bilanciere','dorso (gran dorsale)'],
+['0038-IENzBdA','Curl drag con il bilanciere','barbell drag curl','bilanciere','bicipiti'],
+['0039-IeTIEqg','Squat frontale petto con il bilanciere','barbell front chest squat','bilanciere','glutei'],
+['0040-33AzZeV','Alzate frontali pullover con il bilanciere','barbell front raise and pullover','bilanciere','petto'],
+['0041-b2Uoz54','Alzate frontali con il bilanciere','barbell front raise','bilanciere','spalle'],
+['0042-zG0zs85','Front squat con il bilanciere','barbell front squat','bilanciere','glutei'],
+['0043-qXTaZnJ','Squat completo con il bilanciere','barbell full squat','bilanciere','glutei'],
+['0044-XlZ4lAC','Good morning con il bilanciere','barbell good morning','bilanciere','femorali'],
+['0045-GXoaSgn','Distensioni su panca guillotine con il bilanciere','barbell guillotine bench press','bilanciere','petto'],
+['0046-5VCj6iH','Hack squat con il bilanciere','barbell hack squat','bilanciere','glutei'],
+['0047-3TZduzM','Distensioni su panca su panca inclinata con il bilanciere','barbell incline bench press','bilanciere','petto'],
+['0048-641mIfk','Distensioni su panca inclinata reverse-grip con il bilanciere','barbell incline reverse-grip press','bilanciere','tricipiti'],
+['0049-dmgMp3n','Rematore su panca inclinata con il bilanciere','barbell incline row','bilanciere','dorso (alto)'],
+['0050-xi0yckC','Sollevamento su panca inclinata spalla con il bilanciere','barbell incline shoulder raise','bilanciere','dentato anteriore'],
+['0051-pkSoCW9','Squat jefferson con il bilanciere','barbell jefferson squat','bilanciere','glutei'],
+['0052-ZsiqXYa','Distensioni su panca jm con il bilanciere','barbell jm bench press','bilanciere','tricipiti'],
+['0053-1gFNTZV','Squat con salto con il bilanciere','barbell jump squat','bilanciere','glutei'],
+['0054-t8iSghb','Affondo con il bilanciere','barbell lunge','bilanciere','glutei'],
+['0055-EcaV7aL','Distensioni sdraiato presa stretta con il bilanciere','barbell lying close-grip press','bilanciere','tricipiti'],
+['0056-HJ63mSO','Estensioni per i tricipiti sdraiato presa stretta con il bilanciere','barbell lying close-grip triceps extension','bilanciere','tricipiti'],
+['0057-EMpUwRI','Estensioni sdraiato con il bilanciere','barbell lying extension','bilanciere','tricipiti'],
+['0058-SNFfUff','Sdraiato lifting anca con il bilanciere','barbell lying lifting (on hip)','bilanciere','glutei'],
+['0059-SYJ4Bkt','Curl alla panca Scott sdraiato con il bilanciere','barbell lying preacher curl','bilanciere','bicipiti'],
+['0060-h8LFzo9','Estensioni per i tricipiti sdraiato skull crusher con il bilanciere','barbell lying triceps extension skull crusher','bilanciere','tricipiti'],
+['0061-iZop9xO','Estensioni per i tricipiti sdraiato con il bilanciere','barbell lying triceps extension','bilanciere','tricipiti'],
+['0063-elhhVgj','Squat presa stretta stance con il bilanciere','barbell narrow stance squat','bilanciere','glutei'],
+['0064-Jsgsc27','Rematore a un braccio busto piegato con il bilanciere','barbell one arm bent over row','bilanciere','dorso (alto)'],
+['0065-vtusOWT','Distensioni a terra a un braccio con il bilanciere','barbell one arm floor press','bilanciere','tricipiti'],
+['0066-2DxtqHL','Stacco da terra laterale a un braccio con il bilanciere','barbell one arm side deadlift','bilanciere','glutei'],
+['0067-xHKN2s8','Snatch a un braccio con il bilanciere','barbell one arm snatch','bilanciere','spalle'],
+['0068-uKyN64F','Squat a una gamba con il bilanciere','barbell one leg squat','bilanciere','quadricipiti'],
+['0069-gfk9kD4','Squat sopra la testa con il bilanciere','barbell overhead squat','bilanciere','quadricipiti'],
+['0070-qOgPVf6','Curl alla panca Scott con il bilanciere','barbell preacher curl','bilanciere','bicipiti'],
+['0071-wnEscH8','Sit-up press con il bilanciere','barbell press sit-up','bilanciere','addome'],
+['0072-WLvTAv5','Curl a pancia in giù su panca inclinata con il bilanciere','barbell prone incline curl','bilanciere','bicipiti'],
+['0073-i6LWjok','Pullover con il bilanciere','barbell pullover','bilanciere','dorso (gran dorsale)'],
+['0074-za9Ni4z','Rack pull con il bilanciere','barbell rack pull','bilanciere','glutei'],
+['0075-Ln9iTbU','Alzate posteriori con il bilanciere','barbell rear delt raise','bilanciere','spalle'],
+['0076-S9zHIvU','Rematore per il deltoide posteriore con il bilanciere','barbell rear delt row','bilanciere','spalle'],
+['0077-62Nw60O','Affondo posteriore con il bilanciere','barbell rear lunge v. 2','bilanciere','glutei'],
+['0078-VaP75jl','Affondo posteriore con il bilanciere','barbell rear lunge','bilanciere','glutei'],
+['0079-qDnGfDb','Curl per i polsi revers con il bilanciere','barbell revers wrist curl v. 2','bilanciere','avambracci'],
+['0080-xNrS20v','Curl inverso con il bilanciere','barbell reverse curl','bilanciere','bicipiti'],
+['0081-4LIG9xr','Curl alla panca Scott inverso con il bilanciere','barbell reverse preacher curl','bilanciere','bicipiti'],
+['0082-LsZkfU6','Curl per i polsi inverso con il bilanciere','barbell reverse wrist curl','bilanciere','avambracci'],
+['0083-Gxg9lDc','Rollerout from su panca con il bilanciere','barbell rollerout from bench','bilanciere','addome'],
+['0084-7M66AVi','Rollerout con il bilanciere','barbell rollerout','bilanciere','addome'],
+['0085-wQ2c4XD','Stacco rumeno con il bilanciere','barbell romanian deadlift','bilanciere','glutei'],
+['0086-ngPpyRS','Distensioni da seduto dietro head military con il bilanciere','barbell seated behind head military press','bilanciere','spalle'],
+['0087-0dCyly0','Distensioni da seduto bradford rocky con il bilanciere','barbell seated bradford rocky press','bilanciere','spalle'],
+['0088-ktsFQAZ','Calf raise da seduto con il bilanciere','barbell seated calf raise','bilanciere','polpacci'],
+['0089-1V1gj1u','Curl concentrato da seduto presa stretta con il bilanciere','barbell seated close-grip concentration curl','bilanciere','bicipiti'],
+['0090-d960PgE','Good morning da seduto con il bilanciere','barbell seated good morning','bilanciere','glutei'],
+['0091-kTbSH9h','Distensioni sopra la testa da seduto con il bilanciere','barbell seated overhead press','bilanciere','spalle'],
+['0092-5uFK1xr','Estensioni per i tricipiti da seduto sopra la testa con il bilanciere','barbell seated overhead triceps extension','bilanciere','tricipiti'],
+['0094-dFSNDOA','Torsione da seduto con il bilanciere','barbell seated twist','bilanciere','addome'],
+['0095-dG7tG5y','Scrollate con il bilanciere','barbell shrug','bilanciere','trapezi'],
+['0096-i4JkUaL','Laterale piegato con il bilanciere','barbell side bent v. 2','bilanciere','addome'],
+['0097-HUEqZ1y','Split squat laterale con il bilanciere','barbell side split squat v. 2','bilanciere','quadricipiti'],
+['0098-W31mMjd','Split squat laterale con il bilanciere','barbell side split squat','bilanciere','quadricipiti'],
+['0099-gGNQmVt','Split squat a una gamba con il bilanciere','barbell single leg split squat','bilanciere','quadricipiti'],
+['0100-4Leypho','Skier con il bilanciere','barbell skier','bilanciere','spalle'],
+['0101-euI1BwR','Squat speed con il bilanciere','barbell speed squat','bilanciere','glutei'],
+['0102-oR7O9LW','Squat ginocchia con il bilanciere','barbell squat (on knees)','bilanciere','quadricipiti'],
+['0103-xnInPfE','In piedi ab rollerout con il bilanciere','barbell standing ab rollerout','bilanciere','addome'],
+['0104-2qTvJAZ','Curl per i polsi in piedi schiena con il bilanciere','barbell standing back wrist curl','bilanciere','avambracci'],
+['0105-dCPESfR','Distensioni in piedi bradford con il bilanciere','barbell standing bradford press','bilanciere','spalle'],
+['0106-4dUn2iv','Curl in piedi presa stretta con il bilanciere','barbell standing close grip curl','bilanciere','bicipiti'],
+['0107-S8mo30S','Alzate frontali in piedi over head con il bilanciere','barbell standing front raise over head','bilanciere','spalle'],
+['0108-rGwhJ5o','Calf raise in piedi gamba con il bilanciere','barbell standing leg calf raise','bilanciere','polpacci'],
+['0109-dZl9Q27','Estensioni per i tricipiti in piedi sopra la testa con il bilanciere','barbell standing overhead triceps extension','bilanciere','tricipiti'],
+['0110-LWuA3aZ','Curl in piedi presa inversa con il bilanciere','barbell standing reverse grip curl','bilanciere','bicipiti'],
+['0111-6HiHHe0','Calf raise in piedi rocking gamba con il bilanciere','barbell standing rocking leg calf raise','bilanciere','polpacci'],
+['0112-yQe5HpE','Torsione in piedi con il bilanciere','barbell standing twist','bilanciere','addome'],
+['0113-NdIb5Z1','Curl in piedi presa larga con il bilanciere','barbell standing wide-grip curl','bilanciere','bicipiti'],
+['0114-Kxquu2E','Step-up con il bilanciere','barbell step-up','bilanciere','glutei'],
+['0115-JrOHAZc','Good morning stiff gamba con il bilanciere','barbell stiff leg good morning','bilanciere','glutei'],
+['0116-hrVQWvE','Stacco da terra a gambe tese gamba con il bilanciere','barbell straight leg deadlift','bilanciere','femorali'],
+['0117-KgI0tqW','Stacco da terra sumo con il bilanciere','barbell sumo deadlift','bilanciere','glutei'],
+['0118-SzX3uzM','Rematore presa inversa busto piegato con il bilanciere','barbell reverse grip bent over row','bilanciere','dorso (alto)'],
+['0119-83HoW9X','Tirate al mento con il bilanciere','barbell upright row v. 2','bilanciere','spalle'],
+['0120-UDlhcO8','Tirate al mento con il bilanciere','barbell upright row','bilanciere','spalle'],
+['0121-fI18Rbc','Tirate al mento con il bilanciere','barbell upright row v. 3','bilanciere','spalle'],
+['0122-JsKq9so','Distensioni su panca presa larga con il bilanciere','barbell wide bench press','bilanciere','petto'],
+['0123-RgJDRR1','Tirate al mento presa larga con il bilanciere','barbell wide-grip upright row','bilanciere','spalle'],
+['0124-s7HX1BY','Squat presa larga con il bilanciere','barbell wide squat','bilanciere','quadricipiti'],
+['0125-6kSxYnw','Curl per i polsi con il bilanciere','barbell wrist curl v. 2','bilanciere','avambracci'],
+['0126-82LxxkW','Curl per i polsi con il bilanciere','barbell wrist curl','bilanciere','avambracci'],
+['0127-LSTChY9','Squat zercher con il bilanciere','barbell zercher squat','bilanciere','glutei'],
+['0128-RJa4tCo','Battling ropes','battling ropes','corda','spalle'],
+['0129-RrLske5','Dip alle parallele su panca ginocchia piegato','bench dip (knees bent)','corpo libero','tricipiti'],
+['0130-u27Kcdz','Estensioni su panca anca','bench hip extension','corpo libero','glutei'],
+['0137-U6G2gk9','Body-up','body-up','corpo libero','tricipiti'],
+['0138-CI6baTY','Bottoms-up','bottoms-up','corpo libero','addome'],
+['0139-50BETrz','Bicipiti presa stretta pull-ups','biceps narrow pull-ups','corpo libero','bicipiti'],
+['0140-guT8YnS','Trazioni bicipiti','biceps pull-up','corpo libero','bicipiti'],
+['0148-KHPZL0b','Distensioni sopra la testa alternato ai cavi','cable alternate shoulder press','cavi','spalle'],
+['0149-Gchi5Tr','Estensioni per i tricipiti alternato ai cavi','cable alternate triceps extension','cavi','tricipiti'],
+['0150-eYnzaCm','Lat machine barra laterale ai cavi','cable bar lateral pulldown','cavi','dorso (gran dorsale)'],
+['0151-7xI5MXA','Distensioni su panca ai cavi','cable bench press','cavi','petto'],
+['0152-Db7eEgw','Estensioni concentration ginocchio ai cavi','cable concentration extension (on knee)','cavi','tricipiti'],
+['0153-OQ1otBN','Lat machine cross-over laterale ai cavi','cable cross-over lateral pulldown','cavi','dorso (gran dorsale)'],
+['0154-aqvSOQE','Croci cross-over revers ai cavi','cable cross-over revers fly','cavi','spalle'],
+['0155-0CXGHya','Cross-over variation ai cavi','cable cross-over variation','cavi','petto'],
+['0157-eGDudUV','Stacco da terra ai cavi','cable deadlift','cavi','glutei'],
+['0158-7saC5zz','Croci su panca declinata ai cavi','cable decline fly','cavi','petto'],
+['0159-kesXOpB','Rematore su panca declinata da seduto presa larga ai cavi','cable decline seated wide-grip row','cavi','dorso (alto)'],
+['0160-veXwo0D','Rematore a terra da seduto presa larga ai cavi','cable floor seated wide-grip row','cavi','dorso (alto)'],
+['0161-hvHhCv8','Sollevamento forward ai cavi','cable forward raise','cavi','spalle'],
+['0162-u2X71Np','Alzate frontali ai cavi','cable front raise','cavi','spalle'],
+['0164-mTT3KLn','Sollevamento frontale spalla ai cavi','cable front shoulder raise','cavi','spalle'],
+['0165-HPlPoQA','Hammer curl con la corda ai cavi','cable hammer curl (with rope)','cavi','bicipiti'],
+['0167-ZSJNetl','Rematore alto in ginocchio ai cavi','cable high row (kneeling)','cavi','dorso (alto)'],
+['0168-hBGWILP','Anca adduction ai cavi','cable hip adduction','cavi','adduttori'],
+['0169-Vh0GsK4','Distensioni su panca su panca inclinata ai cavi','cable incline bench press','cavi','petto'],
+['0170-27NNGFr','Croci su panca inclinata con la fitball palla ai cavi','cable incline fly (on stability ball)','cavi','petto'],
+['0171-tBWXbIT','Croci su panca inclinata ai cavi','cable incline fly','cavi','petto'],
+['0172-1PK5Uo3','Pushdown su panca inclinata ai cavi','cable incline pushdown','cavi','dorso (gran dorsale)'],
+['0173-Hx1WC8I','Estensioni per i tricipiti su panca inclinata ai cavi','cable incline triceps extension','cavi','tricipiti'],
+['0174-MvQPqVW','Judo flip ai cavi','cable judo flip','cavi','addome'],
+['0175-WW95auq','Crunch in ginocchio ai cavi','cable kneeling crunch','cavi','addome'],
+['0176-KWdF2JI','Estensioni per i tricipiti in ginocchio ai cavi','cable kneeling triceps extension','cavi','tricipiti'],
+['0177-CuaWCmC','Lat machine laterale con la corda ai cavi','cable lateral pulldown (with rope attachment)','cavi','dorso (gran dorsale)'],
+['0178-goJ6ezq','Alzate laterali ai cavi','cable lateral raise','cavi','spalle'],
+['0179-FVmZVhk','Croci basso ai cavi','cable low fly','cavi','petto'],
+['0180-hvV79Si','Rematore basso da seduto ai cavi','cable low seated row','cavi','dorso (alto)'],
+['0182-61GrD55','Curl sdraiato presa stretta ai cavi','cable lying close-grip curl','cavi','bicipiti'],
+['0184-Q2Eu1Ax','Pullover sdraiato extension con la corda ai cavi','cable lying extension pullover (with rope attachment)','cavi','dorso (gran dorsale)'],
+['0185-lJJ7Yq8','Croci sdraiato ai cavi','cable lying fly','cavi','petto'],
+['0186-uxJcFUU','Estensioni per i tricipiti sdraiato ai cavi','cable lying triceps extension v. 2','cavi','tricipiti'],
+['0188-xLYSdtg','Croci middle ai cavi','cable middle fly','cavi','petto'],
+['0189-EIsE3u8','Rematore a un braccio busto piegato ai cavi','cable one arm bent over row','cavi','dorso (alto)'],
+['0190-YTur5nR','Curl a un braccio ai cavi','cable one arm curl','cavi','bicipiti'],
+['0191-dB07vDu','Laterale a un braccio busto piegato ai cavi','cable one arm lateral bent-over','cavi','petto'],
+['0192-wEulIzp','Alzate laterali a un braccio ai cavi','cable one arm lateral raise','cavi','spalle'],
+['0193-WrYPP2g','Rematore a gambe tese schiena alto in ginocchio a un braccio ai cavi','cable one arm straight back high row (kneeling)','cavi','dorso (alto)'],
+['0194-2IxROQ1','Estensioni per i tricipiti sopra la testa con la corda ai cavi','cable overhead triceps extension (rope attachment)','cavi','tricipiti'],
+['0195-P2lNrGL','Curl alla panca Scott ai cavi','cable preacher curl','cavi','bicipiti'],
+['0196-OM46QHm','Pull through con la corda ai cavi','cable pull through (with rope)','cavi','glutei'],
+['0197-qdRxqCj','Lat machine pro lat barra ai cavi','cable pulldown (pro lat bar)','cavi','dorso (gran dorsale)'],
+['0198-RVwzP10','Lat machine ai cavi','cable pulldown','cavi','dorso (gran dorsale)'],
+['0199-PskORrA','Pushdown a gambe tese braccio ai cavi','cable pushdown (straight arm) v. 2','cavi','dorso (gran dorsale)'],
+['0200-dU605di','Pushdown con la corda ai cavi','cable pushdown (with rope attachment)','cavi','tricipiti'],
+['0201-3ZflifB','Pushdown ai cavi','cable pushdown','cavi','tricipiti'],
+['0202-yUdIGNs','Rematore per il deltoide posteriore stirrups ai cavi','cable rear delt row (stirrups)','cavi','spalle'],
+['0203-wqNPGCg','Rematore per il deltoide posteriore con la corda ai cavi','cable rear delt row (with rope)','cavi','spalle'],
+['0204-c3QQLPi','Posteriore drive ai cavi','cable rear drive','cavi','tricipiti'],
+['0205-SpsOSXk','Lat machine posteriore ai cavi','cable rear pulldown','cavi','dorso (gran dorsale)'],
+['0206-eOG0r6v','Curl inverso ai cavi','cable reverse curl','cavi','bicipiti'],
+['0207-VjYliFZ','Pushdown reverse-grip ai cavi','cable reverse-grip pushdown','cavi','tricipiti'],
+['0208-PNtsX17','Rematore reverse-grip a gambe tese schiena da seduto alto ai cavi','cable reverse-grip straight back seated high row','cavi','dorso (alto)'],
+['0209-IwX5NqK','Curl alla panca Scott inverso ai cavi','cable reverse preacher curl','cavi','bicipiti'],
+['0210-eYmsEPR','Curl per i polsi inverso ai cavi','cable reverse wrist curl','cavi','avambracci'],
+['0211-d9Xaxq6','Russian twists con la fitball palla ai cavi','cable russian twists (on stability ball)','cavi','addome'],
+['0212-8xUv4J7','Crunch da seduto ai cavi','cable seated crunch','cavi','addome'],
+['0213-pwt0pnM','Rematore da seduto alto con il triangolo ai cavi','cable seated high row (v-bar)','cavi','dorso (gran dorsale)'],
+['0214-vpp9Ku2','Rematore da seduto alternato a un braccio ai cavi','cable seated one arm alternate row','cavi','dorso (alto)'],
+['0215-x825CZm','Alzate laterali da seduto posteriore ai cavi','cable seated rear lateral raise','cavi','spalle'],
+['0216-YPoVrBi','Da seduto spalla internal rotation ai cavi','cable seated shoulder internal rotation','cavi','spalle'],
+['0218-qcY50ZD','Rematore da seduto presa larga ai cavi','cable seated wide-grip row','cavi','dorso (alto)'],
+['0219-PzQanLE','Distensioni sopra la testa ai cavi','cable shoulder press','cavi','spalle'],
+['0220-Eg98Ft9','Scrollate ai cavi','cable shrug','cavi','trapezi'],
+['0221-qatbkEd','Crunch laterale bend bosu palla ai cavi','cable side bend crunch (bosu ball)','cavi','addome'],
+['0222-wPypxFY','Flessioni laterali ai cavi','cable side bend','cavi','addome'],
+['0223-q2ADGqV','Crunch laterale ai cavi','cable side crunch','cavi','addome'],
+['0224-VhX2JdE','Curl per i polsi in piedi schiena ai cavi','cable standing back wrist curl','cavi','avambracci'],
+['0225-P5p0j8B','Croci in piedi cross-over alto inverso ai cavi','cable standing cross-over high reverse fly','cavi','spalle'],
+['0226-jpgqxiS','Crunch in piedi ai cavi','cable standing crunch','cavi','addome'],
+['0227-Pr9Rhf4','Croci in piedi ai cavi','cable standing fly','cavi','petto'],
+['0228-Kpajagk','Estensioni in piedi anca ai cavi','cable standing hip extension','cavi','glutei'],
+['0229-YwnI4ja','Curl in piedi inner ai cavi','cable standing inner curl','cavi','bicipiti'],
+['0230-qFpAkpP','In piedi lift ai cavi','cable standing lift','cavi','addome'],
+['0231-sYCcnon','Estensioni per i tricipiti in piedi a un braccio ai cavi','cable standing one arm triceps extension','cavi','tricipiti'],
+['0232-CvPn9WV','Lat machine in piedi con la corda ai cavi','cable standing pulldown (with rope)','cavi','bicipiti'],
+['0233-ZfyAGhK','Rematore per il deltoide posteriore in piedi con la corda ai cavi','cable standing rear delt row (with rope)','cavi','spalle'],
+['0234-4f8RXP8','Rematore in piedi con il triangolo ai cavi','cable standing row (v-bar)','cavi','dorso (alto)'],
+['0235-FWdVhcW','In piedi spalla external rotation ai cavi','cable standing shoulder external rotation','cavi','spalle'],
+['0236-JOZhu2h','Rematore in piedi twist con il triangolo ai cavi','cable standing twist row (v-bar)','cavi','dorso (alto)'],
+['0237-DT14T9T','Lat machine a gambe tese braccio con la corda ai cavi','cable straight arm pulldown (with rope)','cavi','dorso (gran dorsale)'],
+['0238-x69MAlq','Lat machine a gambe tese braccio ai cavi','cable straight arm pulldown','cavi','dorso (gran dorsale)'],
+['0239-Tq6gbK6','Rematore a gambe tese schiena da seduto ai cavi','cable straight back seated row','cavi','dorso (alto)'],
+['0240-PQcUlDi','Croci supino inverso ai cavi','cable supine reverse fly','cavi','spalle'],
+['0241-gAwDzB3','Pushdown tricipiti con il triangolo ai cavi','cable triceps pushdown (v-bar)','cavi','tricipiti'],
+['0242-TXtXc84','Crunch tuck inverso ai cavi','cable tuck reverse crunch','cavi','addome'],
+['0243-aVs3BR3','Torsione ai cavi','cable twist','cavi','addome'],
+['0244-zCgxPbV','Con torsione pull ai cavi','cable twisting pull','cavi','dorso (gran dorsale)'],
+['0245-xBYcQHj','Lat machine underhand ai cavi','cable underhand pulldown','cavi','dorso (gran dorsale)'],
+['0246-cALKspW','Tirate al mento ai cavi','cable upright row','cavi','spalle'],
+['0247-LrV4s90','Curl per i polsi ai cavi','cable wrist curl','cavi','avambracci'],
+['0248-R5swFnc','Rematore cambered barra sdraiato','cambered bar lying row','bilanciere','dorso (alto)'],
+['0251-9WTm7dq','Dip alle parallele petto','chest dip','corpo libero','petto'],
+['0253-G70mEAJ','Chin-ups presa stretta presa neutra','chin-ups (narrow parallel grip)','corpo libero','dorso (alto)'],
+['0257-X7jbxra','Allungamento circles ginocchio','circles knee stretch','corpo libero','polpacci'],
+['0258-CMAxnsG','Piegamenti clock','clock push-up','corpo libero','petto'],
+['0259-x6KpKpq','Piegamenti presa stretta','close-grip push-up','corpo libero','tricipiti'],
+['0260-SLKj2pX','Cocoons','cocoons','corpo libero','addome'],
+['0262-rbu5UUb','Crunch cross body','cross body crunch','corpo libero','addome'],
+['0267-kjJ3VoQ','Crunch mani sopra la testa','crunch (hands overhead)','corpo libero','addome'],
+['0271-MCUhf1F','Crunch con la fitball palla','crunch (on stability ball)','fitball','addome'],
+['0272-Sn8wxAI','Crunch con la fitball ball, braccia a gambe tese','crunch (on stability ball, arms straight)','fitball','addome'],
+['0274-TFqbd8t','Crunch a terra','crunch floor','corpo libero','addome'],
+['0276-iny3m5y','Dead bug','dead bug','corpo libero','addome'],
+['0277-9Ap7miY','Crunch su panca declinata','decline crunch','corpo libero','addome'],
+['0279-i5cEhka','Piegamenti su panca declinata','decline push-up','corpo libero','petto'],
+['0282-QLL2gdc','Sit-up su panca declinata','decline sit-up','corpo libero','addome'],
+['0283-soIB2rj','Piegamenti diamond','diamond push-up','corpo libero','tricipiti'],
+['0284-u5ESqzH','Calf raise donkey','donkey calf raise','corpo libero','polpacci'],
+['0285-BU15nH4','Curl alternato bicipiti con i manubri','dumbbell alternate biceps curl','manubri','bicipiti'],
+['0286-izMnLqz','Distensioni alternato laterale con i manubri','dumbbell alternate side press','manubri','spalle'],
+['0287-eOrFCnx','Distensioni arnold con i manubri','dumbbell arnold press v. 2','manubri','spalle'],
+['0288-vi8EhoE','Pullover around con i manubri','dumbbell around pullover','manubri','petto'],
+['0289-SpYC0Kp','Distensioni su panca con i manubri','dumbbell bench press','manubri','petto'],
+['0290-3d7wHyd','Distensioni su panca da seduto con i manubri','dumbbell bench seated press','manubri','spalle'],
+['0291-mnzcrIB','Squat su panca con i manubri','dumbbell bench squat','manubri','glutei'],
+['0292-C0MA9bC','Rematore a un braccio busto piegato con i manubri','dumbbell one arm bent-over row','manubri','dorso (alto)'],
+['0293-BJ0Hz5L','Rematore busto piegato con i manubri','dumbbell bent over row','manubri','dorso (alto)'],
+['0294-NbVPDMW','Curl bicipiti con i manubri','dumbbell biceps curl','manubri','bicipiti'],
+['0295-7Hg55JG','Clean con i manubri','dumbbell clean','manubri','glutei'],
+['0296-RxayqAZ','Distensioni presa stretta con i manubri','dumbbell close-grip press','manubri','tricipiti'],
+['0297-gvsWLQw','Curl concentrato con i manubri','dumbbell concentration curl','manubri','bicipiti'],
+['0298-Qyk5J3p','Hammer curl cross body con i manubri','dumbbell cross body hammer curl','manubri','bicipiti'],
+['0299-QfAKy1G','Distensioni cuban con i manubri','dumbbell cuban press','manubri','spalle'],
+['0300-nUwVh7b','Stacco da terra con i manubri','dumbbell deadlift','manubri','glutei'],
+['0301-DwhEmmE','Distensioni su panca su panca declinata con i manubri','dumbbell decline bench press','manubri','petto'],
+['0302-xXm4nYq','Croci su panca declinata con i manubri','dumbbell decline fly','manubri','petto'],
+['0303-1qrWgZ2','Distensioni su panca declinata hammer con i manubri','dumbbell decline hammer press','manubri','petto'],
+['0304-bRlbdjK','Scrollate su panca declinata con i manubri','dumbbell decline shrug v. 2','manubri','trapezi'],
+['0305-cwsAI4G','Scrollate su panca declinata con i manubri','dumbbell decline shrug','manubri','trapezi'],
+['0306-OTgkHwR','Estensioni per i tricipiti su panca declinata con i manubri','dumbbell decline triceps extension','manubri','tricipiti'],
+['0307-reFHapa','Croci su panca declinata twist con i manubri','dumbbell decline twist fly','manubri','petto'],
+['0308-yz9nUhF','Croci con i manubri','dumbbell fly','manubri','petto'],
+['0309-Rr7S3yg','Alzate frontali con i manubri','dumbbell front raise v. 2','manubri','spalle'],
+['0310-3eGE2JC','Alzate frontali con i manubri','dumbbell front raise','manubri','spalle'],
+['0311-AQ0mC4Y','Alzate laterali completo can con i manubri','dumbbell full can lateral raise','manubri','spalle'],
+['0312-2NpxjC1','Hammer curl con i manubri','dumbbell hammer curl v. 2','manubri','bicipiti'],
+['0313-slDvUAU','Hammer curl con i manubri','dumbbell hammer curl','manubri','bicipiti'],
+['0314-ns0SIbU','Distensioni su panca su panca inclinata con i manubri','dumbbell incline bench press','manubri','petto'],
+['0315-F3xgbjF','Curl su panca inclinata bicipiti con i manubri','dumbbell incline biceps curl','manubri','bicipiti'],
+['0316-B3Rxp6L','Su panca inclinata breeding con i manubri','dumbbell incline breeding','manubri','petto'],
+['0317-RaflbWD','Curl su panca inclinata con i manubri','dumbbell incline curl v. 2','manubri','bicipiti'],
+['0318-ae9UoXQ','Curl su panca inclinata con i manubri','dumbbell incline curl','manubri','bicipiti'],
+['0319-ESOd5Pl','Croci su panca inclinata con i manubri','dumbbell incline fly','manubri','petto'],
+['0320-ByX0WxV','Hammer curl su panca inclinata con i manubri','dumbbell incline hammer curl','manubri','bicipiti'],
+['0321-PG1kcIb','Distensioni su panca inclinata hammer con i manubri','dumbbell incline hammer press','manubri','petto'],
+['0322-LCtQPn8','Curl su panca inclinata inner bicipiti con i manubri','dumbbell incline inner biceps curl','manubri','bicipiti'],
+['0323-aTNKZiC','Alzate laterali su panca inclinata a un braccio con i manubri','dumbbell incline one arm lateral raise','manubri','spalle'],
+['0324-OVLmUuL','Distensioni su panca inclinata palm-in con i manubri','dumbbell incline palm-in press','manubri','petto'],
+['0325-nxW6BkN','Sollevamento su panca inclinata con i manubri','dumbbell incline raise','manubri','spalle'],
+['0326-vYk8lqw','Alzate laterali su panca inclinata posteriore con i manubri','dumbbell incline rear lateral raise','manubri','spalle'],
+['0327-7vG5o25','Rematore su panca inclinata con i manubri','dumbbell incline row','manubri','dorso (alto)'],
+['0328-6e2DcYX','Sollevamento su panca inclinata spalla con i manubri','dumbbell incline shoulder raise','manubri','dentato anteriore'],
+['0329-JymLInS','Scrollate su panca inclinata con i manubri','dumbbell incline shrug','manubri','trapezi'],
+['0330-OVIKwsd','Estensioni per i tricipiti su panca inclinata con i manubri','dumbbell incline triceps extension','manubri','tricipiti'],
+['0331-1PLE8e9','Su panca inclinata twisted flyes con i manubri','dumbbell incline twisted flyes','manubri','petto'],
+['0332-cALkHHX','Iron cross con i manubri','dumbbell iron cross','manubri','spalle'],
+['0333-W6PxUkg','Kickback con i manubri','dumbbell kickback','manubri','tricipiti'],
+['0334-DsgkuIt','Alzate laterali con i manubri','dumbbell lateral raise','manubri','spalle'],
+['0335-xMjBKwn','Alzate frontali laterale con i manubri','dumbbell lateral to front raise','manubri','spalle'],
+['0336-RRWFUcw','Affondo con i manubri','dumbbell lunge','manubri','glutei'],
+['0337-L2V5Nan','Estensioni sdraiato across face con i manubri','dumbbell lying extension (across face)','manubri','tricipiti'],
+['0338-eOCOwIR','Distensioni sdraiato elbow con i manubri','dumbbell lying elbow press','manubri','tricipiti'],
+['0339-FkBIE6a','Sdraiato femoral con i manubri','dumbbell lying femoral','manubri','femorali'],
+['0340-7gdLIXa','Distensioni sdraiato hammer con i manubri','dumbbell lying hammer press','manubri','petto'],
+['0341-gSw59a4','Sdraiato deltoid posteriore a un braccio con i manubri','dumbbell lying one arm deltoid rear','manubri','spalle'],
+['0342-K3dIO25','Distensioni sdraiato a un braccio con i manubri','dumbbell lying one arm press v. 2','manubri','petto'],
+['0343-zGSIWQi','Distensioni sdraiato a un braccio con i manubri','dumbbell lying one arm press','manubri','petto'],
+['0344-wyaqzOS','Estensioni per i tricipiti sdraiato pronated a un braccio con i manubri','dumbbell lying one arm pronated triceps extension','manubri','tricipiti'],
+['0345-KwFGiEP','Alzate laterali sdraiato posteriore a un braccio con i manubri','dumbbell lying one arm rear lateral raise','manubri','spalle'],
+['0346-zZlORz6','Estensioni per i tricipiti sdraiato supinated a un braccio con i manubri','dumbbell lying one arm supinated triceps extension','manubri','tricipiti'],
+['0347-mym4hJo','Sdraiato pronation con i manubri','dumbbell lying pronation','manubri','avambracci'],
+['0348-53Ttlck','Alzate laterali sdraiato posteriore con i manubri','dumbbell lying rear lateral raise','manubri','spalle'],
+['0349-M2Pm3zj','Sdraiato supination con i manubri','dumbbell lying supination','manubri','avambracci'],
+['0350-KUaZst7','Curl sdraiato supino con i manubri','dumbbell lying supine curl','manubri','bicipiti'],
+['0351-mpKZGWz','Estensioni per i tricipiti sdraiato con i manubri','dumbbell lying triceps extension','manubri','tricipiti'],
+['0352-pP8wP2P','Distensioni su panca presa neutra con i manubri','dumbbell neutral grip bench press','manubri','tricipiti'],
+['0353-k5IpyHg','Curl concentrato con la fitball palla a un braccio con i manubri','dumbbell one arm concentration curl (on stability ball)','manubri','bicipiti'],
+['0354-bQy2Eni','Kickback a un braccio con i manubri','dumbbell one arm kickback','manubri','tricipiti'],
+['0355-n5cWCsI','Alzate laterali a un braccio con i manubri','dumbbell one arm lateral raise','manubri','spalle'],
+['0356-Yg7MJAT','Alzate laterali support a un braccio con i manubri','dumbbell one arm lateral raise with support','manubri','spalle'],
+['0358-BwSNDGt','Curl per i polsi inverso a un braccio con i manubri','dumbbell one arm reverse wrist curl','manubri','avambracci'],
+['0359-e25F58f','Croci inverso support a un braccio con i manubri','dumbbell one arm reverse fly (with support)','manubri','spalle'],
+['0360-1TkiAFK','Distensioni sopra la testa a un braccio con i manubri','dumbbell one arm shoulder press v. 2','manubri','spalle'],
+['0361-84RyJf8','Distensioni sopra la testa a un braccio con i manubri','dumbbell one arm shoulder press','manubri','spalle'],
+['0362-nAuHPcD','Estensioni per i tricipiti su panca a un braccio con i manubri','dumbbell one arm triceps extension (on bench)','manubri','tricipiti'],
+['0363-6cKQC5E','Tirate al mento a un braccio con i manubri','dumbbell one arm upright row','manubri','spalle'],
+['0364-q8aHNoF','Curl per i polsi a un braccio con i manubri','dumbbell one arm wrist curl','manubri','avambracci'],
+['0365-BKa8dmT','Curl per i polsi over su panca neutral con i manubri','dumbbell over bench neutral wrist curl','manubri','bicipiti'],
+['0366-IvV6C9M','Curl per i polsi over su panca neutral a un braccio con i manubri','dumbbell over bench one arm neutral wrist curl','manubri','bicipiti'],
+['0367-KI1DjNN','Curl per i polsi over su panca a un braccio con i manubri','dumbbell over bench one arm wrist curl','manubri','avambracci'],
+['0368-3tAXPQ6','Curl per i polsi over su panca revers con i manubri','dumbbell over bench revers wrist curl','manubri','avambracci'],
+['0369-D1xYJAU','Curl per i polsi over su panca con i manubri','dumbbell over bench wrist curl','manubri','avambracci'],
+['0370-F1KxjBa','Hammer curl peacher con i manubri','dumbbell peacher hammer curl','manubri','bicipiti'],
+['0371-S4pwGlc','Squat plyo con i manubri','dumbbell plyo squat','manubri','glutei'],
+['0372-jivWf8n','Curl alla panca Scott con i manubri','dumbbell preacher curl','manubri','bicipiti'],
+['0373-bpJL2Qs','Estensioni per i tricipiti pronate-grip con i manubri','dumbbell pronate-grip triceps extension','manubri','tricipiti'],
+['0374-mwpPcr1','Curl a pancia in giù su panca inclinata con i manubri','dumbbell prone incline curl','manubri','bicipiti'],
+['0375-9XjtHvS','Pullover con i manubri','dumbbell pullover','manubri','petto'],
+['0376-c9MnDRp','Sollevamento con i manubri','dumbbell raise','manubri','spalle'],
+['0377-EKXOMEh','Deltoide posteriore row_shoulder con i manubri','dumbbell rear delt row_shoulder','manubri','spalle'],
+['0378-8DiFDVA','Croci posteriore con i manubri','dumbbell rear fly','manubri','spalle'],
+['0379-UzkLrem','Alzate laterali posteriore support head con i manubri','dumbbell rear lateral raise (support head)','manubri','spalle'],
+['0380-v1qBec9','Alzate laterali posteriore con i manubri','dumbbell rear lateral raise','manubri','spalle'],
+['0381-SSsBDwB','Affondo posteriore con i manubri','dumbbell rear lunge','manubri','glutei'],
+['0382-e4ojVhP','Curl revers grip bicipiti con i manubri','dumbbell revers grip biceps curl','manubri','bicipiti'],
+['0383-EAs3xL9','Croci inverso con i manubri','dumbbell reverse fly','manubri','spalle'],
+['0384-O8Aq69u','Curl alla panca Scott inverso con i manubri','dumbbell reverse preacher curl','manubri','bicipiti'],
+['0385-BLCvwr2','Curl per i polsi inverso con i manubri','dumbbell reverse wrist curl','manubri','avambracci'],
+['0386-prbWx1D','Croci rotation inverso con i manubri','dumbbell rotation reverse fly','manubri','spalle'],
+['0387-gH5fRsC','Alzate frontali da seduto alternato con i manubri','dumbbell seated alternate front raise','manubri','spalle'],
+['0388-QT5Q0nK','Distensioni da seduto alternato con i manubri','dumbbell seated alternate press','manubri','spalle'],
+['0389-JhYSVwT','Estensioni da seduto su panca con i manubri','dumbbell seated bench extension','manubri','tricipiti'],
+['0390-WgJnBH5','Curl da seduto bicipiti con la fitball palla con i manubri','dumbbell seated biceps curl (on stability ball)','manubri','bicipiti'],
+['0391-TiaZTxx','Curl da seduto con i manubri','dumbbell seated curl','manubri','bicipiti'],
+['0392-Ys97II0','Alzate frontali da seduto con i manubri','dumbbell seated front raise','manubri','spalle'],
+['0393-KXyoEtA','Curl da seduto inner bicipiti con i manubri','dumbbell seated inner biceps curl','manubri','bicipiti'],
+['0394-en550rk','Kickback da seduto con i manubri','dumbbell seated kickback','manubri','tricipiti'],
+['0395-hrrS0Ed','Alzate laterali da seduto con i manubri','dumbbell seated lateral raise v. 2','manubri','spalle'],
+['0396-hxyTtWj','Alzate laterali da seduto con i manubri','dumbbell seated lateral raise','manubri','spalle'],
+['0397-uJmK7Z1','Curl per i polsi da seduto neutral con i manubri','dumbbell seated neutral wrist curl','manubri','bicipiti'],
+['0398-VQ3sNCn','Kickback da seduto a un braccio con i manubri','dumbbell seated one arm kickback','manubri','tricipiti'],
+['0399-7f2jsqP','Da seduto rotate a un braccio con i manubri','dumbbell seated one arm rotate','manubri','avambracci'],
+['0400-Ia7tumC','Calf raise da seduto a una gamba con i manubri','dumbbell seated one leg calf raise','manubri','polpacci'],
+['0401-2dImyQ8','Curl per i polsi da seduto palms con i manubri','dumbbell seated palms up wrist curl','manubri','avambracci'],
+['0402-7D5bgLT','Curl alla panca Scott da seduto con i manubri','dumbbell seated preacher curl','manubri','bicipiti'],
+['0403-lyKCLmK','Curl concentrato da seduto revers grip con i manubri','dumbbell seated revers grip concentration curl','manubri','bicipiti'],
+['0404-f1jf47L','Distensioni sopra la testa da seduto presa neutra con i manubri','dumbbell seated shoulder press (parallel grip)','manubri','spalle'],
+['0405-znQUdHY','Distensioni sopra la testa da seduto con i manubri','dumbbell seated shoulder press','manubri','spalle'],
+['0406-NJzBsGJ','Scrollate con i manubri','dumbbell shrug','manubri','trapezi'],
+['0407-IpONWYv','Flessioni laterali con i manubri','dumbbell side bend','manubri','addome'],
+['0408-fTlkJop','Sollevamento laterale sdraiato a un hand con i manubri','dumbbell side lying one hand raise','manubri','spalle'],
+['0409-1kB3Wmk','Calf raise a una gamba con i manubri','dumbbell single leg calf raise','manubri','polpacci'],
+['0410-qx4fgX7','Split squat a una gamba con i manubri','dumbbell single leg split squat','manubri','quadricipiti'],
+['0411-H6ybluc','Squat a una gamba con i manubri','dumbbell single leg squat','manubri','glutei'],
+['0413-HsvHqgf','Squat con i manubri','dumbbell squat','manubri','glutei'],
+['0414-bBi35y3','Distensioni sopra la testa in piedi alternato con i manubri','dumbbell standing alternate overhead press','manubri','spalle'],
+['0415-SxHteRW','Sollevamento in piedi alternato con i manubri','dumbbell standing alternate raise','manubri','spalle'],
+['0416-3s4NnTh','Curl in piedi bicipiti con i manubri','dumbbell standing biceps curl','manubri','bicipiti'],
+['0417-dPmaUaU','Calf raise in piedi con i manubri','dumbbell standing calf raise','manubri','polpacci'],
+['0418-7inpWch','Curl concentrato in piedi con i manubri','dumbbell standing concentration curl','manubri','bicipiti'],
+['0419-laVRfDf','Alzate frontali in piedi above head con i manubri','dumbbell standing front raise above head','manubri','spalle'],
+['0420-UmpPAAe','Kickback in piedi con i manubri','dumbbell standing kickback','manubri','tricipiti'],
+['0421-8fgqP5a','Curl concentrato in piedi a un braccio con i manubri','dumbbell standing one arm concentration curl','manubri','bicipiti'],
+['0422-BIb1tGo','Curl in piedi over su panca inclinata su panca a un braccio con i manubri','dumbbell standing one arm curl (over incline bench)','manubri','bicipiti'],
+['0423-BCUR88E','Estensioni in piedi a un braccio con i manubri','dumbbell standing one arm extension','manubri','tricipiti'],
+['0424-ocYc6Db','Distensioni in piedi palm a un braccio con i manubri','dumbbell standing one arm palm in press','manubri','spalle'],
+['0425-DU5Kkj2','Curl inverso in piedi a un braccio con i manubri','dumbbell standing one arm reverse curl','manubri','bicipiti'],
+['0426-A6wtbuL','Distensioni sopra la testa in piedi con i manubri','dumbbell standing overhead press','manubri','spalle'],
+['0427-UilDHSs','Distensioni in piedi palms con i manubri','dumbbell standing palms in press','manubri','spalle'],
+['0428-hq2hyDH','Curl alla panca Scott in piedi con i manubri','dumbbell standing preacher curl','manubri','bicipiti'],
+['0429-0IgNjSM','Curl inverso in piedi con i manubri','dumbbell standing reverse curl','manubri','bicipiti'],
+['0430-PdmaD0N','Estensioni per i tricipiti in piedi con i manubri','dumbbell standing triceps extension','manubri','tricipiti'],
+['0431-aXtJhlg','Step-up con i manubri','dumbbell step-up','manubri','glutei'],
+['0432-5eLRITT','Stacco da terra stiff gamba con i manubri','dumbbell stiff leg deadlift','manubri','glutei'],
+['0433-i8BdLTK','Pullover a gambe tese braccio con i manubri','dumbbell straight arm pullover','manubri','petto'],
+['0434-oom75KC','Stacco da terra a gambe tese gamba con i manubri','dumbbell straight leg deadlift','manubri','glutei'],
+['0436-s5PdDyY','Distensioni tate con i manubri','dumbbell tate press','manubri','tricipiti'],
+['0437-ainizkb','Tirate al mento con i manubri','dumbbell upright row','manubri','spalle'],
+['0438-vmwLyCg','W-press con i manubri','dumbbell w-press','manubri','spalle'],
+['0439-kXaIn5A','Curl zottman con i manubri','dumbbell zottman curl','manubri','bicipiti'],
+['0443-jvp6DiD','Elbow-to-knee','elbow-to-knee','corpo libero','addome'],
+['0445-fprd84i','Distensioni anti gravity con il bilanciere EZ','ez barbell anti gravity press','bilanciere EZ','spalle'],
+['0446-V4ryaZa','Curl presa stretta con il bilanciere EZ','ez barbell close-grip curl','bilanciere EZ','bicipiti'],
+['0447-6TG6x2w','Curl con il bilanciere EZ','ez barbell curl','bilanciere EZ','bicipiti'],
+['0448-DgZQ11d','Distensioni su panca declinata face presa stretta con il bilanciere EZ','ez barbell decline close grip face press','bilanciere EZ','tricipiti'],
+['0449-KyLtiLT','Estensioni per i tricipiti su panca inclinata con il bilanciere EZ','ez barbell incline triceps extension','bilanciere EZ','tricipiti'],
+['0450-hnOYgH3','Distensioni su panca jm con il bilanciere EZ','ez barbell jm bench press','bilanciere EZ','tricipiti'],
+['0451-Y5X65IB','Curl presa inversa con il bilanciere EZ','ez barbell reverse grip curl','bilanciere EZ','bicipiti'],
+['0452-vBNyir7','Curl alla panca Scott presa inversa con il bilanciere EZ','ez barbell reverse grip preacher curl','bilanciere EZ','bicipiti'],
+['0453-iaapw0g','Estensioni per i tricipiti da seduto con il bilanciere EZ','ez barbell seated triceps extension','bilanciere EZ','tricipiti'],
+['0454-Ye5Qxb0','Curl spider con il bilanciere EZ','ez barbell spider curl','bilanciere EZ','bicipiti'],
+['0455-awG04cF','Finger curls','finger curls','bilanciere','avambracci'],
+['0456-AR0ig3o','Flexion gamba sit piegato ginocchio','flexion leg sit up (bent knee)','corpo libero','addome'],
+['0457-KZn52RC','Flexion gamba sit a gambe tese braccio','flexion leg sit up (straight arm)','corpo libero','addome'],
+['0458-neonEDL','Croci a terra con il bilanciere','floor fly (with barbell)','bilanciere','petto'],
+['0459-UVo2Qs2','Flutter kicks','flutter kicks','corpo libero','glutei'],
+['0464-CosupLu','Plank frontale twist','front plank with twist','corpo libero','addome'],
+['0466-IL0JUxR','Gironda sternum chin','gironda sternum chin','corpo libero','dorso (gran dorsale)'],
+['0467-bmwlYvD','Gorilla chin','gorilla chin','corpo libero','addome'],
+['0469-mWppALS','Crunch groin','groin crunch','corpo libero','addome'],
+['0471-rQxwMxO','Piegamenti handstand','handstand push-up','corpo libero','tricipiti'],
+['0472-I3tsCnC','Sollevamento gambe appeso','hanging leg raise','corpo libero','addome'],
+['0473-nuBF9MO','Appeso pike','hanging pike','corpo libero','addome'],
+['0474-pj0X0tF','Sollevamento appeso a gambe tese gamba anca','hanging straight leg hip raise','corpo libero','addome'],
+['0475-4Ml7QFO','Sollevamento gambe appeso a gambe tese','hanging straight leg raise','corpo libero','addome'],
+['0476-Q6bvyen','Sollevamento appeso a gambe tese con torsione gamba anca','hanging straight twisting leg hip raise','corpo libero','addome'],
+['0484-196HJGw','Sollevamento anca piegato ginocchio','hip raise (bent knee)','corpo libero','addome'],
+['0488-zkgRrbK','Hyperextension su panca','hyperextension (on bench)','corpo libero','schiena'],
+['0489-zhMwOwE','Hyperextension','hyperextension','corpo libero','schiena'],
+['0490-1YB40kg','Piegamenti su panca inclinata presa stretta','incline close-grip push-up','corpo libero','tricipiti'],
+['0491-eVxAzgz','Sollevamento su panca inclinata gamba anca a gambe tese','incline leg hip raise (leg straight)','corpo libero','addome'],
+['0492-CB8WET1','Piegamenti su panca inclinata depth con salto','incline push up depth jump','corpo libero','petto'],
+['0493-B1EVP9F','Piegamenti su panca inclinata','incline push-up','corpo libero','petto'],
+['0494-XaaRnRn','Piegamenti su panca inclinata presa inversa','incline reverse grip push-up','corpo libero','petto'],
+['0495-9ZGZuOD','Sit-up su panca inclinata con torsione','incline twisting sit-up','corpo libero','addome'],
+['0496-ms7tjSG','Leg curl inverse su panca support','inverse leg curl (bench support)','corpo libero','femorali'],
+['0497-uX3sUBz','Rematore inverted','inverted row v. 2','corpo libero','dorso (alto)'],
+['0498-jdiExfW','Rematore inverted straps','inverted row with straps','corpo libero','dorso (alto)'],
+['0499-bZGHsAZ','Rematore inverted','inverted row','corpo libero','dorso (alto)'],
+['0500-11wrviz','Isometric wipers','isometric wipers','corpo libero','petto'],
+['0501-mr7pkqP','Jack burpee','jack burpee','corpo libero','cardio'],
+['0507-mbkgB44','Sit-up jackknife','jackknife sit-up','corpo libero','addome'],
+['0508-1GPHRyK','Sit-up janda','janda sit-up','corpo libero','addome'],
+['0513-TDYiji6','Squat con salto','jump squat v. 2','corpo libero','glutei'],
+['0514-LIlE5Tn','Squat con salto','jump squat','corpo libero','glutei'],
+['0517-Kal9cQQ','Advanced windmill con il kettlebell','kettlebell advanced windmill','kettlebell','addome'],
+['0518-I4tibZG','Alternato hang clean con il kettlebell','kettlebell alternating hang clean','kettlebell','avambracci'],
+['0519-7w6i0vE','Distensioni alternato a terra con il kettlebell','kettlebell alternating press on floor','kettlebell','petto'],
+['0520-5KLbZWx','Distensioni alternato con il kettlebell','kettlebell alternating press','kettlebell','spalle'],
+['0521-b9kqlBy','Rematore alternato renegade con il kettlebell','kettlebell alternating renegade row','kettlebell','dorso (alto)'],
+['0522-Ca76jUE','Rematore alternato con il kettlebell','kettlebell alternating row','kettlebell','dorso (alto)'],
+['0523-UM8mgyG','Distensioni arnold con il kettlebell','kettlebell arnold press','kettlebell','spalle'],
+['0524-kjE55n5','Distensioni piegato con il kettlebell','kettlebell bent press','kettlebell','addome'],
+['0525-4KJEpzb','Bottoms clean from hang position con il kettlebell','kettlebell bottoms up clean from the hang position','kettlebell','bicipiti'],
+['0526-a4F9Oyc','Double alternato hang clean con il kettlebell','kettlebell double alternating hang clean','kettlebell','bicipiti'],
+['0527-tznL2Ad','Double jerk con il kettlebell','kettlebell double jerk','kettlebell','spalle'],
+['0528-I4KkPdl','Distensioni double push con il kettlebell','kettlebell double push press','kettlebell','spalle'],
+['0529-M74kdvm','Double snatch con il kettlebell','kettlebell double snatch','kettlebell','spalle'],
+['0530-OaE7CpD','Double windmill con il kettlebell','kettlebell double windmill','kettlebell','addome'],
+['0531-rseLfH3','Distensioni extended range a un braccio a terra con il kettlebell','kettlebell extended range one arm press on floor','kettlebell','petto'],
+['0532-L4ay0PW','Figure 8 con il kettlebell','kettlebell figure 8','kettlebell','addome'],
+['0533-DB0n8AG','Front squat con il kettlebell','kettlebell front squat','kettlebell','glutei'],
+['0534-ZA8b5hc','Squat goblet con il kettlebell','kettlebell goblet squat','kettlebell','glutei'],
+['0535-LHWF7us','Hang clean con il kettlebell','kettlebell hang clean','kettlebell','femorali'],
+['0536-WKMQzCD','Affondo pass through con il kettlebell','kettlebell lunge pass through','kettlebell','glutei'],
+['0537-vzAxBtt','Clean jerk a un braccio con il kettlebell','kettlebell one arm clean and jerk','kettlebell','spalle'],
+['0538-S37C94C','Jerk a un braccio con il kettlebell','kettlebell one arm jerk','kettlebell','spalle'],
+['0539-yCvYdi7','Distensioni military laterale a un braccio con il kettlebell','kettlebell one arm military press to the side','kettlebell','spalle'],
+['0540-osdXT3K','Distensioni push a un braccio con il kettlebell','kettlebell one arm push press','kettlebell','spalle'],
+['0541-g9AsZ8P','Rematore a un braccio con il kettlebell','kettlebell one arm row','kettlebell','dorso (alto)'],
+['0542-aXcUyKb','Snatch a un braccio con il kettlebell','kettlebell one arm snatch','kettlebell','spalle'],
+['0543-kuXhl0o','Pirate supper gambe con il kettlebell','kettlebell pirate supper legs','kettlebell','spalle'],
+['0544-5bpPTHv','Squat pistol con il kettlebell','kettlebell pistol squat','kettlebell','glutei'],
+['0545-ktf3nvW','Piegamenti plyo con il kettlebell','kettlebell plyo push-up','kettlebell','petto'],
+['0546-BkxB8LW','Distensioni da seduto con il kettlebell','kettlebell seated press','kettlebell','spalle'],
+['0547-UDm6cGl','Distensioni seesaw con il kettlebell','kettlebell seesaw press','kettlebell','spalle'],
+['0548-8ARQ9Hw','Sumo alto pull con il kettlebell','kettlebell sumo high pull','kettlebell','trapezi'],
+['0549-UHJlbu3','Swing con il kettlebell','kettlebell swing','kettlebell','glutei'],
+['0550-yWxMvB5','Thruster con il kettlebell','kettlebell thruster','kettlebell','spalle'],
+['0551-Ha7SZ3y','Squat turkish get style con il kettlebell','kettlebell turkish get up (squat style)','kettlebell','glutei'],
+['0552-7Ba7bQ2','Clean a due braccia con il kettlebell','kettlebell two arm clean','kettlebell','spalle'],
+['0553-blBXysN','Distensioni military a due braccia con il kettlebell','kettlebell two arm military press','kettlebell','spalle'],
+['0554-9Tkqa9O','Windmill con il kettlebell','kettlebell windmill','kettlebell','addome'],
+['0555-v7p5bYl','Kick out sit','kick out sit','corpo libero','femorali'],
+['0558-pM07UxU','Kipping muscle','kipping muscle up','corpo libero','dorso (gran dorsale)'],
+['0562-QYysSLV','Landmine 180','landmine 180','bilanciere','addome'],
+['0570-OyoZ3Pu','Gamba pull su panca piana su panca','leg pull in flat bench','corpo libero','addome'],
+['0571-w2oRpuH','Rematore alternato da seduto presa stretta a macchina','lever alternating narrow grip seated row','macchina','dorso (alto)'],
+['0572-MaMuGH6','Trazioni presa supina assistito a macchina','lever assisted chin-up','macchina','dorso (gran dorsale)'],
+['0573-rUXfn3R','Estensioni schiena a macchina','lever back extension','macchina','schiena'],
+['0574-X3cqyXz','Rematore busto piegato a macchina','lever bent over row','bilanciere','dorso (alto)'],
+['0575-q6y3OhV','Curl bicipiti a macchina','lever bicep curl','macchina','bicipiti'],
+['0576-DOoWcnA','Distensioni petto a macchina','lever chest press','macchina','petto'],
+['0577-T0yTjgW','Distensioni petto a macchina','lever chest press','macchina','petto'],
+['0578-GUT8I22','Stacco da terra a macchina','lever deadlift','macchina','glutei'],
+['0579-7F1DVzn','Lat machine frontale a macchina','lever front pulldown','macchina','dorso (gran dorsale)'],
+['0580-f91FwXG','Scrollate gripless a macchina','lever gripless shrug','macchina','trapezi'],
+['0581-nZZZy9m','Rematore alto a macchina','lever high row','macchina','dorso (alto)'],
+['0582-nnmCTLN','Leg curl in ginocchio a macchina','lever kneeling leg curl','macchina','femorali'],
+['0583-sZOR9EV','Torsione in ginocchio a macchina','lever kneeling twist','macchina','addome'],
+['0584-dRTfGZT','Alzate laterali a macchina','lever lateral raise','macchina','spalle'],
+['0585-my33uHU','Leg extension a macchina','lever leg extension','macchina','quadricipiti'],
+['0586-17lJ1kr','Leg curl sdraiato a macchina','lever lying leg curl','macchina','femorali'],
+['0587-CggQhII','Distensioni military a macchina','lever military press','macchina','spalle'],
+['0588-IGjKj1v','Rematore da seduto presa stretta a macchina','lever narrow grip seated row','macchina','dorso (alto)'],
+['0589-Fhdtwf3','Rematore a un braccio busto piegato a macchina','lever one arm bent over row','bilanciere','dorso (alto)'],
+['0590-2KGnL6M','Distensioni sopra la testa a un braccio a macchina','lever one arm shoulder press','macchina','spalle'],
+['0591-D5yqP2p','Dip alle parallele overhand tricipiti a macchina','lever overhand triceps dip','macchina','tricipiti'],
+['0592-b6hQYMb','Curl alla panca Scott a macchina','lever preacher curl','macchina','bicipiti'],
+['0593-Krmb3cB','Inverso hyperextension a macchina','lever reverse hyperextension','macchina','glutei'],
+['0594-bOOdeyc','Calf raise da seduto a macchina','lever seated calf raise','macchina','polpacci'],
+['0595-ZnJHhMk','Crunch da seduto petto pad a macchina','lever seated crunch (chest pad)','macchina','addome'],
+['0596-v3xmPAR','Croci da seduto a macchina','lever seated fly','macchina','petto'],
+['0597-CHpahtl','Da seduto anca abduction a macchina','lever seated hip abduction','macchina','abduttori'],
+['0598-oHsrypV','Da seduto anca adduction a macchina','lever seated hip adduction','macchina','adduttori'],
+['0599-Zg3XY7P','Leg curl da seduto a macchina','lever seated leg curl','macchina','femorali'],
+['0600-PQ2AtC3','Sollevamento gambe da seduto crunch a macchina','lever seated leg raise crunch','macchina','addome'],
+['0601-xiHiJcA','Croci da seduto inverso presa neutra a macchina','lever seated reverse fly (parallel grip)','macchina','spalle'],
+['0602-myfUsKf','Croci da seduto inverso a macchina','lever seated reverse fly','macchina','spalle'],
+['0603-67n3r98','Distensioni sopra la testa a macchina','lever shoulder press','macchina','spalle'],
+['0604-ZZKbeMw','Scrollate a macchina','lever shrug','macchina','trapezi'],
+['0605-ykUOVze','Calf raise in piedi a macchina','lever standing calf raise','macchina','polpacci'],
+['0606-aaXr7ld','Rematore a T a macchina','lever t bar row','macchina','dorso (alto)'],
+['0607-Ser9eQp','Estensioni per i tricipiti a macchina','lever triceps extension','macchina','tricipiti'],
+['0609-bLyQokI','Ponte london','london bridge','corda','dorso (alto)'],
+['0613-BWnJR72','Allungamento sdraiato laterale quads','lying (side) quads stretch','corpo libero','quadricipiti'],
+['0620-WhuFnR7','Sollevamento gambe sdraiato su panca piana su panca','lying leg raise flat bench','corpo libero','addome'],
+['0624-sVQCCeG','March sit al muro','march sit (wall)','corpo libero','glutei'],
+['0627-T8UpLkb','Trazioni presa supina mixed grip','mixed grip chin-up','corpo libero','dorso (gran dorsale)'],
+['0628-O95afRA','Camminata monster','monster walk','corpo libero','glutei'],
+['0630-RJgzwny','Mountain climber','mountain climber','corpo libero','cardio'],
+['0631-yJUHKTn','Muscle','muscle up','corpo libero','dorso (gran dorsale)'],
+['0634-szIn2UK','Crunch negative','negative crunch','corpo libero','addome'],
+['0635-QUDd8WS','Oblique crunches a terra','oblique crunches floor','corpo libero','addome'],
+['0636-o1ntciW','Hammer curl con il bilanciere con il bilanciere olimpico','olympic barbell hammer curl','bilanciere olimpico','bicipiti'],
+['0637-wu5LXwz','Estensioni per i tricipiti con il bilanciere con il bilanciere olimpico','olympic barbell triceps extension','bilanciere olimpico','tricipiti'],
+['0638-HjdqmZa','Trazioni presa supina a un braccio','one arm chin-up','corpo libero','dorso (gran dorsale)'],
+['0639-FAoIFMw','Dip alle parallele a un braccio','one arm dip','corpo libero','tricipiti'],
+['0640-jCrtE9b','Slam con la palla medica palla a un braccio','one arm slam (with medicine ball)','palla medica','addome'],
+['0641-UVL20oz','Otis','otis up','con sovraccarico','addome'],
+['0642-jNU1gFQ','Piegamenti outside gamba kick','outside leg kick push-up','corpo libero','glutei'],
+['0643-Z5YStHW','Allungamento sopra la testa tricipiti','overhead triceps stretch','corpo libero','tricipiti'],
+['0648-SiWCcTN','Power clean','power clean','bilanciere','femorali'],
+['0650-UQr48Oi','Pull-in con la fitball palla','pull-in (on stability ball)','fitball','addome'],
+['0651-0V2YQjW','Trazioni presa neutra','pull up (neutral grip)','corpo libero','dorso (gran dorsale)'],
+['0652-lBDjFxJ','Trazioni','pull-up','corpo libero','dorso (gran dorsale)'],
+['0653-2kr2lWy','Piegamenti bosu palla','push-up (bosu ball)','bosu','petto'],
+['0655-Y4BRNQF','Piegamenti con la fitball palla','push-up (on stability ball)','fitball','petto'],
+['0656-tgryw5Y','Piegamenti con la fitball palla','push-up (on stability ball)','fitball','petto'],
+['0658-NCmbLCw','Piegamenti al muro','push-up (wall) v. 2','corpo libero','petto'],
+['0659-LEH9jxP','Piegamenti al muro','push-up (wall)','corpo libero','petto'],
+['0660-KZXAtKQ','Piegamenti off con i manubri presa stretta','push-up close-grip off dumbbell','manubri','tricipiti'],
+['0661-0br45wL','Piegamenti inside gamba kick','push-up inside leg kick','corpo libero','glutei'],
+['0662-I4hDWkc','Piegamenti','push-up','corpo libero','petto'],
+['0663-W8KAlkI','Piegamenti con la palla medica palla','push-up medicine ball','palla medica','petto'],
+['0664-KhHJ338','Piegamenti laterale plank','push-up to side plank','corpo libero','addome'],
+['0666-13TpY4H','Piegamenti raise a un braccio','raise single arm push-up','corpo libero','petto'],
+['0668-UpAlold','Ponte posteriore su panca declinata','rear decline bridge','corpo libero','glutei'],
+['0669-xifhB5W','Allungamento posteriore deltoid','rear deltoid stretch','corpo libero','spalle'],
+['0670-CbFSYC1','Trazioni posteriore','rear pull-up','corpo libero','dorso (gran dorsale)'],
+['0672-NZ5Qqkz','Dip alle parallele inverso','reverse dip','corpo libero','tricipiti'],
+['0673-ecpY0rH','Lat machine a macchina lat presa inversa','reverse grip machine lat pulldown','macchina','dorso (gran dorsale)'],
+['0674-YAk5dIw','Trazioni presa inversa','reverse grip pull-up','corpo libero','dorso (gran dorsale)'],
+['0675-vM5YS2g','Estensioni inverso hyper con la fitball palla','reverse hyper extension (on stability ball)','fitball','glutei'],
+['0677-ezTvXcr','Ring dips','ring dips','corpo libero','tricipiti'],
+['0678-cQ19bBP','Trazioni rocky pulldown','rocky pull-up pulldown','corpo libero','dorso (gran dorsale)'],
+['0680-yaAxcQr','Corda climb','rope climb','corda','dorso (alto)'],
+['0684-y5p0H8a','Corsa equipment','run (equipment)','corpo libero','cardio'],
+['0685-oLrKqDH','Corsa','run','corpo libero','cardio'],
+['0687-XVDdcoj','Russian twist','russian twist','corpo libero','addome'],
+['0688-uTBt1HV','Trazioni scapular','scapular pull-up','corpo libero','trapezi'],
+['0689-Hgs6Nl1','Sollevamento gambe da seduto','seated leg raise','corpo libero','addome'],
+['0690-QFmz6ch','Allungamento da seduto lower schiena','seated lower back stretch','corpo libero','dorso (gran dorsale)'],
+['0691-Y9hNPcN','Crunch da seduto laterale al muro','seated side crunch (wall)','corpo libero','addome'],
+['0696-E4PwJqI','Leg curl self assistito inverse a terra','self assisted inverse leg curl (on floor)','corpo libero','femorali'],
+['0697-GwYwElT','Leg curl self assistito inverse','self assisted inverse leg curl','corpo libero','femorali'],
+['0699-qEse6fe','Piegamenti spalla tap','shoulder tap push-up','corpo libero','petto'],
+['0705-RKjH6Lt','Ponte laterale','side bridge v. 2','corpo libero','addome'],
+['0709-jTkSc6o','Laterale anca alle parallele','side hip (on parallel bars)','corpo libero','addome'],
+['0710-7WaDzyL','Laterale anca abduction','side hip abduction','corpo libero','abduttori'],
+['0716-oQRJYkC','Allungamento laterale push neck','side push neck stretch','corpo libero','collo'],
+['0717-wpbD28t','Piegamenti laterale','side push-up','corpo libero','tricipiti'],
+['0720-isAAZWA','Side-to-side chin','side-to-side chin','corpo libero','dorso (gran dorsale)'],
+['0721-UtmIqcI','Allungamento laterale wrist pull','side wrist pull stretch','corpo libero','avambracci'],
+['0725-MUic5zN','Piegamenti a un braccio','single arm push-up','corpo libero','petto'],
+['0727-fKZgDEO','Calf raise con i manubri a una gamba','single leg calf raise (on a dumbbell)','manubri','polpacci'],
+['0730-LNE3wfo','Platform slide a una gamba','single leg platform slide','corpo libero','femorali'],
+['0735-Bn6TXyO','Sit-up','sit-up v. 2','corpo libero','addome'],
+['0738-qCNVnaU','Distensioni 45в° polpaccio alla pressa','sled 45в° calf press','pressa a slitta','polpacci'],
+['0739-10Z2DXU','Leg press 45в° alla pressa','sled 45в° leg press','pressa a slitta','glutei'],
+['0740-tj41Nu6','Distensioni 45в° gamba presa larga alla pressa','sled 45в° leg wide press','pressa a slitta','glutei'],
+['0741-gf3ZjB9','Hack squat closer alla pressa','sled closer hack squat','pressa a slitta','glutei'],
+['0742-XDOiFns','Calf raise forward angled alla pressa','sled forward angled calf raise','pressa a slitta','polpacci'],
+['0743-Qa55kX1','Hack squat alla pressa','sled hack squat','pressa a slitta','glutei'],
+['0744-9n2149Z','Squat sdraiato alla pressa','sled lying squat','pressa a slitta','glutei'],
+['0746-MzNnwx9','Scrollate schiena al multipower','smith back shrug','multipower','trapezi'],
+['0747-Gpn4ADc','Distensioni dietro il collo al multipower','smith behind neck press','multipower','spalle'],
+['0748-trqKQv2','Distensioni su panca al multipower','smith bench press','multipower','petto'],
+['0749-1bQkKZK','Good morning piegato ginocchio al multipower','smith bent knee good morning','multipower','glutei'],
+['0750-Gu2rNJd','Squat chair al multipower','smith chair squat','multipower','quadricipiti'],
+['0751-WcHl7ru','Distensioni su panca presa stretta al multipower','smith close-grip bench press','multipower','tricipiti'],
+['0752-UfePqpx','Stacco da terra al multipower','smith deadlift','multipower','glutei'],
+['0753-ETZfAbZ','Distensioni su panca su panca declinata al multipower','smith decline bench press','multipower','petto'],
+['0754-MY9P1WA','Distensioni su panca declinata reverse-grip al multipower','smith decline reverse-grip press','multipower','petto'],
+['0755-ZuPXtCK','Hack squat al multipower','smith hack squat','multipower','glutei'],
+['0756-CqhoytW','Sollevamento anca al multipower','smith hip raise','multipower','addome'],
+['0757-5v7KYld','Distensioni su panca su panca inclinata al multipower','smith incline bench press','multipower','petto'],
+['0758-78VqWQK','Distensioni su panca inclinata reverse-grip al multipower','smith incline reverse-grip press','multipower','petto'],
+['0759-ayAHcEm','Su panca inclinata spalla raises al multipower','smith incline shoulder raises','multipower','dentato anteriore'],
+['0760-7zdxRTl','Leg press al multipower','smith leg press','multipower','glutei'],
+['0761-JGKowMS','Rematore presa stretta al multipower','smith narrow row','multipower','dorso (alto)'],
+['0762-nFUwqG6','Rematore per il deltoide posteriore al multipower','smith rear delt row','multipower','spalle'],
+['0763-ywaNfuh','Inverso polpaccio raises al multipower','smith reverse calf raises','multipower','polpacci'],
+['0764-zK8Fu1W','Distensioni reverse-grip al multipower','smith reverse-grip press','multipower','petto'],
+['0765-xUwnBMT','Distensioni sopra la testa da seduto al multipower','smith seated shoulder press','multipower','spalle'],
+['0766-903mzG8','Distensioni sopra la testa al multipower','smith shoulder press','multipower','spalle'],
+['0767-OUQ0ZyW','Scrollate al multipower','smith shrug','multipower','trapezi'],
+['0768-wWFspEi','Split squat a una gamba al multipower','smith single leg split squat','multipower','quadricipiti'],
+['0769-HsjbB1z','Affondo sprint al multipower','smith sprint lunge','multipower','glutei'],
+['0770-jFtipLl','Squat al multipower','smith squat','multipower','glutei'],
+['0771-hfmQ0Tz','Curl per i polsi in piedi schiena al multipower','smith standing back wrist curl','multipower','avambracci'],
+['0772-ht8xDrP','Distensioni in piedi dietro head military al multipower','smith standing behind head military press','multipower','spalle'],
+['0773-6MaEjVA','Calf raise in piedi gamba al multipower','smith standing leg calf raise','multipower','polpacci'],
+['0774-jjUPrze','Distensioni in piedi military al multipower','smith standing military press','multipower','spalle'],
+['0775-1DN3iz4','Tirate al mento al multipower','smith upright row','multipower','spalle'],
+['0776-dG5Smob','Snatch pull','snatch pull','bilanciere','quadricipiti'],
+['0777-p9cCe2r','Spell caster','spell caster','manubri','addome'],
+['0778-P9GFBME','Piegamenti spider crawl','spider crawl push up','corpo libero','glutei'],
+['0786-IMRsOCn','Squat jerk','squat jerk','bilanciere','quadricipiti'],
+['0788-xDh0lJr','Distensioni in piedi dietro il collo','standing behind neck press','bilanciere','spalle'],
+['0794-1jXLYEw','Allungamento in piedi laterale','standing lateral stretch','corpo libero','dorso (gran dorsale)'],
+['0795-C5jncD2','Curl in piedi a una gamba','standing single leg curl','corpo libero','femorali'],
+['0796-KtRomty','In piedi wheel rollerout','standing wheel rollerout','ruota addominale','addome'],
+['0798-a8VDgLw','Camminata stationary bike','stationary bike walk','macchina','cardio'],
+['0803-4GqRrAk','Piegamenti superman','superman push-up','corpo libero','petto'],
+['0805-X3TCNEU','Suspended abdominal fallout','suspended abdominal fallout','corpo libero','addome'],
+['0806-IaGQCrC','Piegamenti suspended','suspended push-up','corpo libero','petto'],
+['0807-R1WYG5D','Crunch suspended inverso','suspended reverse crunch','corpo libero','addome'],
+['0808-4OaumBr','Rematore suspended','suspended row','corpo libero','dorso (alto)'],
+['0809-QpXqiq8','Split squat suspended','suspended split squat','corpo libero','quadricipiti'],
+['0811-jQGwmxN','Stacco da terra barra con la trap bar','trap bar deadlift','trap bar','glutei'],
+['0812-VuoerH0','Dip alle parallele tricipiti su panca gamba','triceps dip (bench leg)','corpo libero','tricipiti'],
+['0813-Wgbn9qo','Dip alle parallele tricipiti between benches','triceps dip (between benches)','corpo libero','tricipiti'],
+['0814-X6C6i5Y','Dip alle parallele tricipiti','triceps dip','corpo libero','tricipiti'],
+['0815-7aVz15j','Tricipiti dips a terra','triceps dips floor','corpo libero','tricipiti'],
+['0816-fSrPP6B','Distensioni tricipiti','triceps press','corpo libero','tricipiti'],
+['0817-uOV3Itw','Allungamento tricipiti','triceps stretch','corpo libero','tricipiti'],
+['0818-rkg41Fb','Lat machine twin handle lat presa neutra','twin handle parallel grip lat pulldown','cavi','dorso (gran dorsale)'],
+['0826-ZNgOYQU','Sollevamento gambe vertical alle parallele','vertical leg raise (on parallel bars)','corpo libero','addome'],
+['0830-MU9HnE7','Dip alle parallele su panca con sovraccarico','weighted bench dip','con sovraccarico','tricipiti'],
+['0832-s8nrDXF','Crunch con sovraccarico','weighted crunch','con sovraccarico','addome'],
+['0833-LmaFNZS','Calf raise donkey con sovraccarico','weighted donkey calf raise','con sovraccarico','polpacci'],
+['0834-e4aFmFY','Alzate frontali con sovraccarico','weighted front raise','con sovraccarico','spalle'],
+['0835-8urJS9b','Hyperextension con la fitball palla con sovraccarico','weighted hyperextension (on stability ball)','con sovraccarico','schiena'],
+['0840-xmM75XG','Crunch sopra la testa con la fitball palla con sovraccarico','weighted overhead crunch (on stability ball)','con sovraccarico','addome'],
+['0841-HMzLjXx','Trazioni con sovraccarico','weighted pull-up','con sovraccarico','dorso (gran dorsale)'],
+['0844-VLYXo8S','Round braccio con sovraccarico','weighted round arm','con sovraccarico','spalle'],
+['0845-WU9BLIs','Russian twist gambe con sovraccarico','weighted russian twist (legs up)','con sovraccarico','addome'],
+['0846-fZFZ704','Russian twist con sovraccarico','weighted russian twist','con sovraccarico','addome'],
+['0847-b4b6afT','Curl da seduto bicipiti con la fitball palla con sovraccarico','weighted seated bicep curl (on stability ball)','palla medica','bicipiti'],
+['0849-s34Y4LR','Torsione da seduto con la fitball palla con sovraccarico','weighted seated twist (on stability ball)','con sovraccarico','addome'],
+['0850-6bOA1Oi','Flessioni laterali con la fitball palla con sovraccarico','weighted side bend (on stability ball)','con sovraccarico','addome'],
+['0851-0lQnxMZ','Sissy squat con sovraccarico','weighted sissy squat','con sovraccarico','quadricipiti'],
+['0852-JZuApnB','Squat con sovraccarico','weighted squat','con sovraccarico','glutei'],
+['0853-M5Y7GPg','Curl in piedi con sovraccarico','weighted standing curl','con sovraccarico','bicipiti'],
+['0854-bjqbauy','In piedi hand squeeze con sovraccarico','weighted standing hand squeeze','con sovraccarico','avambracci'],
+['0856-I1OBLnn','Distensioni svend con sovraccarico','weighted svend press','con sovraccarico','petto'],
+['0857-NAgVB3t','Wheel rollerout','wheel rollerout','ruota addominale','addome'],
+['0858-Qoujh3Q','Wind sprints','wind sprints','corpo libero','addome'],
+['0859-bd5b860','Wrist rollerer','wrist rollerer','con sovraccarico','avambracci'],
+['0860-HEJ6DIX','Kickback ai cavi','cable kickback','cavi','tricipiti'],
+['0861-fUBheHs','Rematore da seduto ai cavi','cable seated row','cavi','dorso (alto)'],
+['0862-fhZQPlV','Torsione up-down ai cavi','cable twist (up-down)','cavi','addome'],
+['0863-bmBf7LN','Sdraiato external spalla rotation con i manubri','dumbbell lying external shoulder rotation','manubri','spalle'],
+['0864-x306lCW','Upright spalla external rotation con i manubri','dumbbell upright shoulder external rotation','manubri','spalle'],
+['0865-9IxJdtC','Sollevamento sdraiato leg-hip','lying leg-hip raise','corpo libero','addome'],
+['0866-QOA0FD0','Sollevamento appeso leg-hip con sovraccarico','weighted hanging leg-hip raise','con sovraccarico','addome'],
+['0868-G08RZcQ','Curl ai cavi','cable curl','cavi','bicipiti'],
+['0869-vqsbmL0','Distensioni sopra la testa a macchina','lever shoulder press v. 2','macchina','spalle'],
+['0870-qcNN2FN','Butt-ups','butt-ups','corpo libero','addome'],
+['0871-BMMolZ3','Crunch tuck','tuck crunch','corpo libero','addome'],
+['0872-nCU1Ekp','Crunch inverso','reverse crunch','corpo libero','addome'],
+['0873-RqOtqD7','Crunch inverso ai cavi','cable reverse crunch','cavi','addome'],
+['0874-XU3ePuv','Crunch in piedi con la corda ai cavi','cable standing crunch (with rope attachment)','cavi','addome'],
+['0968-3omWx6P','Curl alternato bicipiti con l\'elastico','band alternating biceps curl','elastico','bicipiti'],
+['0969-ztAa1RK','Alternato v-up con l\'elastico','band alternating v-up','elastico','addome'],
+['0970-r1XNRYB','Trazioni assistito con l\'elastico','band assisted pull-up','elastico','dorso (gran dorsale)'],
+['0971-zhF9lW4','Assistito wheel rollerout con l\'elastico','band assisted wheel rollerout','elastico','addome'],
+['0972-tZkGYZ9','Crunch bicycle con l\'elastico','band bicycle crunch','elastico','addome'],
+['0974-DptumMx','Lat machine presa stretta con l\'elastico','band close-grip pulldown','elastico','dorso (gran dorsale)'],
+['0975-ufaxB52','Piegamenti presa stretta con l\'elastico','band close-grip push-up','elastico','tricipiti'],
+['0976-kmVVAfu','Curl concentrato con l\'elastico','band concentration curl','elastico','bicipiti'],
+['0977-sTg7iys','Alzate laterali frontale con l\'elastico','band front lateral raise','elastico','spalle'],
+['0978-TFA88iB','Alzate frontali con l\'elastico','band front raise','elastico','spalle'],
+['0979-9pa4H5m','Distensioni horizontal pallof con l\'elastico','band horizontal pallof press','elastico','addome'],
+['0980-wSScovH','Estensioni anca busto piegato con l\'elastico','band bent-over hip extension','elastico','glutei'],
+['0981-KCBKjma','Sit-up jack knife con l\'elastico','band jack knife sit-up','elastico','addome'],
+['0983-pmnrOp0','Lat machine in ginocchio a un braccio con l\'elastico','band kneeling one arm pulldown','elastico','dorso (gran dorsale)'],
+['0984-vIICElP','Sdraiato anca internal rotation con l\'elastico','band lying hip internal rotation','elastico','glutei'],
+['0985-225x2Vd','Crunch in ginocchio con torsione con l\'elastico','band kneeling twisting crunch','elastico','addome'],
+['0986-UNAB8ak','Curl sopra la testa bicipiti a un braccio con l\'elastico','band one arm overhead biceps curl','elastico','bicipiti'],
+['0987-arsYEd3','Split squat a un braccio a una gamba con l\'elastico','band one arm single leg split squat','elastico','quadricipiti'],
+['0988-km0sQC0','Rematore in piedi basso a un braccio con l\'elastico','band one arm standing low row','elastico','dorso (alto)'],
+['0989-c16nYGA','Distensioni con torsione petto a un braccio con l\'elastico','band one arm twisting chest press','elastico','petto'],
+['0990-DKBwJrL','Rematore con torsione da seduto a un braccio con l\'elastico','band one arm twisting seated row','elastico','dorso (alto)'],
+['0991-VtTbiP3','Pull through con l\'elastico','band pull through','elastico','glutei'],
+['0992-zFzbBfL','Sit-up push con l\'elastico','band push sit-up','elastico','addome'],
+['0993-sTfvVsG','Croci inverso con l\'elastico','band reverse fly','elastico','spalle'],
+['0994-Ezpnw9d','Curl per i polsi inverso con l\'elastico','band reverse wrist curl','elastico','avambracci'],
+['0996-9gbyYKk','Da seduto anca internal rotation con l\'elastico','band seated hip internal rotation','elastico','glutei'],
+['0997-peAeMR3','Distensioni sopra la testa con l\'elastico','band shoulder press','elastico','spalle'],
+['0998-obe5LMq','Estensioni per i tricipiti laterale con l\'elastico','band side triceps extension','elastico','tricipiti'],
+['0999-9JprnPh','Calf raise a una gamba con l\'elastico','band single leg calf raise','elastico','polpacci'],
+['1000-QsSQWbf','Calf raise inverso a una gamba con l\'elastico','band single leg reverse calf raise','elastico','polpacci'],
+['1001-y8bYM8w','Split squat a una gamba con l\'elastico','band single leg split squat','elastico','quadricipiti'],
+['1002-bbLR7fB','Sollevamento gambe sdraiato a gambe tese con l\'elastico','band lying straight leg raise','elastico','addome'],
+['1003-w1NOByi','Squat row con l\'elastico','band squat row','elastico','glutei'],
+['1004-TUZLh71','Squat con l\'elastico','band squat','elastico','glutei'],
+['1005-Kzg30R7','Crunch in piedi con l\'elastico','band standing crunch','elastico','addome'],
+['1007-euq4pwp','Crunch in piedi con torsione con l\'elastico','band standing twisting crunch','elastico','addome'],
+['1008-d5bTEPV','Step-up con l\'elastico','band step-up','elastico','glutei'],
+['1009-kuMiR2T','Stacco da terra stiff gamba con l\'elastico','band stiff leg deadlift','elastico','glutei'],
+['1010-KUaoUV8','Stacco da terra a gambe tese gamba con l\'elastico','band straight leg deadlift','elastico','schiena'],
+['1011-S1JXDAG','Torsione da seduto con l\'elastico','band seated twist','elastico','addome'],
+['1012-u4bAmKp','Distensioni sopra la testa con torsione con l\'elastico','band twisting overhead press','elastico','spalle'],
+['1013-k6tUeqS','Lat machine underhand con l\'elastico','band underhand pulldown','elastico','dorso (gran dorsale)'],
+['1014-H6ETwO9','V-up con l\'elastico','band v-up','elastico','addome'],
+['1015-G7PXMlT','Distensioni vertical pallof con l\'elastico','band vertical pallof press','elastico','addome'],
+['1016-vUTfFHw','Curl per i polsi con l\'elastico','band wrist curl','elastico','avambracci'],
+['1017-aHDy5O5','Y-raise con l\'elastico','band y-raise','elastico','spalle'],
+['1018-trmte8s','Scrollate con l\'elastico','band shrug','elastico','trapezi'],
+['1022-tc5dYrf','Rematore per il deltoide posteriore in piedi con l\'elastico','band standing rear delt row','elastico','spalle'],
+['1023-lHeUULr','Stacco da terra a gambe tese schiena stiff gamba con l\'elastico','band straight back stiff leg deadlift','elastico','glutei'],
+['1160-dK9394r','Burpee','burpee','corpo libero','cardio'],
+['1167-3uj0Ozg','Allungamento dynamic petto','dynamic chest stretch (male)','corpo libero','petto'],
+['1201-0JtKWum','Burpee con i manubri','dumbbell burpee','manubri','cardio'],
+['1253-C9LuR4A','Calf raise donkey a macchina','lever donkey calf raise','macchina','polpacci'],
+['1254-khlHMqs','Distensioni su panca con l\'elastico','band bench press','elastico','petto'],
+['1255-9sgNE2O','Pullover su panca declinata con il bilanciere','barbell decline pullover','bilanciere','petto'],
+['1256-DotAgEF','Distensioni su panca su panca declinata presa inversa con il bilanciere','barbell reverse grip decline bench press','bilanciere','petto'],
+['1257-DU7I633','Distensioni su panca su panca inclinata presa inversa con il bilanciere','barbell reverse grip incline bench press','bilanciere','petto'],
+['1258-945zpRg','Distensioni su panca presa larga presa inversa con il bilanciere','barbell wide reverse grip bench press','bilanciere','petto'],
+['1259-QoHIhPl','Allungamento dietro head petto','behind head chest stretch','assistito','petto'],
+['1260-KHGNa16','Distensioni su panca declinata a un braccio ai cavi','cable decline one arm press','cavi','petto'],
+['1261-2Pya1cP','Distensioni su panca declinata ai cavi','cable decline press','cavi','petto'],
+['1262-w4dLzSx','Croci su panca declinata petto a un braccio ai cavi','cable one arm decline chest fly','cavi','petto'],
+['1263-hHy8tQG','Croci exercise palla a un braccio ai cavi','cable one arm fly on exercise ball','cavi','petto'],
+['1264-P14Dz9D','Croci su panca inclinata exercise palla a un braccio ai cavi','cable one arm incline fly on exercise ball','cavi','petto'],
+['1265-GKEH6jj','Distensioni su panca inclinata a un braccio ai cavi','cable one arm incline press','cavi','petto'],
+['1266-6t00BsF','Distensioni su panca inclinata exercise palla a un braccio ai cavi','cable one arm incline press on exercise ball','cavi','petto'],
+['1267-MKIelrR','Distensioni exercise palla a un braccio ai cavi','cable one arm press on exercise ball','cavi','petto'],
+['1268-vAwm6rK','Distensioni exercise palla ai cavi','cable press on exercise ball','cavi','petto'],
+['1269-UKWTJWR','In piedi a gambe tese crossovers ai cavi','cable standing up straight crossovers','cavi','petto'],
+['1270-j7XMAyn','Upper petto crossovers ai cavi','cable upper chest crossovers','cavi','petto'],
+['1271-Uto7l43','Allungamento petto frontale spalla','chest and front of shoulder stretch','corpo libero','petto'],
+['1272-ykA5tU7','Allungamento petto exercise palla','chest stretch with exercise ball','fitball','petto'],
+['1273-wigSg76','Piegamenti clap','clap push up','corpo libero','petto'],
+['1274-vptOQ4N','Piegamenti deep','deep push up','manubri','petto'],
+['1275-Q497lAE','Piegamenti drop','drop push up','corpo libero','petto'],
+['1276-NL6YBwN','Croci su panca declinata a un braccio con i manubri','dumbbell decline one arm fly','manubri','petto'],
+['1277-Lt3iWnf','Croci exercise palla con i manubri','dumbbell fly on exercise ball','manubri','petto'],
+['1278-HYe1ZqR','Croci su panca inclinata exercise palla con i manubri','dumbbell incline fly on exercise ball','manubri','petto'],
+['1279-Gw2HFvW','Croci su panca inclinata a un braccio con i manubri','dumbbell incline one arm fly','manubri','petto'],
+['1280-LLNh6q5','Croci su panca inclinata exercise palla a un braccio con i manubri','dumbbell incline one arm fly on exercise ball','manubri','petto'],
+['1281-rDAiRf9','Distensioni su panca inclinata a un braccio con i manubri','dumbbell incline one arm press','manubri','petto'],
+['1282-Bg5JKSH','Distensioni su panca inclinata exercise palla a un braccio con i manubri','dumbbell incline one arm press on exercise ball','manubri','petto'],
+['1283-bfiHMpI','Distensioni su panca inclinata exercise palla con i manubri','dumbbell incline press on exercise ball','manubri','petto'],
+['1284-iK59oEA','Pullover sdraiato exercise palla con i manubri','dumbbell lying pullover on exercise ball','manubri','petto'],
+['1285-o5Jsk92','Croci su panca a un braccio con i manubri','dumbbell one arm bench fly','manubri','petto'],
+['1286-Bpkf41o','Croci petto exercise palla a un braccio con i manubri','dumbbell one arm chest fly on exercise ball','manubri','petto'],
+['1287-REGM1dE','Distensioni su panca declinata petto a un braccio con i manubri','dumbbell one arm decline chest press','manubri','petto'],
+['1288-Am02iPd','Croci exercise palla a un braccio con i manubri','dumbbell one arm fly on exercise ball','manubri','petto'],
+['1289-PDaMuyV','Distensioni su panca inclinata petto a un braccio con i manubri','dumbbell one arm incline chest press','manubri','petto'],
+['1290-QZFv5ui','Distensioni exercise palla a un braccio con i manubri','dumbbell one arm press on exercise ball','manubri','petto'],
+['1291-bQHPBU3','Pullover exercise palla a un braccio con i manubri','dumbbell one arm pullover on exercise ball','manubri','petto'],
+['1292-pH2x2jj','Croci exercise palla a una gamba con i manubri','dumbbell one leg fly on exercise ball','manubri','petto'],
+['1293-O8o7q4d','Distensioni exercise palla con i manubri','dumbbell press on exercise ball','manubri','petto'],
+['1294-lI7easp','Pullover anca extension exercise palla con i manubri','dumbbell pullover hip extension on exercise ball','manubri','petto'],
+['1295-FSD6PGL','Pullover exercise palla con i manubri','dumbbell pullover on exercise ball','manubri','petto'],
+['1296-sVvXT5J','Piegamenti exercise palla pike','exercise ball pike push up','fitball','petto'],
+['1297-HbSG1Pw','Isometric petto squeeze','isometric chest squeeze','corpo libero','petto'],
+['1298-rg59QCH','Distensioni a terra a un braccio con il kettlebell','kettlebell one arm floor press','kettlebell','petto'],
+['1299-jHAnWmT','Distensioni su panca inclinata petto a macchina','lever incline chest press','macchina','petto'],
+['1300-vsVoPHt','Distensioni su panca declinata petto a macchina','lever decline chest press','macchina','petto'],
+['1301-wDN97Ca','Distensioni inner petto a macchina','machine inner chest press','macchina','petto'],
+['1302-aDoFKrE','Palla petto pass con la palla medica','medicine ball chest pass','palla medica','petto'],
+['1303-dCJnuVq','Palla petto push from 3 point stance con la palla medica','medicine ball chest push from 3 point stance','palla medica','petto'],
+['1304-7aolH9D','Palla petto push multiple response con la palla medica','medicine ball chest push multiple response','palla medica','petto'],
+['1305-jeHtrlO','Palla petto push a un arto response con la palla medica','medicine ball chest push single response','palla medica','petto'],
+['1306-Snj1wSv','Piegamenti plyo','plyo push up','corpo libero','petto'],
+['1307-wVompEp','Piegamenti bosu palla','push up on bosu ball','bosu','petto'],
+['1308-zoOvPcx','Distensioni su panca presa larga al multipower','smith wide grip bench press','multipower','petto'],
+['1309-wi2H9QX','Distensioni su panca su panca declinata presa larga al multipower','smith wide grip decline bench press','multipower','petto'],
+['1310-PSlvNMs','Piegamenti drop con sovraccarico','weighted drop push up','con sovraccarico','petto'],
+['1311-JmMVpR3','Piegamenti presa larga hand','wide hand push up','corpo libero','petto'],
+['1312-pX9Elbe','Corsa palla petto push release con la palla medica','medicine ball chest push with run release','palla medica','petto'],
+['1313-oROuvrX','Rematore unilateral a macchina','lever unilateral row','macchina','dorso (alto)'],
+['1314-qLpO4vV','Estensioni schiena exercise palla','back extension on exercise ball','fitball','schiena'],
+['1316-cA9FuWG','Pullover piegato braccio con il bilanciere','barbell bent arm pullover','bilanciere','dorso (gran dorsale)'],
+['1317-8d8qJQI','Rematore su panca inclinata su panca presa inversa con il bilanciere','barbell reverse grip incline bench row','bilanciere','dorso (alto)'],
+['1318-yaMIo4D','Rematore su panca inclinata su panca ai cavi','cable incline bench row','cavi','dorso (alto)'],
+['1319-OmQ8w0p','Rematore palm rotational ai cavi','cable palm rotational row','cavi','dorso (alto)'],
+['1320-UFGF6gk','Rematore corda crossover da seduto ai cavi','cable rope crossover seated row','cavi','dorso (alto)'],
+['1321-c8oybX6','Rematore corda elevated da seduto ai cavi','cable rope elevated seated row','cavi','dorso (alto)'],
+['1322-MgKwAAo','Rematore corda extension su panca inclinata su panca ai cavi','cable rope extension incline bench row','cavi','dorso (alto)'],
+['1323-SJqRxOt','Rematore corda da seduto ai cavi','cable rope seated row','cavi','dorso (alto)'],
+['1324-PQStVXH','Rematore upper ai cavi','cable upper row','cavi','dorso (alto)'],
+['1325-CmEr4pM','Lat machine posteriore presa larga dietro il collo ai cavi','cable wide grip rear pulldown behind neck','cavi','dorso (gran dorsale)'],
+['1326-T2mxWqc','Trazioni presa supina','chin-up','corpo libero','dorso (gran dorsale)'],
+['1327-VnfUNW7','Trazioni presa supina presa stretta','close grip chin-up','corpo libero','dorso (gran dorsale)'],
+['1328-XUUD0Fs','Rematore per il deltoide posteriore sdraiato con i manubri','dumbbell lying rear delt row','manubri','dorso (alto)'],
+['1329-wt6rwjk','Rematore palm rotational busto piegato con i manubri','dumbbell palm rotational bent over row','manubri','dorso (alto)'],
+['1330-ZIViNh1','Rematore su panca inclinata su panca a un braccio presa inversa con i manubri','dumbbell reverse grip incline bench one arm row','manubri','dorso (alto)'],
+['1331-9pQSkH8','Rematore su panca inclinata su panca a due braccia presa inversa con i manubri','dumbbell reverse grip incline bench two arm row','manubri','dorso (alto)'],
+['1332-EyLrNC2','Exercise palla alternato braccio ups','exercise ball alternating arm ups','fitball','dorso (gran dorsale)'],
+['1333-PERjVm8','Estensioni exercise palla schiena braccia extended','exercise ball back extension with arms extended','fitball','schiena'],
+['1334-o1HGDSq','Estensioni exercise palla schiena mani dietro head','exercise ball back extension with hands behind head','fitball','schiena'],
+['1335-WME869U','Estensioni exercise palla schiena ginocchia off ground','exercise ball back extension with knees off ground','fitball','schiena'],
+['1336-WVD66ff','Estensioni exercise palla schiena rotation','exercise ball back extension with rotation','fitball','schiena'],
+['1338-d7z1Y7V','Exercise palla hug','exercise ball hug','fitball','schiena'],
+['1339-sM84pE4','Allungamento exercise palla lat','exercise ball lat stretch','fitball','dorso (gran dorsale)'],
+['1341-yU7w7CA','Allungamento exercise palla lower schiena pyramid','exercise ball lower back stretch (pyramid)','fitball','dorso (gran dorsale)'],
+['1342-rTbyBYV','Allungamento exercise palla sdraiato laterale lat','exercise ball lying side lat stretch','fitball','dorso (gran dorsale)'],
+['1343-lCKm4Rs','Sollevamento gambe exercise palla a pancia in giù','exercise ball prone leg raise','fitball','schiena'],
+['1344-G8dXpNG','Rematore barra presa inversa busto piegato con il bilanciere EZ','ez bar reverse grip bent over row','bilanciere EZ','dorso (alto)'],
+['1345-wf24o8S','Rematore a due braccia con il kettlebell','kettlebell two arm row','kettlebell','dorso (alto)'],
+['1346-f38OEuO','Allungamento in ginocchio lat','kneeling lat stretch','corpo libero','dorso (gran dorsale)'],
+['1347-tTuZSDT','Lat machine laterale presa larga a un braccio a macchina','lever one arm lateral wide pulldown','macchina','dorso (gran dorsale)'],
+['1348-ZqNOWQ6','Rematore vertical presa inversa a macchina','lever reverse grip vertical row','macchina','dorso (alto)'],
+['1349-BgljGjd','Rematore inverso a T a macchina','lever reverse t-bar row','macchina','dorso (alto)'],
+['1350-7I6LNUG','Rematore da seduto a macchina','lever seated row','macchina','dorso (alto)'],
+['1351-FVM1AUZ','Rematore presa inversa a T a macchina','lever t-bar reverse grip row','macchina','dorso (alto)'],
+['1352-ANbbry2','Curl lower schiena','lower back curl','corpo libero','schiena'],
+['1353-PsVS1QP','Palla catch sopra la testa throw con la palla medica','medicine ball catch and overhead throw','palla medica','dorso (gran dorsale)'],
+['1354-oHg8eop','Palla sopra la testa slam con la palla medica','medicine ball overhead slam','palla medica','dorso (alto)'],
+['1355-ZZTGMKh','Against al muro a un braccio','one arm against wall','corpo libero','dorso (gran dorsale)'],
+['1356-OIFMAp1','Rematore laterale alto a un braccio a macchina','lever one arm lateral high row','macchina','dorso (alto)'],
+['1358-jDOKRM5','Allungamento laterale sdraiato a terra','side lying floor stretch','corpo libero','dorso (gran dorsale)'],
+['1359-ZX9UZmj','Rematore busto piegato al multipower','smith bent over row','multipower','dorso (alto)'],
+['1360-Q4DSJPC','Rematore a un braccio al multipower','smith one arm row','multipower','dorso (alto)'],
+['1361-aaxA3cm','Rematore presa inversa busto piegato al multipower','smith reverse grip bent over row','multipower','dorso (alto)'],
+['1362-DIVyqrU','Sphinx','sphinx','corpo libero','schiena'],
+['1363-JbC2iaV','Allungamento spine','spine stretch','corpo libero','schiena'],
+['1364-cuKYxhu','In piedi pelvic tilt','standing pelvic tilt','corpo libero','schiena'],
+['1365-GSDioYu','Allungamento upper schiena','upper back stretch','corpo libero','dorso (alto)'],
+['1366-01qpYSe','Upward facing dog','upward facing dog','corpo libero','schiena'],
+['1367-OYFhXVD','Trazioni posteriore presa larga','wide grip rear pull-up','corpo libero','dorso (gran dorsale)'],
+['1368-uL9CsKm','Ankle circles','ankle circles','corpo libero','polpacci'],
+['1369-jl6uxZV','Calf raise - con l\'elastico under both gambe a due gambe con l\'elastico','band two legs calf raise - (band under both legs) v. 2','elastico','polpacci'],
+['1370-2IHEa2T','Calf raise a terra con il bilanciere','barbell floor calf raise','bilanciere','polpacci'],
+['1371-ipvgBnC','Calf raise da seduto con il bilanciere','barbell seated calf raise','bilanciere','polpacci'],
+['1372-8ozhUIZ','Calf raise in piedi con il bilanciere','barbell standing calf raise','bilanciere','polpacci'],
+['1373-bJYHBIN','Calf raise in piedi a corpo libero','bodyweight standing calf raise','corpo libero','polpacci'],
+['1374-iPm26QU','Box con salto down stabilization a una gamba','box jump down with one leg stabilization','corpo libero','polpacci'],
+['1375-yl2IYyy','Calf raise in piedi ai cavi','cable standing calf raise','cavi','polpacci'],
+['1376-fgc9Xdl','Calf raise in piedi a una gamba ai cavi','cable standing one leg calf raise','cavi','polpacci'],
+['1377-m0tCHqc','Allungamento polpaccio mani against al muro','calf stretch with hands against wall','corpo libero','polpacci'],
+['1378-1LVFcEn','Allungamento polpaccio con la corda','calf stretch with rope','corda','polpacci'],
+['1379-r29jP7S','Calf raise da seduto con i manubri','dumbbell seated calf raise','manubri','polpacci'],
+['1380-FxhcxUW','Calf raise da seduto - hammer grip a una gamba con i manubri','dumbbell seated one leg calf raise - hammer grip','manubri','polpacci'],
+['1381-VW88JNd','Calf raise da seduto - palm a una gamba con i manubri','dumbbell seated one leg calf raise - palm up','manubri','polpacci'],
+['1382-xo6sENf','Calf raise exercise palla al muro','exercise ball on the wall calf raise','manubri','polpacci'],
+['1383-2ORFMoR','Calf raise hack','hack calf raise','pressa a slitta','polpacci'],
+['1384-AxFoqAD','Calf raise hack a una gamba','hack one leg calf raise','pressa a slitta','polpacci'],
+['1385-IeDEXTe','Calf raise da seduto squat a macchina alla pressa a macchina','lever seated squat calf raise on leg press machine','macchina','polpacci'],
+['1386-A2upspL','Calf raise donkey a una gamba','one leg donkey calf raise','corpo libero','polpacci'],
+['1387-0jp9Rlz','Calf raise a terra a una gamba','one leg floor calf raise','corpo libero','polpacci'],
+['1388-XhfS1DZ','Allungamento peroneals','peroneals stretch','corda','polpacci'],
+['1389-DEEqoI2','Allungamento posterior tibialis','posterior tibialis stretch','corda','polpacci'],
+['1390-17bqEXD','Allungamento da seduto polpaccio','seated calf stretch (male)','corpo libero','polpacci'],
+['1391-ykHcWme','Distensioni polpaccio alla pressa alla pressa','sled calf press on leg press','pressa a slitta','polpacci'],
+['1392-u0pLNgz','Distensioni polpaccio a una gamba alla pressa alla pressa','sled one leg calf press on leg press','pressa a slitta','polpacci'],
+['1393-9GXrTE6','Calf raise a terra a una gamba al multipower','smith one leg floor calf raise','multipower','polpacci'],
+['1394-Lsqrgh4','Inverso polpaccio raises al multipower','smith reverse calf raises','multipower','polpacci'],
+['1395-0S75mYG','Calf raise da seduto a una gamba al multipower','smith seated one leg calf raise','multipower','polpacci'],
+['1396-Y4QlY8z','Sollevamento toe al multipower','smith toe raise','multipower','polpacci'],
+['1397-XIHEoCG','In piedi calves','standing calves','corpo libero','polpacci'],
+['1398-qOKcgVP','Allungamento in piedi calves polpaccio','standing calves calf stretch','corpo libero','polpacci'],
+['1399-9RT8oQW','Dip alle parallele su panca a terra','bench dip on floor','corpo libero','tricipiti'],
+['1401-Af0EW2I','Muscle-up vertical barra','muscle-up (on vertical bar)','corpo libero','dorso (gran dorsale)'],
+['1403-x2chWLO','Allungamento neck laterale','neck side stretch','corpo libero','collo'],
+['1405-chfnQnM','Allungamento schiena pec','back pec stretch','corpo libero','dorso (gran dorsale)'],
+['1407-PzNxakt','Allungamento polpaccio push mani against al muro','calf push stretch with hands against wall','corpo libero','polpacci'],
+['1408-E4R8Hz1','Anca lift con l\'elastico','band hip lift','elastico','glutei'],
+['1409-qKBpF7I','Ponte per i glutei con il bilanciere','barbell glute bridge','bilanciere','glutei'],
+['1410-py1HSzx','Affondo laterale con il bilanciere','barbell lateral lunge','bilanciere','glutei'],
+['1411-yzYH9pI','Curl per i polsi palms down over su panca con il bilanciere','barbell palms down wrist curl over a bench','bilanciere','avambracci'],
+['1412-SJAA2IQ','Curl per i polsi palms over su panca con il bilanciere','barbell palms up wrist curl over a bench','bilanciere','avambracci'],
+['1413-gVlnLIJ','Curl inverso a un braccio ai cavi','cable reverse one arm curl','cavi','bicipiti'],
+['1414-bWxq4op','Curl alla panca Scott inverso a un braccio con i manubri','dumbbell one arm reverse preacher curl','manubri','bicipiti'],
+['1415-YtaCTYl','Curl per i polsi da seduto neutral a un braccio con i manubri','dumbbell one arm seated neutral wrist curl','manubri','avambracci'],
+['1416-M72BExt','Exercise palla a pancia in giù lower body rotation a una gamba','exercise ball one leg prone lower body rotation','fitball','glutei'],
+['1417-GOJKFfO','Curl exercise palla a un legged diagonal kick hamstring','exercise ball one legged diagonal kick hamstring curl','fitball','glutei'],
+['1418-znP9SIh','Hug keens petto','hug keens to chest','corpo libero','glutei'],
+['1419-pZwUsKB','Allungamento iron cross','iron cross stretch','corpo libero','glutei'],
+['1420-UgDm3oy','Squat in ginocchio con salto','kneeling jump squat','bilanciere','glutei'],
+['1421-arvaszz','Piegamenti modified lower braccia','modified push up to lower arms','corpo libero','avambracci'],
+['1422-D9qe7CM','Ponte pelvic tilt into','pelvic tilt into bridge','corpo libero','glutei'],
+['1423-OrETs32','Inverso hyper su panca piana su panca','reverse hyper on flat bench','corpo libero','glutei'],
+['1424-DeDThfG','Allungamento da seduto glute','seated glute stretch','corpo libero','glutei'],
+['1425-WWD6FzI','Distensioni 45 degrees a una gamba alla pressa','sled 45 degrees one leg press','pressa a slitta','glutei'],
+['1426-B6dAO1t','Curl per i polsi da seduto al multipower','smith seated wrist curl','multipower','avambracci'],
+['1427-mQ1tBXn','A gambe tese gamba outer anca abductor','straight leg outer hip abductor','corpo libero','abduttori'],
+['1428-2zNKRUB','Wrist circles','wrist circles','corpo libero','avambracci'],
+['1429-Qqi7bko','Trazioni presa larga','wide grip pull-up','corpo libero','dorso (gran dorsale)'],
+['1430-XgWyAiA','Dip alle parallele petto dip-pull-up cage','chest dip (on dip-pull-up cage)','corpo libero','petto'],
+['1431-7OeHptV','Trazioni presa supina in piedi assistito','assisted standing chin-up','macchina','dorso (gran dorsale)'],
+['1432-f4xtKBj','Trazioni in piedi assistito','assisted standing pull-up','macchina','dorso (gran dorsale)'],
+['1433-lFhb2Rw','Front squat clean grip al multipower','smith front squat (clean grip)','multipower','glutei'],
+['1434-RGLscZM','Squat basso barra al multipower','smith low bar squat','multipower','glutei'],
+['1435-bTpEUcm','Squat basso barra con il bilanciere','barbell low bar squat','bilanciere','glutei'],
+['1436-Gnfo4FM','Squat alto barra con il bilanciere','barbell high bar squat','bilanciere','glutei'],
+['1437-mtXengz','Finger curls con i manubri','dumbbell finger curls','manubri','avambracci'],
+['1438-ZEkjZDi','Distensioni da seduto military a due braccia con il kettlebell','kettlebell seated two arm military press','kettlebell','spalle'],
+['1439-cbuFJrn','Scrollate gripless a macchina','lever gripless shrug v. 2','macchina','trapezi'],
+['1441-4Jc36XM','Curl per i polsi over su panca inverso a un braccio con i manubri','dumbbell over bench one arm reverse wrist curl','manubri','avambracci'],
+['1451-BRImeP8','Dip alle parallele da seduto a macchina','lever seated dip','macchina','tricipiti'],
+['1452-Wgaz7pm','Crunch da seduto a macchina','lever seated crunch','macchina','addome'],
+['1456-wdRZISl','Distensioni in piedi military presa stretta con il bilanciere','barbell standing close grip military press','bilanciere','spalle'],
+['1457-Kyd9Rz5','Distensioni in piedi presa larga military con il bilanciere','barbell standing wide military press','bilanciere','spalle'],
+['1458-jtFKbt5','Da seduto curls con il bilanciere EZ','ez barbell seated curls','bilanciere EZ','bicipiti'],
+['1459-rR0LJzx','Stacco rumeno con i manubri','dumbbell romanian deadlift','manubri','glutei'],
+['1460-IZVHb27','Affondo walking','walking lunge','corpo libero','glutei'],
+['1461-DhMl549','Squat completo con il bilanciere','barbell full squat (back pov)','bilanciere','glutei'],
+['1462-iYzB0Cz','Squat completo con il bilanciere','barbell full squat (side pov)','bilanciere','glutei'],
+['1463-2Qh2J1e','Leg press 45° alla pressa','sled 45° leg press (side pov)','pressa a slitta','glutei'],
+['1464-yn2lLSI','Leg press 45в° alla pressa','sled 45в° leg press (back pov)','pressa a slitta','glutei'],
+['1466-AX1kB0o','Torsione anca lift','twist hip lift','corpo libero','glutei'],
+['1467-4Jt8QsQ','Piegamenti lower braccia','push-up on lower arms','corpo libero','tricipiti'],
+['1468-xgsGFVM','Torsione crab toe touch','crab twist toe touch','corpo libero','addome'],
+['1471-ZgsNQ6d','Inchworm','inchworm','corpo libero','addome'],
+['1472-uZKq7lo','Forward con salto','forward jump','corpo libero','quadricipiti'],
+['1473-SaDOwk7','Backward con salto','backward jump','corpo libero','quadricipiti'],
+['1476-C31LMnP','Squat a una gamba','one leg squat','corpo libero','glutei'],
+['1479-o17Jfkt','Distensioni su panca inclinata petto a macchina','lever incline chest press v. 2','macchina','petto'],
+['1489-xdYPUtE','Sissy squat','sissy squat','corpo libero','quadricipiti'],
+['1490-6HmFgmx','Calf raise in piedi sui gradini','standing calf raise (on a staircase)','corpo libero','polpacci'],
+['1494-bWlZvXh','Butterfly yoga pose','butterfly yoga pose','corpo libero','adduttori'],
+['1495-cJgSTmh','Crunch oblique','oblique crunch v. 2','corpo libero','addome'],
+['1496-REXmfVC','Sledge hammer','sledge hammer','martello','addome'],
+['1511-99rWm7w','Allungamento hamstring','hamstring stretch','corpo libero','femorali'],
+['1512-qBcKorM','Allungamento all fours squad','all fours squad stretch','corpo libero','quadricipiti'],
+['1545-vR1vold','Squat completo zercher con il bilanciere','barbell full zercher squat','bilanciere','glutei'],
+['1548-xGgAGPm','Allungamento chair gamba extended','chair leg extended stretch','corpo libero','quadricipiti'],
+['1559-2LQkNPW','Allungamento exercise palla anca flexor','exercise ball hip flexor stretch','fitball','glutei'],
+['1560-yRYyfdA','Allungamento exercise palla da seduto hamstring','exercise ball seated hamstring stretch','fitball','femorali'],
+['1564-tFGKm99','Allungamento intermediate anca flexor quad','intermediate hip flexor and quad stretch','corda','quadricipiti'],
+['1576-sU5BrfP','Allungamento gamba hamstring','leg up hamstring stretch','corpo libero','femorali'],
+['1582-K5xgdvI','Reclining big toe pose con la corda','reclining big toe pose with rope','corda','femorali'],
+['1585-0mB6wHO','Allungamento runners','runners stretch','corpo libero','femorali'],
+['1587-HIgYKAB','Da seduto presa larga angle pose sequence','seated wide angle pose sequence','corpo libero','femorali'],
+['1599-xTjr103','Allungamento in piedi hamstring polpaccio strap','standing hamstring and calf stretch with strap','corda','femorali'],
+['1604-DFGXwZr','Allungamento world greatest','world greatest stretch','corpo libero','femorali'],
+['1614-ye84CTU','Curl alla panca Scott a macchina','lever preacher curl v. 2','macchina','bicipiti'],
+['1615-OAguZoG','Curl alla panca Scott hammer grip a macchina','lever hammer grip preacher curl','macchina','bicipiti'],
+['1616-kj3hy6W','Curl alla panca Scott presa inversa a macchina','lever reverse grip preacher curl','macchina','bicipiti'],
+['1617-SHUMp5H','Distensioni su panca declinata hammer a un braccio con i manubri','dumbbell decline one arm hammer press','manubri','tricipiti'],
+['1618-wkgnGfb','Distensioni su panca inclinata hammer exercise palla con i manubri','dumbbell incline hammer press on exercise ball','manubri','tricipiti'],
+['1619-LL1UiTX','Distensioni su panca inclinata hammer a un braccio con i manubri','dumbbell incline one arm hammer press','manubri','tricipiti'],
+['1620-jDnrkar','Distensioni su panca inclinata hammer exercise palla a un braccio con i manubri','dumbbell incline one arm hammer press on exercise ball','manubri','tricipiti'],
+['1621-VYmYxK5','Distensioni hammer exercise palla a un braccio con i manubri','dumbbell one arm hammer press on exercise ball','manubri','tricipiti'],
+['1622-Ze7MoIb','Distensioni a un braccio presa inversa con i manubri','dumbbell one arm reverse grip press','manubri','petto'],
+['1623-8eqjhOl','Distensioni su panca palms su panca inclinata con i manubri','dumbbell palms in incline bench press','manubri','tricipiti'],
+['1624-UIbGx6H','Distensioni su panca inverso con i manubri','dumbbell reverse bench press','manubri','petto'],
+['1625-yB9SvIF','Distensioni su panca a macchina su panca declinata presa stretta al multipower','smith machine decline close grip bench press','multipower','tricipiti'],
+['1626-QyO6Uma','Distensioni su panca a macchina inverso su panca declinata presa stretta al multipower','smith machine reverse decline close grip bench press','multipower','petto'],
+['1627-hacCyUv','Curl alla panca Scott presa stretta con il bilanciere EZ','ez barbell close grip preacher curl','bilanciere EZ','bicipiti'],
+['1628-2kattbR','Curl spider con il bilanciere EZ','ez barbell spider curl','bilanciere EZ','bicipiti'],
+['1629-faHKVkK','Curl in piedi bicipiti presa larga con il bilanciere','barbell standing wide grip biceps curl','bilanciere','bicipiti'],
+['1630-BCGQ6J5','Curl presa stretta ai cavi','cable close grip curl','cavi','bicipiti'],
+['1631-NvfE43H','Curl concentrato ai cavi','cable concentration curl','cavi','bicipiti'],
+['1632-dXz8zjF','Curl drag ai cavi','cable drag curl','cavi','bicipiti'],
+['1633-eHBlPsa','Curl alla panca Scott a un braccio ai cavi','cable one arm preacher curl','cavi','bicipiti'],
+['1634-otqIxU4','Curl sdraiato bicipiti ai cavi','cable lying bicep curl','cavi','bicipiti'],
+['1635-ZXnjcOQ','Curl alla panca Scott inverso a un braccio ai cavi','cable one arm reverse preacher curl','cavi','bicipiti'],
+['1636-wDUqY2u','Curl sopra la testa ai cavi','cable overhead curl','cavi','bicipiti'],
+['1637-ioTf098','Curl sopra la testa exercise palla ai cavi','cable overhead curl on exercise ball','cavi','bicipiti'],
+['1638-QTXKWPh','Lat machine bicipiti curl ai cavi','cable pulldown bicep curl','cavi','bicipiti'],
+['1639-PcPe0P5','Curl alla panca Scott corda hammer ai cavi','cable rope hammer preacher curl','cavi','bicipiti'],
+['1640-4hATdoB','Curl alla panca Scott corda hammer a un braccio ai cavi','cable rope one arm hammer preacher curl','cavi','bicipiti'],
+['1641-8oYqOt9','Curl da seduto ai cavi','cable seated curl','cavi','bicipiti'],
+['1642-rZ80Gbp','Curl concentrato da seduto a un braccio ai cavi','cable seated one arm concentration curl','cavi','bicipiti'],
+['1643-DpWMFP5','Curl da seduto sopra la testa ai cavi','cable seated overhead curl','cavi','bicipiti'],
+['1644-3XFdb1Z','Curl squatting ai cavi','cable squatting curl','cavi','bicipiti'],
+['1645-H9y3Dkr','Curl su panca inclinata su panca a due braccia ai cavi','cable two arm curl on incline bench','cavi','bicipiti'],
+['1646-fy7Tgy4','Curl alla panca Scott alternato hammer con i manubri','dumbbell alternate hammer preacher curl','manubri','bicipiti'],
+['1647-NlfIbzq','Curl alla panca Scott alternato con i manubri','dumbbell alternate preacher curl','manubri','bicipiti'],
+['1648-6em2Dxj','Hammer curl alternato da seduto con i manubri','dumbbell alternate seated hammer curl','manubri','bicipiti'],
+['1649-Zwiw7XR','Curl alternato bicipiti gamba raised exercise palla con i manubri','dumbbell alternating bicep curl with leg raised on exercise ball','manubri','bicipiti'],
+['1650-J74XlNf','Curl alternato da seduto bicipiti exercise palla con i manubri','dumbbell alternating seated bicep curl on exercise ball','manubri','bicipiti'],
+['1651-1VpF8db','Affondo bicipiti curl bowling motion con i manubri','dumbbell bicep curl lunge with bowling motion','manubri','bicipiti'],
+['1652-2NImIAG','Curl bicipiti exercise palla gamba raised con i manubri','dumbbell bicep curl on exercise ball with leg raised','manubri','bicipiti'],
+['1653-uSkDMYl','Curl bicipiti stork stance con i manubri','dumbbell bicep curl with stork stance','manubri','bicipiti'],
+['1654-nFc4FyV','Curl bicipiti inverso con i manubri','dumbbell biceps curl reverse','manubri','bicipiti'],
+['1655-niXESDw','Squat bicipiti curl con i manubri','dumbbell biceps curl squat','manubri','bicipiti'],
+['1656-H1XAdpk','Curl bicipiti sit bosu palla con i manubri','dumbbell biceps curl v sit on bosu ball','manubri','bicipiti'],
+['1657-HDYiZcY','Hammer curl cross body con i manubri','dumbbell cross body hammer curl v. 2','manubri','bicipiti'],
+['1658-Mz6lLcW','Affondo bicipiti curl con i manubri','dumbbell lunge with bicep curl','manubri','bicipiti'],
+['1659-fY68AyX','Hammer curl exercise palla con i manubri','dumbbell hammer curl on exercise ball','manubri','bicipiti'],
+['1660-2JCuFTU','Curl in ginocchio bicipiti exercise palla con i manubri','dumbbell kneeling bicep curl exercise ball','manubri','bicipiti'],
+['1661-XVzF3iZ','Curl sdraiato supino bicipiti con i manubri','dumbbell lying supine biceps curl','manubri','bicipiti'],
+['1662-qm9veZw','Curl sdraiato presa larga con i manubri','dumbbell lying wide curl','manubri','bicipiti'],
+['1663-4dF3maG','Curl alla panca Scott hammer a un braccio con i manubri','dumbbell one arm hammer preacher curl','manubri','bicipiti'],
+['1664-qAmNMJY','Curl alto con i manubri','dumbbell high curl','manubri','bicipiti'],
+['1665-JWjujiY','Curl a pancia in giù a un braccio con i manubri','dumbbell one arm prone curl','manubri','bicipiti'],
+['1666-LIGZSTA','Hammer curl a pancia in giù a un braccio con i manubri','dumbbell one arm prone hammer curl','manubri','bicipiti'],
+['1667-VdLZ3nB','Curl inverso spider a un braccio con i manubri','dumbbell one arm reverse spider curl','manubri','bicipiti'],
+['1668-s999Hdo','Curl da seduto bicipiti exercise palla a un braccio con i manubri','dumbbell one arm seated bicep curl on exercise ball','manubri','bicipiti'],
+['1669-jK2hZ6n','Hammer curl da seduto a un braccio con i manubri','dumbbell one arm seated hammer curl','manubri','bicipiti'],
+['1670-ffQsyBj','Curl in piedi a un braccio con i manubri','dumbbell one arm standing curl','manubri','bicipiti'],
+['1671-2sQGZ5b','Hammer curl in piedi a un braccio con i manubri','dumbbell one arm standing hammer curl','manubri','bicipiti'],
+['1672-sxY5Biu','Curl alla panca Scott zottman a un braccio con i manubri','dumbbell one arm zottman preacher curl','manubri','bicipiti'],
+['1673-hwygydB','Curl alla panca Scott over exercise palla con i manubri','dumbbell preacher curl over exercise ball','manubri','bicipiti'],
+['1674-cWemPG8','Hammer curl a pancia in giù su panca inclinata con i manubri','dumbbell prone incline hammer curl','manubri','bicipiti'],
+['1675-6sMAmNv','Curl inverso spider con i manubri','dumbbell reverse spider curl','manubri','bicipiti'],
+['1676-QLRmNeT','Hammer curl da seduto alternato exercise palla con i manubri','dumbbell seated alternate hammer curl on exercise ball','manubri','bicipiti'],
+['1677-xiA6lRr','Curl da seduto bicipiti con i manubri','dumbbell seated bicep curl','manubri','bicipiti'],
+['1678-IGtBdNT','Hammer curl da seduto con i manubri','dumbbell seated hammer curl','manubri','bicipiti'],
+['1679-84sESNy','Curl da seduto bicipiti exercise palla gamba raised a un braccio con i manubri','dumbbell seated one arm bicep curl on exercise ball with leg raised','manubri','bicipiti'],
+['1680-EmlJR2y','Curl in piedi over su panca inclinata su panca a un braccio con i manubri','dumbbell standing one arm curl over incline bench','manubri','bicipiti'],
+['1682-Dsfz0Id','Curl concentrato barra da seduto presa stretta con il bilanciere EZ','ez bar seated close grip concentration curl','bilanciere EZ','bicipiti'],
+['1683-zILLZ98','Curl a macchina bicipiti al multipower','smith machine bicep curl','multipower','bicipiti'],
+['1684-76vfTdU','Curl step balance bicipiti a una gamba con i manubri','dumbbell step up single leg balance with bicep curl','manubri','bicipiti'],
+['1685-QChZi3x','Squat sopra la testa reach','squat to overhead reach','corpo libero','quadricipiti'],
+['1686-5BZHW9s','Squat sopra la testa reach twist','squat to overhead reach with twist','corpo libero','quadricipiti'],
+['1687-ErqK3UL','Posterior step sopra la testa reach','posterior step to overhead reach','corpo libero','addome'],
+['1688-K9VL0Jq','Affondo twist','lunge with twist','corpo libero','addome'],
+['1689-wXvUZC8','Push pull a corpo libero','push and pull bodyweight','corpo libero','petto'],
+['1700-FS63wTN','Distensioni push con i manubri','dumbbell push press','manubri','spalle'],
+['1701-8K7m2SS','Piegamenti palla presa stretta con la palla medica','medicine ball close grip push up','palla medica','tricipiti'],
+['1705-T2fA5Ir','Squat bosu palla','squat on bosu ball','bosu','quadricipiti'],
+['1707-1IG6gVF','Torsione a pancia in giù con la fitball palla','prone twist on stability ball','fitball','addome'],
+['1708-GxDwDX0','Allungamento sdraiato calves assistito','assisted lying calves stretch','assistito','polpacci'],
+['1709-yn0LjwL','Allungamento sdraiato glutes assistito','assisted lying glutes stretch','assistito','glutei'],
+['1710-RQNVT10','Allungamento sdraiato gluteus piriformis assistito','assisted lying gluteus and piriformis stretch','assistito','glutei'],
+['1712-hC6oYY5','Allungamento laterale sdraiato adductor assistito','assisted side lying adductor stretch','assistito','adduttori'],
+['1713-YUYAMEj','Allungamento a pancia in giù sdraiato quads assistito','assisted prone lying quads stretch','assistito','quadricipiti'],
+['1714-2Ryn564','Allungamento a pancia in giù rectus femoris assistito','assisted prone rectus femoris stretch','assistito','addome'],
+['1716-RoV1Rfa','Allungamento da seduto pectoralis major con la fitball palla assistito','assisted seated pectoralis major stretch with stability ball','assistito','petto'],
+['1717-f7fnAIB','Squat row con la corda ai cavi','cable squat row (with rope attachment)','cavi','dorso (gran dorsale)'],
+['1718-4CBIBOM','Estensioni per i tricipiti da seduto presa stretta dietro il collo con il bilanciere','barbell seated close grip behind neck triceps extension','bilanciere','tricipiti'],
+['1719-gx7s7uF','Distensioni su panca su panca inclinata presa stretta con il bilanciere','barbell incline close grip bench press','bilanciere','tricipiti'],
+['1720-yg8Totb','Estensioni per i tricipiti sdraiato schiena head con il bilanciere','barbell lying back of the head tricep extension','bilanciere','tricipiti'],
+['1721-yRLPCLu','Skullcrusher presa inversa con il bilanciere','barbell reverse grip skullcrusher','bilanciere','tricipiti'],
+['1722-1xHyxys','Estensioni per i tricipiti alto pulley sopra la testa ai cavi','cable high pulley overhead tricep extension','cavi','tricipiti'],
+['1723-qRZ5S1N','Pushdown tricipiti a un braccio ai cavi','cable one arm tricep pushdown','cavi','tricipiti'],
+['1724-NN8nSNT','Estensioni per i tricipiti corda alto pulley sopra la testa ai cavi','cable rope high pulley overhead tricep extension','cavi','tricipiti'],
+['1725-ZujAdR9','Estensioni per i tricipiti corda su panca inclinata ai cavi','cable rope incline tricep extension','cavi','tricipiti'],
+['1726-U3ffHlY','Estensioni per i tricipiti corda a terra ai cavi','cable rope lying on floor tricep extension','cavi','tricipiti'],
+['1727-i11JWU7','Estensioni per i tricipiti in piedi sopra la testa a un braccio presa inversa ai cavi','cable standing reverse grip one arm overhead tricep extension','cavi','tricipiti'],
+['1728-vvNjDJS','Kickback tricipiti a due braccia ai cavi','cable two arm tricep kickback','cavi','tricipiti'],
+['1729-NfP83rA','Estensioni sdraiato alternato con i manubri','dumbbell lying alternate extension','manubri','tricipiti'],
+['1730-x0lwvfq','Kickback da seduto alternato busto piegato con i manubri','dumbbell seated bent over alternate kickback','manubri','tricipiti'],
+['1731-7jGOBF3','Distensioni presa stretta con i manubri','dumbbell close grip press','manubri','tricipiti'],
+['1732-XalXcvM','Estensioni per i tricipiti forward lunge con i manubri','dumbbell forward lunge triceps extension','manubri','tricipiti'],
+['1733-U7D9Fx3','Estensioni su panca inclinata a due braccia con i manubri','dumbbell incline two arm extension','manubri','tricipiti'],
+['1734-cAvTaSg','Kickbacks exercise palla con i manubri','dumbbell kickbacks on exercise ball','manubri','tricipiti'],
+['1735-6MfS53i','Estensioni sdraiato a un arto con i manubri','dumbbell lying single extension','manubri','tricipiti'],
+['1736-ziFKQXP','Distensioni french exercise palla a un braccio con i manubri','dumbbell one arm french press on exercise ball','manubri','tricipiti'],
+['1737-4ievMJ9','Estensioni per i tricipiti da seduto busto piegato con i manubri','dumbbell seated bent over triceps extension','manubri','tricipiti'],
+['1738-5fKX7wi','Estensioni per i tricipiti da seduto sopra la testa a un braccio presa inversa con i manubri','dumbbell seated reverse grip one arm overhead tricep extension','manubri','tricipiti'],
+['1739-Gi2BXfK','Kickback in piedi alternato tricipiti con i manubri','dumbbell standing alternating tricep kickback','manubri','tricipiti'],
+['1740-CJwa0vD','Estensioni per i tricipiti in piedi a un braccio busto piegato con i manubri','dumbbell standing bent over one arm triceps extension','manubri','tricipiti'],
+['1741-3T12T87','Estensioni per i tricipiti in piedi a due braccia busto piegato con i manubri','dumbbell standing bent over two arm triceps extension','manubri','tricipiti'],
+['1742-wOLmCXc','Kickback tricipiti stork stance con i manubri','dumbbell tricep kickback with stork stance','manubri','tricipiti'],
+['1743-z6TAHoT','Distensioni su panca con torsione con i manubri','dumbbell twisting bench press','manubri','tricipiti'],
+['1744-kprile3','Dip alle parallele exercise palla','exercise ball dip','fitball','tricipiti'],
+['1745-7ePTw4B','Allungamento exercise palla da seduto tricipiti','exercise ball seated triceps stretch','fitball','tricipiti'],
+['1746-Gm2Uv1z','Estensioni per i tricipiti exercise palla supino','exercise ball supine triceps extension','manubri','tricipiti'],
+['1747-CFN9P8G','Distensioni barra french exercise palla con il bilanciere EZ','ez bar french press on exercise ball','bilanciere EZ','tricipiti'],
+['1748-6CKUx7o','Estensioni per i tricipiti barra sdraiato dietro head presa stretta con il bilanciere EZ','ez bar lying close grip triceps extension behind head','bilanciere EZ','tricipiti'],
+['1749-1cTf2Ux','Distensioni barra in piedi french con il bilanciere EZ','ez bar standing french press','bilanciere EZ','tricipiti'],
+['1750-Al3tP0D','Palla supino petto throw con la palla medica','medicine ball supine chest throw','palla medica','tricipiti'],
+['1751-bndCa3Q','Pin presses con il bilanciere','barbell pin presses','bilanciere','tricipiti'],
+['1752-o8aOcrz','Estensioni per i tricipiti a macchina su panca inclinata al multipower','smith machine incline tricep extension','multipower','tricipiti'],
+['1753-DQ0cqkT','Dip alle parallele three su panca','three bench dip','corpo libero','tricipiti'],
+['1754-gtO1ErP','Three su panca dips con sovraccarico','weighted three bench dips','con sovraccarico','tricipiti'],
+['1755-bZq4bwK','Tricipiti dips con sovraccarico','weighted tricep dips','con sovraccarico','tricipiti'],
+['1756-gEyURal','Stacco da terra a una gamba con il bilanciere','barbell single leg deadlift','bilanciere','glutei'],
+['1757-gKozT8X','Stacco da terra a una gamba con i manubri','dumbbell single leg deadlift','manubri','glutei'],
+['1758-aumB2IV','Sit-up assistito','assisted sit-up','assistito','addome'],
+['1759-nqs5HGV','Squat pistol a una gamba','single leg squat (pistol) male','corpo libero','glutei'],
+['1760-yn8yg1r','Squat goblet con i manubri','dumbbell goblet squat','manubri','quadricipiti'],
+['1761-BaE7O6U','Sollevamento appeso oblique ginocchio','hanging oblique knee raise','corpo libero','addome'],
+['1763-YtgD7Xq','Trazioni spalla grip','shoulder grip pull-up','corpo libero','dorso (gran dorsale)'],
+['1764-VEcJRo2','Sollevamento appeso gamba anca','hanging leg hip raise','corpo libero','addome'],
+['1765-Iptlv6x','Tirate al mento con i manubri','dumbbell upright row (back pov)','manubri','spalle'],
+['1766-ZSY3MsL','Leg curl self assistito inverse','self assisted inverse leg curl','corpo libero','femorali'],
+['1767-K1vlode','Dip alle parallele tricipiti alto parallel bars con sovraccarico','weighted triceps dip on high parallel bars','con sovraccarico','tricipiti'],
+['1769-gscGLOU','Curl laterale sdraiato bicipiti a corpo libero','bodyweight side lying biceps curl','corpo libero','bicipiti'],
+['1770-sJFIDIp','Curl concentrato bicipiti gamba','biceps leg concentration curl','corpo libero','bicipiti'],
+['1771-s0HKO2I','Estensioni per i tricipiti in ginocchio a corpo libero','bodyweight kneeling triceps extension','corpo libero','tricipiti'],
+['1772-wbUYILZ','Piegamenti elbow lift - inverso','elbow lift - reverse push-up','corpo libero','dorso (alto)'],
+['1773-bKWbrTA','Rematore towel a un braccio','one arm towel row','corpo libero','dorso (alto)'],
+['1774-WL4EmxJ','Ponte laterale anca abduction','side bridge hip abduction','corpo libero','abduttori'],
+['1775-VO2qeJg','Plank laterale anca adduction','side plank hip adduction','corpo libero','adduttori'],
+['2133-qPEzJjA','Camminata farmers','farmers walk','manubri','quadricipiti'],
+['2135-VBAWRPG','Plank frontale con sovraccarico','weighted front plank','con sovraccarico','addome'],
+['2136-BqgCRif','Distensioni cuban con i manubri','dumbbell cuban press v. 2','manubri','spalle'],
+['2137-Xy4jlWA','Distensioni arnold con i manubri','dumbbell arnold press','manubri','spalle'],
+['2138-H1PESYI','Corsa stationary bike','stationary bike run v. 3','cyclette','cardio'],
+['2139-pAIWRGu','Mani bike','hands bike','ergometro braccia','petto'],
+['2141-rjtuP6X','Camminata elliptical cross trainer','walk elliptical cross trainer','ellittica','cardio'],
+['2142-vpQaQkH','Ski ergometer','ski ergometer','skierg','tricipiti'],
+['2143-RSOsp5d','In piedi around world con i manubri','dumbbell standing around world','manubri','spalle'],
+['2144-nIR4Rwl','Distensioni da seduto petto ai cavi','cable seated chest press','cavi','petto'],
+['2186-CQHoDm0','Estensioni per i tricipiti su panca declinata con il bilanciere EZ','ez barbell decline triceps extension','bilanciere EZ','tricipiti'],
+['2187-YqJw82s','Distensioni su panca inverso presa stretta con il bilanciere','barbell reverse close-grip bench press','bilanciere','tricipiti'],
+['2188-kont8Ut','Estensioni per i tricipiti da seduto con i manubri','dumbbell seated triceps extension','manubri','tricipiti'],
+['2189-FQXdXzY','Estensioni per i tricipiti dumbbells da seduto','dumbbells seated triceps extension','manubri','tricipiti'],
+['2202-oMypNrz','Allungamento roller anca','roller hip stretch','rullo','glutei'],
+['2203-8coXSYU','Roller da seduto spalla flexor depresor retractor','roller seated shoulder flexor depresor retractor','rullo','petto'],
+['2204-XeMvLgE','Roller body saw','roller body saw','rullo','addome'],
+['2205-0L2KwtI','Allungamento roller anca lat','roller hip lat stretch','rullo','glutei'],
+['2206-SKXQAx3','Crunch roller inverso','roller reverse crunch','rullo','addome'],
+['2207-c3Pfhti','Allungamento roller laterale lat','roller side lat stretch','rullo','dorso (gran dorsale)'],
+['2208-isofgzg','Allungamento roller schiena','roller back stretch','rullo','schiena'],
+['2209-CjETvlw','Roller da seduto spalla flexor depresor retractor a una gamba','roller seated single leg shoulder flexor depresor retractor','rullo','petto'],
+['2271-hoXt6wv','Left hook. boxing','left hook. boxing','corpo libero','spalle'],
+['2285-4U7iLb5','Pullover a macchina','lever pullover','macchina','dorso (gran dorsale)'],
+['2286-OPqShYN','Estensioni anca a macchina','lever hip extension v. 2','macchina','glutei'],
+['2287-V07qpXy','Leg press alternato a macchina','lever alternate leg press','macchina','quadricipiti'],
+['2288-mKwcrHn','Gripper mani a macchina','lever gripper hands','macchina','avambracci'],
+['2289-7B4F5nZ','Distensioni polpaccio a macchina','lever calf press','macchina','polpacci'],
+['2292-mu5Guxt','Alzate posteriori con i manubri','dumbbell rear delt raise','manubri','spalle'],
+['2293-P2nRiUa','Curl alla panca Scott in piedi zottman con i manubri','dumbbell standing zottman preacher curl','manubri','bicipiti'],
+['2294-y5U5B9Y','Curl alla panca Scott zottman con i manubri','dumbbell zottman preacher curl','manubri','bicipiti'],
+['2297-Gn5FwYT','Crunch palla completo range mani dietro head con la fitball','stability ball crunch (full range hands behind head)','fitball','addome'],
+['2298-Mxa7Cr8','Rematore inverted su panca','inverted row on bench','corpo libero','dorso (alto)'],
+['2300-VPPtusI','Rematore inverted piegato ginocchia','inverted row bent knees','corpo libero','dorso (alto)'],
+['2311-j9Q5crt','Walking stepmill','walking on stepmill','stepper','cardio'],
+['2312-AQIhRjM','Sdraiato elbow ginocchio','lying elbow to knee','corpo libero','addome'],
+['2315-MrgP9L6','Rotary polpaccio a macchina','lever rotary calf','macchina','polpacci'],
+['2317-JzQbv7J','Alzate laterali da seduto piegato braccio con i manubri','dumbbell seated bent arm lateral raise','manubri','spalle'],
+['2318-dNFYIU1','Distensioni sopra la testa a macchina','lever shoulder press v. 3','macchina','spalle'],
+['2321-vKilzz3','Curl in piedi inner bicipiti con i manubri','dumbbell standing inner biceps curl v. 2','manubri','bicipiti'],
+['2327-Nh3mvOO','Rematore presa inversa con i manubri','dumbbell reverse grip row (female)','manubri','dorso (alto)'],
+['2328-4cWjYEN','Piegamenti presa stretta exercise palla','narrow push-up on exercise ball','fitball','tricipiti'],
+['2329-2jl9K55','Torsione spine','spine twist','corpo libero','addome'],
+['2330-LEprlgG','Lat machine lat completo range motion ai cavi','cable lat pulldown full range of motion','cavi','dorso (gran dorsale)'],
+['2331-XSCHmiI','Cycle cross trainer','cycle cross trainer','macchina','cardio'],
+['2333-PXTIwgu','Braccio slingers appeso a gambe tese gambe','arm slingers hanging straight legs','corpo libero','addome'],
+['2334-g376LuL','Distensioni sdraiato polpaccio alla pressa','sled lying calf press','pressa a slitta','polpacci'],
+['2335-Ie9UGty','Distensioni da seduto polpaccio a macchina','lever seated calf press','macchina','polpacci'],
+['2355-uWpxD4v','Braccio slingers appeso piegato ginocchio gambe','arm slingers hanging bent knee legs','corpo libero','addome'],
+['2363-O2K9Vb5','Dip alle parallele petto alto parallel bars presa larga','wide-grip chest dip on high parallel bars','corpo libero','petto'],
+['2364-PnZJIrk','Dip alle parallele petto in ginocchio presa larga assistito','assisted wide-grip chest dip (kneeling)','macchina','petto'],
+['2368-9E25EOx','Split squats','split squats','corpo libero','quadricipiti'],
+['2371-YIUAtYf','Russian twist con sovraccarico','weighted russian twist v. 2','con sovraccarico','addome'],
+['2397-5vfAI0I','Distensioni scott con i manubri','dumbbell scott press','manubri','spalle'],
+['2398-v3vLFW0','Piegamenti ginocchia presa stretta','close-grip push-up (on knees)','corpo libero','tricipiti'],
+['2399-UEjSrKI','Torsione da seduto ai cavi','cable seated twist','cavi','addome'],
+['2400-0rHfvy9','Leg curl inverse pull-up ai cavi a macchina','inverse leg curl (on pull-up cable machine)','corpo libero','femorali'],
+['2401-nlJsbkW','Curl bicipiti braccio blaster con i manubri','dumbbell biceps curl (with arm blaster)','manubri','bicipiti'],
+['2402-GNhAeJ0','Hammer curls braccio blaster con i manubri','dumbbell hammer curls (with arm blaster)','manubri','bicipiti'],
+['2403-CfKsRbG','Curl alternato bicipiti braccio blaster con i manubri','dumbbell alternate biceps curl (with arm blaster)','manubri','bicipiti'],
+['2404-tJ5nYqo','Curl ez-bar bicipiti braccio blaster','ez-bar biceps curl (with arm blaster)','bilanciere EZ','bicipiti'],
+['2405-OxJk1fg','Pushdown tricipiti braccio blaster con il triangolo ai cavi','cable triceps pushdown (v-bar) (with arm blaster)','cavi','tricipiti'],
+['2406-ThKP69G','Pushdown tricipiti sz-bar braccio blaster presa inversa ai cavi','cable reverse grip triceps pushdown (sz-bar) (with arm blaster)','cavi','tricipiti'],
+['2407-aee2Fcj','Curl bicipiti braccio blaster con il bilanciere','barbell biceps curl (with arm blaster)','bilanciere','bicipiti'],
+['2414-vsMcDi9','Curl concentrato in piedi con il bilanciere','barbell standing concentration curl','bilanciere','bicipiti'],
+['2429-FFRP97T','Crunch frog','frog crunch','corpo libero','addome'],
+['2432-da4cXST','Distensioni su panca ez-bar presa stretta','ez-bar close-grip bench press','bilanciere EZ','tricipiti'],
+['2459-oZjMu1t','Tire flip','tire flip','pneumatico','glutei'],
+['2462-LQFOrMn','Dip alle parallele petto a gambe tese barra','chest dip on straight bar','corpo libero','petto'],
+['2464-ZgwWBoC','Rematore thibaudeau kayak ai cavi','cable thibaudeau kayak row','cavi','dorso (gran dorsale)'],
+['2466-9c6T1YX','Mountain climber bridge - cross body','bridge - mountain climber (cross body)','corpo libero','addome'],
+['2470-Ion0XWz','Alzate posteriori a terra con i manubri','dumbbell lying on floor rear delt raise','manubri','spalle'],
+['2567-QY39eBr','Allungamento da seduto piriformis','seated piriformis stretch','corpo libero','glutei'],
+['2571-2Dk4xQV','Allungamento rocking frog','rocking frog stretch','corpo libero','glutei'],
+['2611-9KU9TYF','Distensioni horizontal a una gamba a macchina','lever horizontal one leg press','macchina','glutei'],
+['2612-e1e76I2','Con salto corda','jump rope','corda','cardio'],
+['2616-4c9BhzB','Lat machine laterale con il triangolo ai cavi','cable lateral pulldown with v-bar','cavi','dorso (gran dorsale)'],
+['2705-7RWNjiB','Sdraiato pronation a terra con i manubri','dumbbell lying pronation on floor','manubri','avambracci'],
+['2706-rEhi2o5','Sdraiato supination a terra con i manubri','dumbbell lying supination on floor','manubri','avambracci'],
+['2736-ky8FLU8','Lat machine laterale presa inversa a macchina','lever reverse grip lateral pulldown','macchina','dorso (gran dorsale)'],
+['2741-OVTZ65k','Curl ez-barbell in piedi bicipiti presa larga','ez-barbell standing wide grip biceps curl','bilanciere EZ','bicipiti'],
+['2796-gFyFj9z','Affondo step-up con i manubri','dumbbell step-up lunge','manubri','quadricipiti'],
+['2798-RYcV1kH','Squat con salto step posteriore lunge con il bilanciere','barbell squat jump step rear lunge','bilanciere','quadricipiti'],
+['2799-G7xoEzr','Sollevamento gambe sitted alternato con il bilanciere','barbell sitted alternate leg raise','bilanciere','addome'],
+['2800-BCs0G2F','Sollevamento gambe sitted alternato con il bilanciere','barbell sitted alternate leg raise (female)','bilanciere','addome'],
+['2801-yT9tk17','Sollevamento gambe twisted','twisted leg raise (female)','corpo libero','addome'],
+['2802-C0eCeEt','Sollevamento gambe twisted','twisted leg raise','corpo libero','addome'],
+['2803-r5DgrW9','Squat supported con i manubri','dumbbell supported squat','manubri','quadricipiti'],
+['2805-daBmy1Y','Stacco da terra stepbox support a una gamba con i manubri','dumbbell single leg deadlift with stepbox support','manubri','glutei'],
+['2808-BmrwWzo','Sumo pull through con i manubri','dumbbell sumo pull through','manubri','glutei'],
+['2810-HBYyX94','Split squat con il bilanciere','barbell split squat v. 2','bilanciere','quadricipiti'],
+['2812-QjE2DcA','Split squat step-up con i manubri','dumbbell step-up split squat','manubri','quadricipiti'],
+['2963-weoDEpH','Sollevamento gambe captains chair a gambe tese','captains chair straight leg raise','corpo libero','addome'],
+['2987-Gk1r408','Trazioni presa supina dip cage presa stretta con sovraccarico','weighted close grip chin-up on dip cage','con sovraccarico','dorso (gran dorsale)'],
+['3006-0xDpB4L','Con l\'elastico da seduto anca abduction con l\'elastico','resistance band seated hip abduction','elastico','abduttori'],
+['3007-Y1MsI1l','Leg extension con l\'elastico con l\'elastico','resistance band leg extension','elastico','quadricipiti'],
+['3010-nDK1HJ0','Pullover barra sdraiato piegato braccia con il bilanciere EZ','ez bar lying bent arms pullover','bilanciere EZ','dorso (gran dorsale)'],
+['3011-GdMa1ET','Piegamenti su panca inclinata scapula','incline scapula push up','corpo libero','dentato anteriore'],
+['3012-7xeukSt','Scapula dips','scapula dips','corpo libero','trapezi'],
+['3013-u0cNiij','Ponte per i glutei basso a terra','low glute bridge on floor','corpo libero','glutei'],
+['3016-g2oKspu','Curl-up','curl-up','corpo libero','addome'],
+['3017-r0z6xzQ','Rematore pendlay con il bilanciere','barbell pendlay row','bilanciere','dorso (alto)'],
+['3019-mExgrF9','Su panca pull-ups','bench pull-ups','corpo libero','dorso (gran dorsale)'],
+['3021-jV65tKx','Piegamenti scapula','scapula push-up','corpo libero','dentato anteriore'],
+['3116-ZH68exZ','Lat machine fixed schiena underhand con l\'elastico','band fixed back underhand pulldown','elastico','dorso (gran dorsale)'],
+['3117-4LoWllp','Lat machine fixed schiena presa stretta con l\'elastico','band fixed back close grip pulldown','elastico','dorso (gran dorsale)'],
+['3119-75Bgtjy','Squat potty','potty squat','corpo libero','addome'],
+['3122-S93zLTG','Distensioni sopra la testa con l\'elastico da seduto con l\'elastico','resistance band seated shoulder press','elastico','spalle'],
+['3123-XFc3vpY','Curl con l\'elastico da seduto bicipiti con l\'elastico','resistance band seated biceps curl','elastico','bicipiti'],
+['3124-4x5Okof','Distensioni con l\'elastico da seduto petto con l\'elastico','resistance band seated chest press','elastico','petto'],
+['3132-b63ZzGe','Squat potty support','potty squat with support','corpo libero','glutei'],
+['3142-dzz6BiV','Squat sumo al multipower','smith sumo squat','multipower','glutei'],
+['3144-Nu7jqFE','Rematore con l\'elastico da seduto a gambe tese schiena con l\'elastico','resistance band seated straight back row','elastico','dorso (alto)'],
+['3145-pvBMLHA','Piegamenti plus','push-up plus','corpo libero','petto'],
+['3147-NKJ8o6x','Pelvic tilt','pelvic tilt','corpo libero','addome'],
+['3156-v2DfH14','Rematore in piedi a un braccio presa stretta a corpo libero','bodyweight standing close-grip one arm row','corpo libero','dorso (alto)'],
+['3158-tig3PXb','Rematore in piedi presa stretta a corpo libero','bodyweight standing close-grip row','corpo libero','dorso (alto)'],
+['3161-O4oIqQD','Rematore in piedi towel a un braccio a corpo libero','bodyweight standing one arm row (with towel)','corpo libero','dorso (alto)'],
+['3162-xbkPfaw','Rematore in piedi a un braccio a corpo libero','bodyweight standing one arm row','corpo libero','dorso (alto)'],
+['3165-uTv34oq','Rematore in piedi towel a corpo libero','bodyweight standing row (with towel)','corpo libero','dorso (alto)'],
+['3166-wd4ds3s','Rematore in piedi a corpo libero','bodyweight standing row','corpo libero','dorso (alto)'],
+['3167-BReCuOn','Rematore squatting towel a corpo libero','bodyweight squatting row (with towel)','corpo libero','dorso (alto)'],
+['3168-3xK09Sk','Rematore squatting a corpo libero','bodyweight squatting row','corpo libero','dorso (alto)'],
+['3193-Vvwjz6N','Sollevamento glute-ham','glute-ham raise','corpo libero','femorali'],
+['3194-bdWcbaU','Squat frankenstein','frankenstein squat','bilanciere','glutei'],
+['3195-UXpKJoq','Leg curl sdraiato two-one a macchina','lever lying two-one leg curl','macchina','femorali'],
+['3200-LuBEORI','Rematore busto piegato con il triangolo a macchina','lever bent-over row with v-bar','macchina','dorso (alto)'],
+['3201-enxnJcM','Sit-up quarter','quarter sit-up','corpo libero','addome'],
+['3202-iQ241UP','Sit-up mezzo','half sit-up (male)','corpo libero','addome'],
+['3203-mgejmGP','Sit-up prisoner mezzo','prisoner half sit-up (male)','corpo libero','addome'],
+['3204-NAkmgdx','Sit-up braccia sopra la testa completo','arms overhead full sit-up (male)','corpo libero','addome'],
+['3211-ZOuKWir','Piegamenti in ginocchio','kneeling push-up (male)','corpo libero','petto'],
+['3212-BbfB8Gb','Basic toe touch','basic toe touch (male)','corpo libero','glutei'],
+['3213-WCAvOfC','Side-to-side toe touch','side-to-side toe touch (male)','corpo libero','addome'],
+['3214-RtyAsy1','Braccia apart circular toe touch','arms apart circular toe touch (male)','corpo libero','glutei'],
+['3215-yq3GAJX','Mani reversed clasped circular toe touch','hands reversed clasped circular toe touch (male)','corpo libero','glutei'],
+['3216-7E06s6d','Piegamenti petto tap','chest tap push-up (male)','corpo libero','petto'],
+['3217-epOSYUZ','Piegamenti modified hindu','modified hindu push-up (male)','corpo libero','petto'],
+['3218-B5xca8s','Mani clasped circular toe touch','hands clasped circular toe touch (male)','corpo libero','glutei'],
+['3219-Eh2v5Iu','Scissor jumps','scissor jumps (male)','corpo libero','cardio'],
+['3220-f9lVSSI','Astride jumps','astride jumps (male)','corpo libero','cardio'],
+['3221-ia6kIIl','Mezzo ginocchio bends','half knee bends (male)','corpo libero','cardio'],
+['3222-6FMU51h','Squat semi con salto','semi squat jump (male)','corpo libero','cardio'],
+['3223-HtfCpfi','Star con salto','star jump (male)','corpo libero','cardio'],
+['3224-1g5bPpA','Jack con salto','jack jump (male)','corpo libero','cardio'],
+['3231-p195zsJ','A due toe touch','two toe touch (male)','corpo libero','schiena'],
+['3234-P9ZRyLT','Croci hyght con i manubri','hyght dumbbell fly','manubri','petto'],
+['3235-zHEpuuc','Leg curl assistito inverse ai cavi','cable assisted inverse leg curl','cavi','femorali'],
+['3236-Pjbc0Kt','Con l\'elastico anca thrusts ginocchia con l\'elastico','resistance band hip thrusts on knees (female)','elastico','glutei'],
+['3237-eXMFHww','Alzate laterali landmine','landmine lateral raise','bilanciere','spalle'],
+['3239-h1ezqSu','Plank in ginocchio tap spalla','kneeling plank tap shoulder (male)','corpo libero','addome'],
+['3240-j74M6Zn','Calf raise exercise palla al muro tennis between ginocchia','exercise ball on the wall calf raise (tennis ball between knees)','manubri','polpacci'],
+['3241-FY3UdNT','Calf raise exercise palla al muro tennis between ankles','exercise ball on the wall calf raise (tennis ball between ankles)','manubri','polpacci'],
+['3281-NNoHCEA','Squat completo al multipower','smith full squat','multipower','glutei'],
+['3286-JsOV1SU','Muscle con sovraccarico','weighted muscle up','con sovraccarico','dorso (gran dorsale)'],
+['3287-LkoAWAE','Elbow dips','elbow dips','corpo libero','tricipiti'],
+['3288-rWoBmi5','Korean dips','korean dips','corpo libero','petto'],
+['3289-05Cf2v8','Impossible dips','impossible dips','corpo libero','tricipiti'],
+['3290-fXfqg1E','Trazioni a un hand con sovraccarico','weighted one hand pull up','con sovraccarico','dorso (gran dorsale)'],
+['3291-zd4P4B2','Distensioni stalder','stalder press','corpo libero','tricipiti'],
+['3292-zYmNaoY','Elevator','elevator','corpo libero','dorso (alto)'],
+['3293-72BC5Za','Trazioni archer','archer pull up','corpo libero','dorso (gran dorsale)'],
+['3294-A9qxk2F','Piegamenti archer','archer push up','corpo libero','petto'],
+['3295-hbY9wqG','Frontale a macchina reps','front lever reps','corpo libero','dorso (alto)'],
+['3296-PkCN2lv','Frontale a macchina','front lever','corpo libero','addome'],
+['3297-GaSzzuh','Schiena a macchina','back lever','corpo libero','dorso (alto)'],
+['3298-BL3GHeY','Straddle planche','straddle planche','corpo libero','addome'],
+['3299-YZ4961r','Completo planche','full planche','corpo libero','addome'],
+['3300-LYJodFS','Lean planche','lean planche','corpo libero','addome'],
+['3301-rQhGcin','Frog planche','frog planche','corpo libero','addome'],
+['3302-XooAdhl','Handstand','handstand','corpo libero','tricipiti'],
+['3303-pQ0Mx1Z','Flag','flag','corpo libero','addome'],
+['3304-MSfvriJ','Skin cat','skin the cat','corpo libero','dorso (alto)'],
+['3305-f7Y9eDZ','Thruster con il bilanciere','barbell thruster','bilanciere','spalle'],
+['3312-MCkqdKE','Muscle barra con sovraccarico','weighted muscle up (on bar)','con sovraccarico','dorso (gran dorsale)'],
+['3313-Ff18ItA','Dip alle parallele a gambe tese barra con sovraccarico','weighted straight bar dip','con sovraccarico','petto'],
+['3314-HfqciZF','Straddle maltese','straddle maltese','corpo libero','addome'],
+['3315-YRaCa5Y','Completo maltese','full maltese','corpo libero','addome'],
+['3318-tnaj0mT','Swing 360','swing 360','corpo libero','cardio'],
+['3327-gw9PqGk','Piegamenti completo planche','full planche push-up','corpo libero','petto'],
+['3360-0Yz8WdV','Bear crawl','bear crawl','corpo libero','cardio'],
+['3361-zfNHMN9','Skater hops','skater hops','corpo libero','cardio'],
+['3418-d1GgzTU','L-pull-up','l-pull-up','corpo libero','dorso (gran dorsale)'],
+['3419-UpWmA5E','L-sit a terra','l-sit on floor','corpo libero','addome'],
+['3420-ZuXu4Eq','V-sit a terra','v-sit on floor','corpo libero','addome'],
+['3433-SP3hUez','Swimmer kicks','swimmer kicks v. 2 (male)','corpo libero','glutei'],
+['3470-kMzUs9Y','Affondo forward','forward lunge (male)','corpo libero','glutei'],
+['3523-aWedzZX','Ponte per i glutei su panca a due gambe','glute bridge two legs on bench (male)','corpo libero','glutei'],
+['3533-6YUfHPL','Quads','quads','corpo libero','quadricipiti'],
+['3541-PbzNu7c','Su panca inclinata y-raise con i manubri','dumbbell incline y-raise','manubri','dorso (alto)'],
+['3542-jgbvVJ0','Su panca inclinata t-raise con i manubri','dumbbell incline t-raise','manubri','spalle'],
+['3543-wfotm7S','Squat drop con salto a corpo libero','bodyweight drop jump squat','corpo libero','glutei'],
+['3544-5VXmnV5','Plank su panca inclinata laterale a corpo libero','bodyweight incline side plank','corpo libero','addome'],
+['3545-TVdivgY','Distensioni su panca inclinata alternato con i manubri','dumbbell incline alternate press','manubri','petto'],
+['3546-q7qkONO','Da seduto alternato spalla con i manubri','dumbbell seated alternate shoulder','manubri','spalle'],
+['3547-OeL23VY','Distensioni sopra la testa da seduto bicipiti curl con i manubri','dumbbell seated biceps curl to shoulder press','manubri','bicipiti'],
+['3548-mWBtgmb','Sopra la testa carry a un braccio con i manubri','dumbbell single arm overhead carry','manubri','spalle'],
+['3552-mweqJin','Quick feet','quick feet v. 2','corpo libero','quadricipiti'],
+['3560-LeaZOIz','Hammer curl in piedi alternato press con i manubri','dumbbell standing alternate hammer curl and press','manubri','bicipiti'],
+['3561-GibBPPg','Ponte per i glutei march','glute bridge march','corpo libero','glutei'],
+['3562-qg2PGl6','Ponte per i glutei su panca a due gambe con il bilanciere','barbell glute bridge two legs on bench (male)','bilanciere','glutei'],
+['3563-U5INZY6','Lat machine a un braccio ai cavi','cable one arm pulldown','cavi','dorso (gran dorsale)'],
+['3582-PM1PZjg','Affondo con salto','lunge with jump','corpo libero','glutei'],
+['3635-ecl28tP','Affondo contralateral forward con i manubri','dumbbell contralateral forward lunge','manubri','glutei'],
+['3636-ealLwvX','Alto ginocchio against al muro','high knee against wall','corpo libero','cardio'],
+['3637-km2Ljzj','Corsa wheel','wheel run','corpo libero','cardio'],
+['3638-PrQbjvB','Corsa push','push to run','corpo libero','cardio'],
+['3639-6sYyrRX','Torsione piegato ginocchio sdraiato','bent knee lying twist (male)','corpo libero','glutei'],
+['3640-dTg95eZ','Crunch ginocchio touch','knee touch crunch','corpo libero','addome'],
+['3641-7uFJuXp','In ginocchio step swing con sovraccarico','weighted kneeling step with swing','con sovraccarico','spalle'],
+['3642-13VW2VO','Affondo stretch con sovraccarico','weighted stretch lunge','con sovraccarico','glutei'],
+['3643-GWoKnIm','Cossack squats con sovraccarico','weighted cossack squats (male)','con sovraccarico','glutei'],
+['3644-5WiFcYk','Affondo swing con sovraccarico','weighted lunge with swing','con sovraccarico','glutei'],
+['3645-rmEukuS','Ponte outstretched gamba a una gamba','single leg bridge with outstretched leg','corpo libero','glutei'],
+['3655-J9zIWig','Affondo walking alto ginocchia','walking high knees lunge','corpo libero','cardio'],
+['3656-CcWEoWV','Corsa short stride','short stride run','corpo libero','cardio'],
+['3662-XPUDTt7','Piegamenti pike-to-cobra','pike-to-cobra push-up','corpo libero','glutei'],
+['3663-tFToB7l','Plank inverso gamba lift','reverse plank with leg lift','corpo libero','addome'],
+['3664-X6ytgYZ','Croci laterale plank posteriore con i manubri','dumbbell side plank with rear fly','manubri','dorso (alto)'],
+['3665-hCjGsRQ','Plank power point','power point plank','corpo libero','addome'],
+['3666-rjiM4L3','Walking sul tapis roulant in salita','walking on incline treadmill','macchina','cardio'],
+['3667-c8f5cSY','Laterale sdraiato anca adduction','side lying hip adduction (male)','corpo libero','adduttori'],
+['3669-JF8AkMX','In piedi archer','standing archer','corpo libero','dorso (alto)'],
+['3670-EZeDVzO','Sit-up su panca declinata con sovraccarico','weighted decline sit-up','con sovraccarico','addome'],
+['3671-5MRH8H2','Ski step','ski step','corpo libero','cardio'],
+['3672-fNGumX0','Schiena forth step','back and forth step','corpo libero','cardio'],
+['3679-6ZCiYWQ','Sit-up braccia petto','sit-up with arms on chest','corpo libero','addome'],
+['3697-G61cXLk','Rematore per il deltoide posteriore in ginocchio con la corda ai cavi','cable kneeling rear delt row (with rope) (male)','cavi','spalle'],
+['3698-TV87DNB','Inchworm','inchworm v. 2','corpo libero','addome'],
+['3699-yRpV5TC','Spalla tap','shoulder tap','corpo libero','addome'],
+['3758-WbNq5Xu','Distensioni in piedi petto a macchina','lever standing chest press','macchina','petto'],
+['3759-XsCcxCC','Good morning da seduto a macchina','lever seated good morning','macchina','glutei'],
+['3760-eXFXCY0','Crunch da seduto a macchina','lever seated crunch v. 2','macchina','addome'],
+['3769-gUjqdei','Squat curtsey','curtsey squat','corpo libero','glutei'],
+['3785-F7vjXqT','Piegamenti su panca inclinata box','incline push-up (on box)','corpo libero','petto'],
+['3888-6pTkI99','Snatch a un braccio con i manubri','dumbbell one arm snatch','manubri','glutei'],
+['5201-KOpzGBL','Curl waiter bicipiti con i manubri','dumbbell waiter biceps curl','manubri','bicipiti']
+];
+
+/* [media, nome, nome inglese, attrezzo, muscolo] */
+function libVoce(r) {
+  return { media: r[0], id: 'x:' + r[0], nome: r[1], en: r[2], attrezzo: r[3], muscolo: r[4] };
+}
+
+/* L'indirizzo dell'animazione di un esercizio fuori scheda. E' l'unico punto
+   in cui l'app chiede qualcosa alla rete per la parte allenamento: senza
+   connessione resta il nome, e le serie si registrano lo stesso. */
+function libGif(media) {
+  return 'https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/videos/' + media + '.gif';
+}
+
+/* Ricerca: sull'italiano e sull'inglese insieme, perche' sulle macchine in
+   palestra c'e' scritto l'inglese. Tutte le parole devono comparire, in
+   qualunque ordine: "curl manubri inclinata" deve funzionare. */
+function libCerca(q, filtro, limite) {
+  var par = (q || '').toLowerCase().split(/\s+/).filter(Boolean);
+  var out = [];
+  for (var i = 0; i < LIB.length && out.length < (limite || 40); i++) {
+    var r = LIB[i];
+    if (filtro && r[3] !== filtro) continue;
+    var testo = (r[1] + ' ' + r[2] + ' ' + r[3] + ' ' + r[4]).toLowerCase();
+    var tutte = true;
+    for (var j = 0; j < par.length; j++) {
+      if (testo.indexOf(par[j]) < 0) { tutte = false; break; }
+    }
+    if (tutte) out.push(libVoce(r));
+  }
+  return out;
+}
+
+function libAttrezzi() {
+  var visti = {}, out = [];
+  LIB.forEach(function (r) { if (!visti[r[3]]) { visti[r[3]] = 1; out.push(r[3]); } });
+  return out.sort();
+}
+
+if (false) module.exports = { LIB: LIB, libCerca: libCerca };
 
 
 /* ===== esercizi.js ===== */
@@ -4586,7 +6008,7 @@ var KEY = 'palestra_v1';
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmu37oty3';
+var BUILD = 'vmu37u61j';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -4604,6 +6026,7 @@ var S = {
   log: {},        // { 'AAAA-MM-GG': { giorno:'A', serie: { 'panca-piana': [{kg,rip,fatto,t}] } } }
   diario: {},     // { 'AAAA-MM-GG': { dolore, reflusso, note, bagno: [{h,b,d,u}], integratori: [{id,n,h}] } }
   ultimo: {},     // { 'panca-piana': [{kg,rip}] } ultima prestazione per esercizio
+  exExtra: {},    // { 'x:0318-abc': {nome, en, media, attrezzo, muscolo} } esercizi aggiunti fuori scheda
   prodotti: {},   // { '8000500310427': {n,marca,k,pr,c,f,fi,u,ean} } archivio dei codici a barre
   vista: 'home', ctx: {}
 };
@@ -4614,7 +6037,7 @@ function load() {
     if (!raw) return;
     var d = JSON.parse(raw);
     for (var k in d) {
-      if (d[k] === undefined || k === 'vista' || k === 'ctx') continue;
+      if (d[k] === undefined || k === 'vista' || k === 'ctx' || k === 'v') continue;
       if (k === 'profilo') {
         /* il profilo si fonde, non si sostituisce: un salvataggio fatto con una
            versione precedente non deve cancellare i campi aggiunti dopo */
@@ -4672,10 +6095,11 @@ function datiDaSalvare() {
     log: S.log,
     diario: S.diario,
     ultimo: S.ultimo,
-    prodotti: S.prodotti
+    prodotti: S.prodotti,
+    exExtra: S.exExtra
   };
 }
-var CHIAVI_DATI = ['profilo', 'log', 'diario', 'ultimo', 'prodotti'];
+var CHIAVI_DATI = ['profilo', 'log', 'diario', 'ultimo', 'prodotti', 'exExtra'];
 
 /* Se il salvataggio fallisce l'utente DEVE saperlo: prima la cosa passava in
    silenzio e ci si accorgeva dei dati persi solo alla riapertura. */
@@ -4815,6 +6239,9 @@ function inizioCiclo() {
     d = S.log[date[i]];
     vere = 0;
     for (var ex in (d.serie || {})) {
+      /* gli esercizi aggiunti a mano non fanno partire il ciclo: una giornata
+         di solo allenamento libero non e' la prima seduta della scheda */
+      if (ex.indexOf('x:') === 0 || ex.indexOf('l:') === 0) continue;
       (d.serie[ex] || []).forEach(function (s) { if (s && s.fatto && s.kg) vere++; });
     }
     if (vere >= 3) return date[i];
@@ -4987,8 +6414,9 @@ function rampa(kgLavoro, n, passo) {
 /* Il passo di arrotondamento dipende dall'attrezzo: i manubri esistono di
    chilo in chilo, i dischi del bilanciere no. */
 function descrizioneAttrezzo(exId) {
-  var ex = ESERCIZI[exId] || {};
-  return ((ex.setup || []).map(function (r) { return r[1]; }).join(' ') + ' ' + (ex.nome || '')).toLowerCase();
+  var ex = esercizioDi(exId) || {};
+  return ((ex.setup || []).map(function (r) { return r[1]; }).join(' ') + ' ' +
+          (ex.attrezzo || '') + ' ' + (ex.nome || '')).toLowerCase();
 }
 function passoCarico(exId) {
   return /manubri|manubrio/.test(descrizioneAttrezzo(exId)) ? 1 : 2.5;
@@ -5125,7 +6553,7 @@ function render() {
     /* le viste di dettaglio hanno bisogno del contesto: se manca si torna alla scheda
        invece di lasciare la schermata bloccata */
     if (v === 'giorno' && !giornoDi(S.ctx.giorno)) v = 'home';
-    if (v === 'esercizio' && (!giornoDi(S.ctx.giorno) || !ESERCIZI[S.ctx.ex])) v = 'home';
+    if (v === 'esercizio' && (!giornoDi(S.ctx.giorno) || !esercizioDi(S.ctx.ex))) v = 'home';
 
     if (v === 'home') h = vHome();
     else if (v === 'giorno') h = vGiorno();
@@ -5133,6 +6561,7 @@ function render() {
     else if (v === 'nutrizione') h = vNutrizione();
     else if (v === 'ricetta') h = vRicetta();
     else if (v === 'extra') h = vExtra();
+    else if (v === 'libreria') h = vLibreria();
     else if (v === 'diario') h = vDiario();
     else if (v === 'progressi') h = vProgressi();
     else if (v === 'impostazioni') h = vImpostazioni();
@@ -5287,7 +6716,7 @@ function volumiSettimanali() {
   var v = {};
   giorniCorrenti().forEach(function (g) {
     g.esercizi.forEach(function (e) {
-      var ex = ESERCIZI[e.ex]; if (!ex) return;
+      var ex = esercizioDi(e.ex); if (!ex) return;
       /* conteggio frazionale: le serie contano intere sul gruppo primario
          e a meta' sui gruppi coinvolti indirettamente */
       v[ex.gruppo] = (v[ex.gruppo] || 0) + e.serie;
@@ -5327,7 +6756,7 @@ function apriFoto(id) {
   if (!g) return;
   /* i movimenti del riscaldamento non sono esercizi della scheda: non hanno
      una voce in ESERCIZI, e il nome va preso da GIF_FONTE o dalla chiave */
-  var ex = ESERCIZI[id];
+  var ex = esercizioDi(id);
   var nome = ex ? ex.nome : ((GIF_FONTE[id] && GIF_FONTE[id][1]) || id);
   chiudiLente();
   var n = el('<div class="lente"><img src="' + g + '" alt="' + esc(nome) + '">' +
@@ -5411,12 +6840,12 @@ function vGiorno() {
   }
 
   var bloccoCorrente = null;
-  eserciziDi(g).forEach(function (e, i) {
-    var ex = ESERCIZI[e.ex];
+  eserciziDiOggi(g).forEach(function (e, i) {
+    var ex = esercizioDi(e.ex);
     if (!ex) return;
     if (e.blocco && e.blocco !== bloccoCorrente) {
       bloccoCorrente = e.blocco;
-      var quante = eserciziDi(g).filter(function (x) { return x.blocco === e.blocco; }).length;
+      var quante = eserciziDiOggi(g).filter(function (x) { return x.blocco === e.blocco; }).length;
       /* Gli addominali sono un blocco a parte: facoltativi, in coda e fuori dal
          tempo dichiarato. Va detto qui, non solo nella scheda di ognuno. */
       var core = e.blocco === 'Addominali';
@@ -5442,15 +6871,211 @@ function vGiorno() {
       (fatte ? '<div class="state">' + fatte + '/' + nS + '</div>' : '<div class="chev">›</div>') +
       '</div>';
   });
+  /* Quello che si fa in piu' rispetto alla scheda: prima non si poteva
+     registrare, e quelle serie sparivano. */
+  h += '<button class="agg" id="agg-ex">+ Aggiungi un esercizio a oggi</button>';
+  h += '<p class="dim">Per una macchina che era libera, un esercizio a corpo libero o una ' +
+       'variante: finisce in fondo alla giornata e si registra come gli altri.</p>';
   h += '</main>';
   return h;
+}
+
+/* ---------- esercizi fuori scheda (versione 10) ----------
+   In palestra capita di fare altro: una macchina libera, un esercizio a corpo
+   libero, una variante. Prima non si potevano registrare, e quelle serie
+   sparivano — con il risultato che i Progressi raccontavano meno di quello che
+   era successo davvero.
+
+   Come sono tenuti:
+   - la PRESCRIZIONE del giorno sta in S.log[data].extra (sta con la giornata);
+   - le SERIE eseguite in S.log[data].serie['x:<media>'], cioe' nella stessa
+     struttura di sempre: storico, Progressi e durate reali funzionano senza
+     modifiche;
+   - il NOME resta in S.exExtra, un registro a parte, perche' ESERCIZI non li
+     contiene e senza quello i Progressi li mostrerebbero come 'undefined'
+     dopo qualche mese.
+   La chiave ha il prefisso 'x:' (dal dataset) o 'l:' (scritto a mano), cosi'
+   non puo' mai collidere con gli id della scheda. */
+
+function logDi(d, creaSeManca) {
+  if (!S.log[d] && creaSeManca) S.log[d] = { giorno: null, serie: {} };
+  return S.log[d] || null;
+}
+
+function extraDi(d) {
+  var l = S.log[d];
+  return (l && l.extra) || [];
+}
+
+/* Un esercizio qualunque per id: prima la scheda, poi il registro degli extra.
+   Le voci costruite qui hanno gli stessi campi che vEsercizio() si aspetta. */
+function esercizioDi(id) {
+  if (ESERCIZI[id]) return ESERCIZI[id];
+  var r = S.exExtra && S.exExtra[id];
+  if (!r) return null;
+  return {
+    nome: r.nome, gruppo: r.gruppo || 'Aggiunto', target: r.muscolo || '',
+    en: r.en, media: r.media, extra: true,
+    setup: r.attrezzo ? [['Attrezzo', r.attrezzo]] : null,
+    tecnica: null, errori: null, alternativa: null
+  };
+}
+
+function eserciziDiOggi(g) {
+  /* eserciziDi() resta com'era: la durata stimata della seduta e il volume
+     settimanale devono continuare a parlare della scheda, non di quello che
+     si aggiunge una sera. */
+  return eserciziDi(g).concat(extraDi(oggi()).map(function (e) {
+    return { ex: e.ex, serie: e.serie, rip: e.rip, rir: e.rir, rec: e.rec,
+             blocco: 'Aggiunti oggi', opzionale: true, extra: true };
+  }));
+}
+
+function aggiungiExtra(voce, serie, rip, rec) {
+  var d = oggi();
+  var l = logDi(d, true);
+  if (!l.extra) l.extra = [];
+  if (!S.exExtra) S.exExtra = {};
+  S.exExtra[voce.id] = {
+    nome: voce.nome, en: voce.en, media: voce.media,
+    attrezzo: voce.attrezzo, muscolo: voce.muscolo,
+    gruppo: voce.muscolo ? voce.muscolo.charAt(0).toUpperCase() + voce.muscolo.slice(1) : 'Aggiunto'
+  };
+  if (!extraDi(d).some(function (e) { return e.ex === voce.id; })) {
+    l.extra.push({ ex: voce.id, serie: serie || 3, rip: rip || '8-12',
+                   rir: '1-2', rec: rec || '90 sec' });
+  }
+  save();
+}
+
+function togliExtra(id) {
+  var l = S.log[oggi()];
+  if (!l || !l.extra) return;
+  l.extra = l.extra.filter(function (e) { return e.ex !== id; });
+  /* le serie gia' registrate NON si cancellano: se lo rimette, le ritrova.
+     Se non ne ha registrata nessuna, la voce sparisce e basta. */
+  save();
+}
+
+/* ---------- vista libreria ---------- */
+function vLibreria() {
+  var q = S.ctx.q || '';
+  var filtro = S.ctx.filtro || '';
+  var h = testata('Aggiungi un esercizio', 'cercalo fra ' + LIB.length + ' esercizi', 'giorno');
+  h += '<main>';
+  h += '<div class="hint">Serve per quello che fai <b>in più</b> rispetto alla scheda: una ' +
+       'macchina che era libera, un esercizio a corpo libero, una variante. Finisce in fondo alla ' +
+       'giornata di oggi e lo registri come gli altri.</div>';
+  h += '<input class="cerca" id="lib-q" placeholder="curl, panca, polpacci, squat..." value="' +
+       esc(q) + '" autocomplete="off">';
+
+  var rapidi = ['corpo libero', 'manubri', 'bilanciere', 'cavi', 'macchina', 'multipower'];
+  h += '<div class="filtri">' + rapidi.map(function (a) {
+    return '<button class="pill' + (filtro === a ? ' on' : '') + '" data-filtro="' + esc(a) + '">' +
+           esc(a) + '</button>';
+  }).join('') + '</div>';
+
+  if (!q && !filtro) {
+    h += '<p class="dim">Scrivi almeno due lettere, oppure scegli un attrezzo qui sopra.</p>';
+  } else if (q.length < 2 && !filtro) {
+    h += '<p class="dim">Ancora una lettera…</p>';
+  } else {
+    var ris = libCerca(q, filtro, 40);
+    if (!ris.length) {
+      h += '<p class="dim">Niente con queste parole. Prova con il nome inglese ' +
+           '(«incline curl»), oppure aggiungilo a mano qui sotto.</p>';
+    }
+    h += '<div class="lib-ris">' + ris.map(function (v) {
+      return '<button class="lib-r" data-lib="' + esc(v.media) + '">' +
+        '<b>' + esc(v.nome) + '</b>' +
+        '<i>' + esc(v.en) + '</i>' +
+        '<span class="tagrow"><span class="tag">' + esc(v.attrezzo) + '</span>' +
+        '<span class="tag hi">' + esc(v.muscolo) + '</span></span></button>';
+    }).join('') + '</div>';
+  }
+
+  h += '<h2>Non lo trovi?</h2>';
+  h += '<div class="card"><label class="field"><span>Scrivilo tu</span>' +
+       '<input id="lib-mio" placeholder="es. Rematore con elastico a casa"></label>' +
+       '<button class="primary" id="lib-mio-ok">Aggiungi alla giornata</button></div>';
+  h += '</main>';
+  return h;
+}
+
+function collegaLibreria() {
+  var q = document.getElementById('lib-q');
+  if (q) {
+    q.oninput = function () {
+      S.ctx.q = q.value;
+      var pos = q.selectionStart;
+      render();
+      var n = document.getElementById('lib-q');
+      /* render() riscrive tutto: senza questo il cursore tornerebbe in fondo
+         a ogni lettera e la tastiera si chiuderebbe */
+      if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} }
+    };
+  }
+  document.querySelectorAll('[data-filtro]').forEach(function (b) {
+    b.onclick = function () {
+      S.ctx.filtro = (S.ctx.filtro === b.dataset.filtro) ? '' : b.dataset.filtro;
+      render();
+    };
+  });
+  document.querySelectorAll('[data-lib]').forEach(function (b) {
+    b.onclick = function () {
+      var v = null;
+      LIB.forEach(function (r) { if (r[0] === b.dataset.lib) v = libVoce(r); });
+      if (!v) return;
+      S.ctx.scelto = v;
+      pannelloExtra(v);
+    };
+  });
+  var mio = document.getElementById('lib-mio-ok');
+  if (mio) mio.onclick = function () {
+    var n = (document.getElementById('lib-mio').value || '').trim();
+    if (!n) return;
+    var v = { id: 'l:' + n.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40),
+              media: null, nome: n, en: '', attrezzo: '', muscolo: '' };
+    aggiungiExtra(v, 3, '8-12', '90 sec');
+    toast(n + ' aggiunto a oggi');
+    S.vista = 'giorno'; S.ctx = { giorno: S.ctx.giorno }; render();
+  };
+}
+
+/* Pannello serie x ripetizioni prima di aggiungere: gli stessi valori che
+   l'app propone per gli esercizi della scheda, cosi' non si parte da zero. */
+function pannelloExtra(v) {
+  var vecchio = document.querySelector('.pannello');
+  if (vecchio) vecchio.remove();
+  var n = el('<div class="pannello"><div class="pan-in">' +
+    '<b>' + esc(v.nome) + '</b>' +
+    '<p class="dim">' + esc(v.en) + ' · ' + esc(v.attrezzo) + '</p>' +
+    '<div class="pan-riga">' +
+      '<label>Serie<input type="number" id="pe-serie" value="3" min="1" max="10"></label>' +
+      '<label>Ripetizioni<input id="pe-rip" value="8-12"></label>' +
+      '<label>Recupero<input id="pe-rec" value="90 sec"></label>' +
+    '</div>' +
+    '<button class="primary" id="pe-ok">Aggiungi alla giornata di oggi</button>' +
+    '<button class="link" id="pe-no">Annulla</button>' +
+    '</div></div>');
+  document.body.appendChild(n);
+  document.getElementById('pe-no').onclick = function () { n.remove(); };
+  document.getElementById('pe-ok').onclick = function () {
+    aggiungiExtra(v,
+      parseInt(document.getElementById('pe-serie').value, 10) || 3,
+      document.getElementById('pe-rip').value || '8-12',
+      document.getElementById('pe-rec').value || '90 sec');
+    n.remove();
+    toast(v.nome + ' aggiunto a oggi');
+    S.vista = 'giorno'; S.ctx = { giorno: S.ctx.giorno }; render();
+  };
 }
 
 /* ---------- esercizio ---------- */
 function vEsercizio() {
   var g = giornoDi(S.ctx.giorno);
-  var e = eserciziDi(g).filter(function (x) { return x.ex === S.ctx.ex; })[0];
-  var ex = ESERCIZI[e.ex];
+  var e = eserciziDiOggi(g).filter(function (x) { return x.ex === S.ctx.ex; })[0];
+  var ex = esercizioDi(e.ex);
   var nSerie = serieDi(e);
   var h = testata(ex.nome, nSerie + ' × ' + e.rip + ' · RIR ' + e.rir, 'giorno');
   h += '<main>';
@@ -5463,7 +7088,17 @@ function vEsercizio() {
          '<img src="' + anim + '" alt="' + esc(ex.nome + ' — il movimento completo') + '">' +
          '<figcaption><b>Il movimento</b><span>in rosso il muscolo che lavora</span>' +
          '</figcaption></figure></div>';
+  } else if (ex.media) {
+    /* Esercizio aggiunto dalla libreria: l'animazione non e' dentro l'app (le
+       1324 peserebbero 128 MB) e si scarica al momento. Senza rete resta il
+       riquadro con la spiegazione: le serie si registrano lo stesso. */
+    h += '<div class="movimento"><figure data-zoom="' + e.ex + '">' +
+         '<img src="' + libGif(ex.media) + '" alt="' + esc(ex.nome) + '" loading="lazy" ' +
+         'data-gif-cdn="1">' +
+         '<figcaption><b>Il movimento</b><span class="serve-rete">se non compare, serve la ' +
+         'connessione: si scarica una volta sola e poi resta</span></figcaption></figure></div>';
   }
+  if (ex.en) h += '<p class="dim en-nome">In inglese: <b>' + esc(ex.en) + '</b></p>';
 
   /* Il video sta subito sotto l'animazione: e' li' che guardi come si fa,
      prima di mettere le mani sul bilanciere. Richiede la rete, il resto no. */
@@ -5576,11 +7211,23 @@ function vEsercizio() {
       }).join('') + '</table></div>';
   }
 
-  h += '<h2>Esecuzione</h2><ul class="tech">' +
-       ex.tecnica.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
-  h += '<h2>Errori da evitare</h2><ul class="tech err">' +
-       ex.errori.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
-  h += '<details><summary>Se la macchina è occupata</summary><div>' + esc(ex.alternativa) + '</div></details>';
+  if (ex.tecnica) {
+    h += '<h2>Esecuzione</h2><ul class="tech">' +
+         ex.tecnica.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
+  }
+  if (ex.errori) {
+    h += '<h2>Errori da evitare</h2><ul class="tech err">' +
+         ex.errori.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
+  }
+  if (ex.alternativa) {
+    h += '<details><summary>Se la macchina è occupata</summary><div>' + esc(ex.alternativa) + '</div></details>';
+  }
+  if (ex.extra) {
+    h += '<div class="note">Questo esercizio lo hai aggiunto tu: non fa parte della scheda, quindi ' +
+         'non ha la scheda tecnica degli altri e non entra nel volume settimanale programmato. ' +
+         'Le serie invece si registrano e valgono come tutte le altre.</div>';
+    h += '<button class="link" id="ex-via">Togli questo esercizio da oggi</button>';
+  }
 
 
   if (prec.length) {
@@ -6646,7 +8293,7 @@ function durateReali() {
     SCHEDA.blocchi.forEach(function (b) {
       b.giorni.forEach(function (x) { if (x.id === S.log[d].giorno && !g) g = x; });
     });
-    out.push({ data: d, giorno: g ? g.nome : 'Seduta ' + (S.log[d].giorno || '?'),
+    out.push({ data: d, giorno: g ? g.nome : (S.log[d].giorno ? 'Seduta ' + S.log[d].giorno : 'Allenamento libero'),
                min: min, stima: g ? durataSeduta(g) : null });
   });
   return out;
@@ -6698,7 +8345,7 @@ function vProgressi() {
   var ids = Object.keys(S.ultimo);
   if (!ids.length) h += '<p class="dim">Ancora nessuna serie registrata. Compare qui appena completi il primo esercizio.</p>';
   ids.forEach(function (id) {
-    var ex = ESERCIZI[id]; if (!ex) return;
+    var ex = esercizioDi(id); if (!ex) return;
     var s = S.ultimo[id];
     var best = s.reduce(function (a, x) { return Math.max(a, x.kg || 0); }, 0);
     h += '<div class="card"><b style="font-size:14.5px">' + esc(ex.nome) + '</b>' +
@@ -6992,11 +8639,33 @@ function collega() {
     n.onclick = function (ev) { ev.stopPropagation(); apriFoto(n.dataset.zoom); };
   });
 
+  /* Aggiungi un esercizio: apre la libreria tenendo da parte la giornata,
+     cosi' dopo l'aggiunta si torna dove si era. */
+  var ag = document.getElementById('agg-ex');
+  if (ag) ag.onclick = function () { applica('libreria', { giorno: S.ctx.giorno, q: '', filtro: '' }); };
+
+  var via = document.getElementById('ex-via');
+  if (via) via.onclick = function () {
+    togliExtra(S.ctx.ex);
+    toast('Tolto da oggi');
+    applica('giorno', { giorno: S.ctx.giorno });
+  };
+
+  /* L'animazione scaricata dalla rete puo' non arrivare: lo si dice, invece di
+     lasciare un riquadro vuoto. */
+  document.querySelectorAll('[data-gif-cdn]').forEach(function (im) {
+    im.onerror = function () {
+      var f = im.parentNode;
+      if (f) f.classList.add('senza-rete');
+    };
+  });
+
   /* i recuperi delle serie di avvicinamento: durate diverse da quelle di lavoro */
   document.querySelectorAll('[data-rec]').forEach(function (b) {
     b.onclick = function (ev) { ev.stopPropagation(); avviaTimer(+b.dataset.rec); };
   });
 
+  if (S.vista === 'libreria') collegaLibreria();
   if (S.vista === 'esercizio') collegaEsercizio();
   if (S.vista === 'nutrizione') collegaNutrizione();
   if (S.vista === 'diario') collegaDiario();
@@ -7006,8 +8675,8 @@ function collega() {
 
 function collegaEsercizio() {
   var g = giornoDi(S.ctx.giorno);
-  var e = eserciziDi(g).filter(function (x) { return x.ex === S.ctx.ex; })[0];
-  var ex = ESERCIZI[e.ex];
+  var e = eserciziDiOggi(g).filter(function (x) { return x.ex === S.ctx.ex; })[0];
+  var ex = esercizioDi(e.ex);
 
   /* riepilogo sempre visibile di quante serie risultano registrate oggi */
   function aggiornaContatore() {
