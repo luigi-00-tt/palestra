@@ -21,6 +21,9 @@ Home del telefono e funziona anche senza rete.
   da soli. I valori arrivano da [Open Food Facts](https://world.openfoodfacts.org/); se un
   prodotto non c'è, si inseriscono a mano una volta sola e restano nell'archivio personale.
   Per gli alimenti sfusi c'è un elenco di 281 voci con i valori delle tabelle CREA.
+- **Dispensa**: che cosa c'è in casa, in che quantità e quando scade, aggiunto con lo stesso
+  lettore di codici a barre del diario. Da lì l'app propone le ricette che si possono davvero
+  fare con quello che c'è, mettendo davanti quelle che consumano i prodotti in scadenza.
 - **Progressi**: carichi per esercizio, volume settimanale per gruppo muscolare e durata reale
   delle sedute.
 
@@ -48,10 +51,14 @@ immagini non lasciano il dispositivo: vengono analizzate dal browser e basta.
 - Le **ricette** vengono da due parti, e la differenza è scritta dentro l'app.
   Una parte è **scritta per questo progetto**, con le grammature esatte e i valori calcolati
   sommando gli ingredienti con le tabelle CREA.
-  Le altre vengono dall'**archivio pubblico di [gamberorosso.it](https://www.gamberorosso.it/ricette/)**,
-  letto dalla loro API pubblica: qui di ognuna ci sono il nome del piatto, l'elenco degli
-  ingredienti e **il link alla pagina originale**, dove si legge il procedimento.
-  **Il testo del procedimento non è ripubblicato su questo sito**: è materiale redazionale loro.
+  Le altre vengono dall'**archivio di [gamberorosso.it](https://www.gamberorosso.it/ricette/)**,
+  letto dalla loro API pubblica: nome del piatto, ingredienti, procedimento e fotografia, con
+  **il link alla pagina originale su ogni ricetta**.
+  Testo e fotografie di quelle ricette **sono del Gambero Rosso** e stanno qui per **uso
+  personale** di chi usa l'app, con il rimando alla fonte. Questo non è un sito di ricette e
+  non vuole esserlo: è escluso dai motori di ricerca (`robots.txt` e `noindex`), non ha
+  pubblicità e non ha lettori. Se il Gambero Rosso preferisce che non ci siano, si tolgono:
+  il punto da cui toglierli è segnato nel codice (`__GR_PROC__` in `app/build.js`).
   La classificazione per il colon irritabile — il semaforo, il motivo ingrediente per
   ingrediente, i rimedi — e i valori nutrizionali sono invece calcolati e scritti in questo
   progetto, con le tabelle CREA e la rassegna di letteratura che sta alla base dell'app.
