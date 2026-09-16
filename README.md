@@ -20,7 +20,7 @@ Home del telefono e funziona anche senza rete.
   browser): si scansiona la confezione, si scrivono i grammi e i macronutrienti si calcolano
   da soli. I valori arrivano da [Open Food Facts](https://world.openfoodfacts.org/); se un
   prodotto non c'è, si inseriscono a mano una volta sola e restano nell'archivio personale.
-  Per gli alimenti sfusi c'è un elenco di 158 voci con i valori delle tabelle CREA.
+  Per gli alimenti sfusi c'è un elenco di 281 voci con i valori delle tabelle CREA.
 - **Progressi**: carichi per esercizio, volume settimanale per gruppo muscolare e durata reale
   delle sedute.
 
@@ -45,8 +45,16 @@ immagini non lasciano il dispositivo: vengono analizzate dal browser e basta.
 - Le **fotografie dei piatti** vengono da **Wikimedia Commons**, solo con licenze che ne
   permettono la ridistribuzione (pubblico dominio, CC0, CC BY, CC BY-SA). Autore e licenza di
   ogni singola foto sono elencati dentro l'app, in *Impostazioni → Da dove vengono le immagini*.
-- Le ricette sono **scritte per questo progetto**: nessun testo è ripreso da siti o libri di
-  cucina. I valori nutrizionali sono calcolati sommando gli ingredienti con le tabelle CREA.
+- Le **ricette** vengono da due parti, e la differenza è scritta dentro l'app.
+  Una parte è **scritta per questo progetto**, con le grammature esatte e i valori calcolati
+  sommando gli ingredienti con le tabelle CREA.
+  Le altre vengono dall'**archivio pubblico di [gamberorosso.it](https://www.gamberorosso.it/ricette/)**,
+  letto dalla loro API pubblica: qui di ognuna ci sono il nome del piatto, l'elenco degli
+  ingredienti e **il link alla pagina originale**, dove si legge il procedimento.
+  **Il testo del procedimento non è ripubblicato su questo sito**: è materiale redazionale loro.
+  La classificazione per il colon irritabile — il semaforo, il motivo ingrediente per
+  ingrediente, i rimedi — e i valori nutrizionali sono invece calcolati e scritti in questo
+  progetto, con le tabelle CREA e la rassegna di letteratura che sta alla base dell'app.
 - Le fotografie degli esercizi usate fino alla versione 9 venivano da
   [free-exercise-db](https://github.com/yuhonas/free-exercise-db), pubblico dominio
   (licenza Unlicense); il file è ancora nel progetto ma non fa più parte dell'app.
