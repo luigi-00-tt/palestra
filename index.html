@@ -3522,7 +3522,7 @@ if (false) module.exports = ESERCIZI;
    ============================================================ */
 
 var SCHEDA = {
-  versione: '2.0',
+  versione: '3.0',
   nome: 'Full body 3× — priorità braccia',
   settimanePerBlocco: 6,      // la sesta è di scarico
   settimanaScarico: 6,
@@ -3532,7 +3532,7 @@ var SCHEDA = {
   target: {
     Bicipiti: [12, 17], Tricipiti: [12, 17],
     Petto: [8, 12], Dorso: [8, 12], Spalle: [8, 12],
-    Quadricipiti: [5, 9], Femorali: [3, 6], Glutei: [2, 4], Polpacci: [4, 6]
+    Quadricipiti: [5, 9], Femorali: [4, 6], Glutei: [4, 6], Polpacci: [4, 6]
   },
 
   blocchi: [
@@ -3550,19 +3550,19 @@ var SCHEDA = {
                 'l\'ipertrofia, ma il blocco gambe fa da stacco fra la lat machine e i curl, ' +
                 'e ci arrivi con il bicipite riposato.',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '6-8', rir: '2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'],
+            { avvicinamento: 3, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '6-8', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'],
               nota: 'Primo esercizio della settimana: qui cerchi il carico.' },
-            { ex: 'lat-machine', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '2', rec: '2-3 min', indiretti: ['Bicipiti'] },
-            { avvicinamento: 2, ex: 'leg-press', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '2', rec: '3 min', indiretti: ['Glutei'],
+            { ex: 'lat-machine', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Bicipiti'] },
+            { avvicinamento: 2, ex: 'leg-press', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1-2', rec: '3 min', indiretti: ['Glutei'],
               nota: 'Ferma la discesa prima che il bacino si stacchi: oltre quel punto comprimi l\'addome e favorisci il reflusso. La pressa resta comunque preferibile allo squat pesante: 161 mmHg di pressione addominale di picco contro 219. È l\'unico esercizio in cui i 3 minuti pieni di recupero sono ripagati da un dato sperimentale.' },
             { ex: 'calf-seduto', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '0-1', rec: '60 sec',
               nota: 'Subito dopo la pressa: stessa zona della palestra, nessuno spostamento.' },
             { ex: 'incline-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '90 sec',
               tecnica_speciale: 'capo lungo in allungamento',
-              nota: 'È l\'esercizio più importante della tua settimana per il bicipite: la spalla estesa mette il capo lungo in allungamento massimo. Carichi leggeri, posizione perfetta.' },
+              nota: 'Il bicipite lavora con la spalla estesa, quindi più allungato. Onestà sui dati: l\'idea che questo faccia crescere di più la parte alta del bicipite poggia su uno studio su donne non allenate con differenze di un decimo di centimetro (Kassiano 2025), e lo studio più controllato, del 2026, non trova nessuna differenza fra spalla estesa e neutra (Larsen 2026). Resta un ottimo curl, non l\'esercizio decisivo: carichi leggeri, posizione perfetta.' },
             { ex: 'overhead-extension', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '1', rec: '90 sec',
               tecnica_speciale: 'capo lungo del tricipite', superset: 'in superserie con il curl, se vuoi finire prima',
-              nota: 'Il capo lungo cresce circa il 40% in più con il braccio sopra la testa. Ultima serie: 3-4 ripetizioni parziali in basso quando non chiudi più il movimento completo.' },
+              nota: 'Nell\'unico confronto diretto il tricipite è cresciuto del 19,9% con il braccio sopra la testa contro il 13,5% con il pushdown, su 21 persone non allenate (Maeo 2023): è il dato più forte a favore del lavoro in allungamento, e per questo l\'overhead ha più serie del pushdown. Ultima serie: 3-4 ripetizioni parziali in basso quando non chiudi più il movimento completo.' },
             { ex: 'alzate-laterali', blocco: 'Spalle', serie: 3, rip: '12-15', rir: '0-1', rec: '1 min' }
           ]
         },
@@ -3572,13 +3572,13 @@ var SCHEDA = {
                 'pushdown senza pausa fra i due: mentre lavora un muscolo l\'altro recupera, e ' +
                 'togli una decina di minuti alla seduta.',
           esercizi: [
-            { avvicinamento: 3, ex: 'shoulder-press', blocco: 'Spalle', serie: 3, rip: '6-8', rir: '2', rec: '2-3 min', indiretti: ['Tricipiti'],
+            { avvicinamento: 3, ex: 'shoulder-press', blocco: 'Spalle', serie: 3, rip: '6-8', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti'],
               nota: 'Seduto con schienale, non in piedi: riduce la pressione addominale e quindi il rischio di reflusso.' },
-            { ex: 'chest-supported-row', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '2', rec: '2-3 min', indiretti: ['Bicipiti'],
+            { ex: 'chest-supported-row', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Bicipiti'],
               nota: 'Il petto appoggiato sostituisce il rematore con manubrio piegato in avanti: stesso stimolo sul dorso senza la posizione che scatena il reflusso.' },
             { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1', rec: '90 sec' },
-            { ex: 'hip-thrust', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '1', rec: '2 min', indiretti: ['Femorali'],
-              nota: 'Accorpato al leg curl per non tornare due volte nella zona gambe.' },
+            { ex: 'hip-thrust', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1', rec: '2 min', indiretti: ['Femorali'],
+              nota: 'Accorpato al leg curl per non tornare due volte nella zona gambe. Tre serie e non due: glutei e femorali stavano sulla soglia minima efficace, 4 serie frazionarie a settimana (Pelland 2025); con la terza la superano entrambi, e costa due minuti e mezzo.' },
             { ex: 'preacher-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '90 sec',
               tecnica_speciale: 'brachiale e porzione distale',
               nota: 'Complementare all\'incline curl: qui il picco di carico è nella parte bassa e colpisce il brachiale, il muscolo che spinge in fuori il bicipite.' },
@@ -3594,9 +3594,9 @@ var SCHEDA = {
                 'esercizi di fila. Se il tempo stringe, taglia le alzate o i polpacci, mai bicipiti ' +
                 'e tricipiti.',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-inclinata-manubri', blocco: 'Petto', serie: 3, rip: '8-10', rir: '2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'],
+            { avvicinamento: 3, ex: 'panca-inclinata-manubri', blocco: 'Petto', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'],
               nota: 'Inclinazione 30 gradi, mai declinata: la panca declinata mette la testa sotto il livello dello stomaco ed è uno dei trigger più diretti del reflusso.' },
-            { ex: 'pulley-basso', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '2', rec: '2-3 min', indiretti: ['Bicipiti'] },
+            { ex: 'pulley-basso', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Bicipiti'] },
             { ex: 'leg-extension', blocco: 'Gambe', serie: 3, rip: '10-15', rir: '1', rec: '90 sec' },
             { ex: 'calf-seduto', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '0-1', rec: '60 sec' },
             { ex: 'curl-cavo-basso', blocco: 'Braccia', serie: 3, rip: '10-15', rir: '0-1', rec: '90 sec',
@@ -3622,9 +3622,9 @@ var SCHEDA = {
           id: 'A', nome: 'Seduta A', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
           nota: 'Gli affondi sostituiscono la pressa: busto eretto, quindi anche meglio per il reflusso.',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-inclinata-bilanciere', blocco: 'Petto', serie: 3, rip: '6-8', rir: '2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'] },
-            { ex: 'lat-machine-neutra', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '2', rec: '2-3 min', indiretti: ['Bicipiti'] },
-            { avvicinamento: 2, ex: 'affondi', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '2', rec: '2-3 min', indiretti: ['Glutei'],
+            { avvicinamento: 3, ex: 'panca-inclinata-bilanciere', blocco: 'Petto', serie: 3, rip: '6-8', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'] },
+            { ex: 'lat-machine-neutra', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Bicipiti'] },
+            { avvicinamento: 2, ex: 'affondi', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1-2', rec: '2-3 min', indiretti: ['Glutei'],
               nota: 'Le ripetizioni sono per gamba. Se la stabilità è precaria, tienile più alte e il carico più basso.' },
             { ex: 'calf-seduto', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '0-1', rec: '60 sec' },
             { ex: 'curl-concentrato', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '90 sec',
@@ -3640,11 +3640,11 @@ var SCHEDA = {
         {
           id: 'B', nome: 'Seduta B', focus: 'Spalle · Dorso · Gambe · Braccia · Petto',
           esercizi: [
-            { avvicinamento: 3, ex: 'shoulder-press', blocco: 'Spalle', serie: 3, rip: '8-10', rir: '2', rec: '2-3 min', indiretti: ['Tricipiti'] },
-            { ex: 'rematore-mono-cavo', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '2', rec: '2 min', indiretti: ['Bicipiti'],
+            { avvicinamento: 3, ex: 'shoulder-press', blocco: 'Spalle', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti'] },
+            { ex: 'rematore-mono-cavo', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'],
               nota: 'Un braccio alla volta: più allungamento e correggi gli squilibri fra i due lati.' },
             { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '10-15', rir: '1', rec: '90 sec' },
-            { ex: 'hip-thrust', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '1', rec: '2 min', indiretti: ['Femorali'] },
+            { ex: 'hip-thrust', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1', rec: '2 min', indiretti: ['Femorali'] },
             { ex: 'incline-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '90 sec',
               tecnica_speciale: 'capo lungo in allungamento' },
             { ex: 'pushdown', blocco: 'Braccia', serie: 3, rip: '12-15', rir: '0-1', rec: '1 min',
@@ -3655,8 +3655,8 @@ var SCHEDA = {
         {
           id: 'C', nome: 'Seduta C', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '8-10', rir: '2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'] },
-            { ex: 'pulley-basso', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '2', rec: '2-3 min', indiretti: ['Bicipiti'] },
+            { avvicinamento: 3, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'] },
+            { ex: 'pulley-basso', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Bicipiti'] },
             { ex: 'leg-extension', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '90 sec' },
             { ex: 'calf-seduto', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '0-1', rec: '60 sec' },
             { ex: 'hammer-curl', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '0-1', rec: '90 sec' },
@@ -3679,8 +3679,8 @@ var SCHEDA = {
         {
           id: 'A', nome: 'Seduta A', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '5-7', rir: '2', rec: '3 min', indiretti: ['Tricipiti', 'Spalle'],
-              nota: 'Qui vai a cercare il record: ripetizioni basse, tecnica perfetta. Sono le uniche serie della seduta in cui i 3 minuti pieni servono davvero.' },
+            { avvicinamento: 3, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '6-8', rir: '1-2', rec: '3 min', indiretti: ['Tricipiti', 'Spalle'],
+              nota: 'Ripetizioni medio-basse, non un record: sotto le 6 il carico impone di trattenere il fiato, e quell\'apnea è ciò che spinge il contenuto dello stomaco verso l\'alto. Espira mentre spingi. Sono le uniche serie della seduta in cui i 3 minuti pieni servono davvero.' },
             { ex: 'trazioni', blocco: 'Dorso', serie: 3, rip: '5-10', rir: '1', rec: '2-3 min', indiretti: ['Bicipiti'],
               nota: 'Se non arrivi a 5 ripetizioni pulite usa la lat machine assistita e torna a provarle ogni settimana.' },
             { avvicinamento: 2, ex: 'leg-press', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '2-3 min', indiretti: ['Glutei'] },
@@ -3697,10 +3697,10 @@ var SCHEDA = {
         {
           id: 'B', nome: 'Seduta B', focus: 'Spalle · Dorso · Gambe · Braccia · Petto',
           esercizi: [
-            { avvicinamento: 3, ex: 'shoulder-press', blocco: 'Spalle', serie: 3, rip: '8-10', rir: '2', rec: '2-3 min', indiretti: ['Tricipiti'] },
-            { ex: 'chest-supported-row', blocco: 'Dorso', serie: 3, rip: '10-12', rir: '2', rec: '2 min', indiretti: ['Bicipiti'] },
+            { avvicinamento: 3, ex: 'shoulder-press', blocco: 'Spalle', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti'] },
+            { ex: 'chest-supported-row', blocco: 'Dorso', serie: 3, rip: '10-12', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'] },
             { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '90 sec' },
-            { ex: 'hip-thrust', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '1', rec: '2 min', indiretti: ['Femorali'] },
+            { ex: 'hip-thrust', blocco: 'Gambe', serie: 3, rip: '10-15', rir: '1', rec: '2 min', indiretti: ['Femorali'] },
             { ex: 'preacher-curl', blocco: 'Braccia', serie: 3, rip: '10-14', rir: '0-1', rec: '90 sec' },
             { ex: 'french-press', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '1', rec: '90 sec',
               superset: 'in superserie con il preacher, se vuoi finire prima' },
@@ -3710,8 +3710,8 @@ var SCHEDA = {
         {
           id: 'C', nome: 'Seduta C', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-inclinata-manubri', blocco: 'Petto', serie: 3, rip: '10-12', rir: '2', rec: '2 min', indiretti: ['Tricipiti', 'Spalle'] },
-            { ex: 'lat-machine', blocco: 'Dorso', serie: 3, rip: '10-12', rir: '2', rec: '2 min', indiretti: ['Bicipiti'] },
+            { avvicinamento: 3, ex: 'panca-inclinata-manubri', blocco: 'Petto', serie: 3, rip: '10-12', rir: '1-2', rec: '2 min', indiretti: ['Tricipiti', 'Spalle'] },
+            { ex: 'lat-machine', blocco: 'Dorso', serie: 3, rip: '10-12', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'] },
             { avvicinamento: 2, ex: 'affondi', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '1', rec: '2 min', indiretti: ['Glutei'] },
             { ex: 'calf-seduto', blocco: 'Gambe', serie: 2, rip: '12-15', rir: '0-1', rec: '60 sec' },
             { ex: 'curl-cavo-basso', blocco: 'Braccia', serie: 3, rip: '12-20', rir: '0-1', rec: '75 sec',
@@ -3913,7 +3913,7 @@ var SCHEDA = {
 
   glossario: [
     { t: 'RIR — ripetizioni in riserva',
-      d: 'E\' il numero di ripetizioni che <b>avresti ancora potuto fare</b> quando ti fermi. RIR 2 vuol dire: chiudi la serie sapendo che ne avresti fatte altre due. RIR 0 vuol dire che sei arrivato al punto in cui la ripetizione successiva non sarebbe uscita.<br><br>Serve a regolare lo sforzo senza andare sempre al massimo. Nella tua scheda trovi <b>RIR 2 sui multiarticolari</b> (panca, pressa, lat machine): li\' fermarsi due ripetizioni prima costa pochissimo in crescita e ti risparmia fatica e rischio tecnico. E <b>RIR 0-1 sugli isolamenti</b> per le braccia: li\' il costo di arrivare al limite e\' basso e il guadagno diretto.<br><br>All\'inizio sbaglierai la stima, e\' normale: quasi tutti credono di essere a RIR 1 quando ne hanno ancora 3 in canna. Per tararti, ogni tanto sull\'ultima serie di un curl vai davvero fino a non completare piu\' la ripetizione: ti accorgerai di quanto margine avevi.' },
+      d: 'E\' il numero di ripetizioni che <b>avresti ancora potuto fare</b> quando ti fermi. RIR 2 vuol dire: chiudi la serie sapendo che ne avresti fatte altre due. RIR 0 vuol dire che sei arrivato al punto in cui la ripetizione successiva non sarebbe uscita.<br><br>Serve a regolare lo sforzo senza andare sempre al massimo. Nella tua scheda trovi <b>RIR 1-2 sui multiarticolari</b> (panca, pressa, lat machine): 2 nelle prime serie, 1 nell\'ultima. Fermarsi lì costa poco in crescita e risparmia fatica e rischio tecnico. E <b>RIR 0-1 sugli isolamenti</b> per le braccia: li\' il costo di arrivare al limite e\' basso e il guadagno diretto.<br><br>All\'inizio sbaglierai la stima, e\' normale: quasi tutti credono di essere a RIR 1 quando ne hanno ancora 3 in canna. Per tararti, ogni tanto sull\'ultima serie di un curl vai davvero fino a non completare piu\' la ripetizione: ti accorgerai di quanto margine avevi.' },
 
     { t: 'Serie e ripetizioni: cosa vuol dire "3 × 8-12"',
       d: 'Il primo numero sono le <b>serie</b>: quante volte ripeti il blocco di ripetizioni, con il recupero in mezzo. Il secondo e\' il <b>range di ripetizioni</b>: 8-12 vuol dire che devi restare in quella finestra.<br><br>Se non arrivi al minimo, il peso e\' troppo. Se superi il massimo su tutte le serie, il peso e\' diventato leggero ed e\' ora di salire.' },
@@ -3931,13 +3931,13 @@ var SCHEDA = {
       d: '2-3 minuti sui multiarticolari pesanti, 60-90 secondi sugli isolamenti. E\' indicato per ogni esercizio e il timer parte da solo quando spunti una serie.<br><br>Recuperare troppo poco sui pesanti fa perdere ripetizioni nelle serie dopo, e quelle ripetizioni sono lo stimolo che cerchi.' },
 
     { t: 'Superserie e jumpset',
-      d: 'Due esercizi di fila senza recupero in mezzo. Nella tua scheda è segnata come <b>facoltativa</b> in un punto solo, dentro il blocco braccia, fra <b>bicipite e tricipite</b>: mentre lavora uno l\'altro recupera per davvero, quindi arrivi alla serie successiva senza perdere ripetizioni e togli 3-5 minuti alla seduta.<br><br>Una precisazione di onestà: nella rassegna che abbiamo costruito non c\'è uno studio che confronti direttamente superserie e serie tradizionali sull\'ipertrofia. Il ragionamento sta in piedi perché il muscolo che riposa riposa lo stesso tempo di prima, ma resta un\'inferenza pratica, non un risultato misurato: per questo è facoltativa e non nella struttura base.<br><br>Non farla mai fra due esercizi che usano lo stesso muscolo, né fra due multiarticolari pesanti.' },
+      d: 'Due esercizi di fila senza recupero in mezzo. Nella tua scheda è segnata come <b>facoltativa</b> in un punto solo, dentro il blocco braccia, fra <b>bicipite e tricipite</b>: mentre lavora uno l\'altro recupera per davvero, quindi arrivi alla serie successiva senza perdere ripetizioni e togli 3-5 minuti alla seduta.<br><br>Da settembre 2026 c\'è anche la misura: una meta-analisi di 19 studi (Zhang 2025) trova stesse ripetizioni e stesso volume delle serie tradizionali, seduta più corta e adattamenti cronici simili, al prezzo di più fatica percepita e lattato. Resta facoltativa perché è più dura, non perché sia meno efficace.<br><br>Non farla mai fra due esercizi che usano lo stesso muscolo, né fra due multiarticolari pesanti.' },
 
     { t: 'Volume e conteggio frazionario',
       d: 'Il <b>volume</b> e\' il numero di serie che un muscolo riceve in una settimana, ed e\' la variabile che piu\' determina la crescita.<br><br>Nel conteggio frazionario una serie di curl vale <b>1</b> per il bicipite, mentre una di lat machine vale <b>0,5</b>: il bicipite lavora, ma non e\' il protagonista. E\' il metodo che predice meglio i risultati ed e\' quello delle barre nella schermata principale.' },
 
     { t: 'Settimana di scarico',
-      d: 'La sesta di ogni blocco: <b>stessi carichi, meta\' delle serie</b>, dimezzate in automatico dall\'app.<br><br>Serve a smaltire la fatica e ripartire piu\' forte. Non perdi muscolo in una settimana: mantenere richiede molto meno volume che crescere.' },
+      d: 'Da settembre 2026 <b>la decidi tu</b>. La sesta settimana di ogni blocco l\'app ti chiede se la vuoi: se la attivi, stessi carichi e metà delle serie, dimezzate in automatico per quella settimana. Gli studi randomizzati non le trovano un vantaggio sulla crescita (Coleman 2024, Pancar 2026): serve a smaltire fatica quando c\'è, non a far crescere. Non perdi muscolo in una settimana leggera.' },
 
     { t: 'Cedimento',
       d: 'Il punto in cui non completi un\'altra ripetizione <b>con la tecnica corretta</b>. Se per finirla devi inarcare la schiena o slanciare, quella era gia\' la ripetizione di troppo.' }
@@ -3983,6 +3983,8 @@ var SCHEDA = {
   ],
 
   principi: [
+    { t: 'Revisione di settembre 2026: che cosa è cambiato e perché',
+      d: 'La letteratura è stata riletta da capo, con le pubblicazioni fino a settembre 2026 e senza partire da ciò che c\'era scritto. Cinque cose sono cambiate. <b>1.</b> RIR 1-2 sui multiarticolari invece di 2 fisso (Grgic 2022, Hermann 2025). <b>2.</b> Scarico su richiesta, non automatico (Coleman 2024, Pancar 2026). <b>3.</b> Hip thrust a 3 serie: glutei e femorali erano alla soglia minima efficace (Pelland 2025). <b>4.</b> Panca del Blocco 3 a 6-8 ripetizioni invece di 5-7: sotto le 6 il carico impone l\'apnea, e l\'apnea è pressione sullo stomaco. <b>5.</b> Le note sull\'incline curl dicono la verità sui dati: la prova che la spalla estesa faccia crescere di più il bicipite è debole (Larsen 2026, Varović 2025). Tutto il resto, volume, frequenza, range di ripetizioni, recuperi e cadenza, ha retto al confronto.' },
     { t: 'Perché la scheda cambia da sola ogni 6 settimane',
       d: 'Non perché il corpo "si abitui" — è un mito. Il motivo vero è che dopo qualche settimana ' +
          'la progressione sullo stesso esercizio rallenta, e cambiare angolo o attrezzo ti permette ' +
@@ -3991,10 +3993,7 @@ var SCHEDA = {
          'esercizi, non i principi. Dopo i tre blocchi si ricomincia dal primo, con i carichi ' +
          'che nel frattempo sono saliti.' },
     { t: 'La settimana di scarico',
-      d: 'La <b>sesta settimana di ogni blocco</b> è di scarico: stessi carichi, <b>metà delle ' +
-         'serie</b>. L\'app te lo dice da sola quando arriva. Sulla cadenza esatta la letteratura ' +
-         'è povera — una settimana ogni 5-6 è una convenzione pratica, non un dato sperimentale. ' +
-         'Se arrivi alla sesta settimana carico e senza cali, puoi tirare fino alla settima.' },
+      d: 'Da settembre 2026 <b>non è più automatica</b>. Due studi randomizzati l\'hanno messa alla prova: in 39 allenati una settimana di scarico a metà di un programma di 9 non ha cambiato l\'ipertrofia e ha leggermente frenato la forza (Coleman 2024); in 19 principianti due scarichi in 8 settimane non hanno né aiutato né nuociuto (Pancar 2026). Quindi lo scarico non fa crescere: serve quando serve, cioè quando i carichi sono fermi da due settimane, dormi male o arrivi in palestra svuotato. La sesta settimana di ogni blocco resta segnata come <b>momento in cui decidere</b>: l\'app te lo chiede lì, e se attivi lo scarico dimezza le serie per quella settimana, stessi carichi.' },
     { t: 'Perché gli esercizi sono raggruppati per muscolo',
       d: 'Ogni seduta è divisa in blocchi — petto, dorso, gambe, braccia, spalle — e dentro un ' +
          'blocco fai tutto quello che riguarda quel muscolo prima di passare al successivo. Non ' +
@@ -4031,31 +4030,16 @@ var SCHEDA = {
     { t: 'Perché full body e non uno split',
       d: 'A parità di volume settimanale, allenare un muscolo 1, 2 o 3 volte a settimana produce ' +
          'la stessa crescita: la frequenza serve a distribuire il volume, non è una leva di crescita ' +
-         'a sé (Schoenfeld 2019, Pelland 2024). Con 3 sedute il full body è la struttura che ti fa ' +
+         'a sé (Schoenfeld 2019, Pelland 2025). Con 3 sedute il full body è la struttura che ti fa ' +
          'allenare bicipiti e tricipiti <b>3 volte a settimana</b> invece di una. Uno split ' +
          'upper/lower su 3 giorni ti darebbe le gambe una volta e mezza a settimana e meno ' +
          'occasioni per le braccia.' },
     { t: 'Cosa cambia rispetto a quello che facevi',
-      d: 'Nelle tue schede le braccia ricevevano circa <b>6 serie dirette a settimana</b>, quasi ' +
-         'tutte in triset di fine seduta. Qui arrivano a 15-17 serie in conteggio frazionario: è la ' +
-         'zona dove la curva dose-risposta è ancora chiaramente produttiva (Pelland 2024). Il resto ' +
-         'del corpo scende a volume di mantenimento, che basta a non perdere nulla e libera ' +
-         'recupero per le braccia.' },
+      d: 'Nelle tue schede le braccia ricevevano circa <b>6 serie dirette a settimana</b>, quasi tutte in triset di fine seduta. Qui arrivano a 15-17 in conteggio frazionario. La meta-regressione di riferimento (Pelland 2025, 67 studi) dà i livelli: sotto 4 serie a settimana la crescita non è nemmeno rilevabile, fra 5 e 10 ogni serie rende molto, fra 11 e 18 rende ancora ma meno, oltre 19 sempre meno. Le braccia stanno nella fascia intermedia, che è quella giusta per una priorità; petto, dorso e spalle nella fascia alta; gambe e polpacci appena sopra la soglia minima, e per questo l\'hip thrust è passato a 3 serie, così glutei e femorali salgono a 4,5.' },
     { t: 'Perché questi esercizi per le braccia',
-      d: 'Regioni diverse dello stesso muscolo rispondono a stimoli diversi. L\'<b>incline curl</b> ' +
-         '(spalla estesa) allunga il capo lungo e fa crescere la porzione <b>alta</b> del bicipite; ' +
-         'il <b>preacher curl</b> carica la parte bassa e sviluppa brachiale e porzione ' +
-         '<b>distale</b>. Nel confronto diretto (Kassiano 2025, 63 partecipanti, 8 settimane) le ' +
-         'differenze sono di 0,08 cm sul prossimale a favore dell\'incline e 0,10 cm sul distale a ' +
-         'favore del preacher: piccole, ma in direzioni opposte — ed è il motivo per cui li teniamo ' +
-         'entrambi. Lo studio però è su donne non allenate: la direzione dell\'effetto è affidabile, ' +
-         'l\'entità sul tuo caso meno. Per il tricipite, il lavoro <b>sopra la testa</b> fa crescere ' +
-         'il capo lungo circa il 40% in più del pushdown (Maeo 2023), ma il pushdown resta per capo ' +
-         'laterale e mediale.' },
+      d: 'La regola pratica non cambia: incline curl, preacher, curl ai cavi e hammer coprono angoli e prese diverse, e una variazione sistematica di questo tipo aiuta senza danni (Kassiano 2022). Cambia quanto ci si può credere. Nel confronto diretto (Kassiano 2025, 63 donne non allenate) le differenze regionali fra incline e preacher sono di 0,08 e 0,10 cm; la meta-analisi del 2025 su lunghezza muscolare e crescita regionale trova effetti triviali, 0,05-0,09 di effetto standardizzato (Varović 2025); e nel 2026 uno studio che ha pareggiato il profilo di resistenza fra curl al cavo con spalla estesa e neutra non ha trovato differenze, in 24 uomini non allenati (Larsen 2026). Quindi l\'incline curl resta perché è un buon esercizio, non perché «fa crescere la parte alta». A favore dell\'allungamento restano due cose solide: i parziali nella metà bassa battono i parziali nella metà alta (Strey 2026, 8 studi) e il tricipite con il braccio sopra la testa è cresciuto del 19,9% contro il 13,5% del pushdown (Maeo 2023, non allenati). Per questo l\'overhead extension tiene le sue 4 serie e il pushdown resta per capo laterale e mediale.' },
     { t: 'Quanto vicino al cedimento',
-      d: 'Per l\'ipertrofia il beneficio aumenta avvicinandosi al cedimento, mentre per la forza no ' +
-         '(Robinson 2024). Quindi <b>RIR 2</b> sui multiarticolari pesanti e <b>RIR 0-1</b> sugli ' +
-         'isolamenti per le braccia, dove il costo di recupero è basso e il guadagno diretto.' },
+      d: 'Per l\'ipertrofia il beneficio aumenta avvicinandosi al cedimento, per la forza no (Robinson 2024). Negli allenati arrivare al cedimento dà un piccolo vantaggio misurabile, 0,15 di effetto (Grgic 2022), confermato nel 2025 in 42 allenati con una serie sola per esercizio (Hermann 2025): modesto, ma nella direzione giusta. Da settembre 2026 la scheda dice <b>RIR 1-2</b> sui multiarticolari, 2 nelle prime serie e 1 nell\'ultima, e <b>RIR 0-1</b> sugli isolamenti. Arrivare ogni tanto al cedimento su un rematore a petto appoggiato non è un errore; farlo su panca e shoulder press a ogni serie costa tecnica e recupero senza guadagno proporzionale.' },
     { t: 'Come progredire',
       d: 'Doppia progressione: resti sullo stesso carico finché non chiudi <b>tutte</b> le serie al ' +
          'massimo del range; allora sali (+2,5 kg sui bilancieri, +1-2 kg sui manubri) e riparti dal ' +
@@ -4083,25 +4067,13 @@ var NUTRIZIONE = {
     'nella cartella letteratura/. Non sono una diagnosi né una terapia. Il dolore addominale dopo la ' +
     'defecazione e il reflusso ricorrente meritano l\'inquadramento di un gastroenterologo, anche per ' +
     'escludere celiachia, intolleranza al lattosio, SIBO e malattie infiammatorie intestinali, che hanno ' +
-    'criteri diagnostici precisi. La dieta low FODMAP va condotta con un dietista e mai prolungata a ' +
+    'criteri diagnostici precisi. La frequenza urinaria e i risvegli notturni per urinare vanno inquadrati dal medico di base o dall\'urologo. La dieta low FODMAP va condotta con un dietista e mai prolungata a ' +
     'tempo indefinito.',
 
   sezioni: [
     {
       titolo: 'Una cosa da chiedere al gastroenterologo',
-      testo: 'Il fastidio che arriva <b>dopo</b> aver finito, non prima, ha un riscontro preciso in ' +
-             'letteratura: la <b>dissinergia del pavimento pelvico</b> è presente nel <b>41% dei ' +
-             'pazienti con IBS</b> contro il 5% dei controlli, e si accompagna spesso a ipersensibilità ' +
-             'rettale. Nel tuo sottotipo, l\'alvo diarroico, la percentuale sale al <b>39%</b>. ' +
-             'Non è una diagnosi che si possa fare dai sintomi: serve una manometria anorettale.<br><br>' +
-             'Vale però la pena nominarla alla visita, perché se fosse quello si tratta con il ' +
-             '<b>biofeedback</b>, efficace nel 70-80% dei casi e raccomandato come prima scelta — una ' +
-             'strada diversa da qualsiasi modifica alimentare, che nessuna dieta potrebbe sostituire.' +
-             '<br><br><i>Una precisazione onesta: gli studi sull\'efficacia del biofeedback sono stati ' +
-             'condotti soprattutto su pazienti con stipsi, non con alvo diarroico come il tuo. Che il ' +
-             'problema meccanico sia frequente anche nell\'IBS-D è documentato; che il biofeedback ' +
-             'funzioni altrettanto bene in questo sottotipo è un\'estrapolazione ragionevole ma non ' +
-             'ancora verificata direttamente.</i>'
+      testo: 'Il fastidio che arriva <b>dopo</b> aver finito, non prima, ha più di un riscontro in letteratura, e conviene portarli tutti alla visita.<br><br><b>1. Dissinergia del pavimento pelvico.</b> Presente nel <b>41%</b> dei pazienti con IBS contro il 5% dei controlli, <b>39%</b> nell\'alvo diarroico <span class="fonte">[C04]</span>: il pavimento pelvico non si rilassa bene durante l\'evacuazione e lascia una sensazione di svuotamento incompleto e uno spasmo residuo. Si verifica con la <b>manometria anorettale</b> e il test di espulsione del palloncino; se c\'è, si tratta con il <b>biofeedback</b>, efficace nel 70-80% dei casi <span class="fonte">[C31, C32]</span>.<br><br><b>2. Ipersensibilità rettale.</b> Il <b>94%</b> dei pazienti con IBS percepisce come dolorosa una distensione del retto che gli altri non sentono <span class="fonte">[C54]</span>: dopo la scarica retto e colon si contraggono ancora per qualche minuto, e in chi è ipersensibile quella contrazione fa male.<br><br><b>3. Dolore anorettale funzionale (Roma IV).</b> Se il dolore dura <b>più di 30 minuti</b> e peggiora da seduto si chiama sindrome dell\'elevatore dell\'ano; se dura pochi minuti ed è raro, proctalgia fugax. Nel primo caso il medico lo riconosce toccando il muscolo puborettale, e il biofeedback funziona in oltre il 90% dei casi nel breve periodo <span class="fonte">[C53]</span>.<br><br><b>Un collegamento che vale la pena nominare.</b> Colon e vescica condividono i nervi sensitivi: chi ha l\'IBS ha una probabilità <b>2,4 volte</b> maggiore di avere una vescica iperattiva <span class="fonte">[C50]</span>, e un terzo di chi ha la vescica iperattiva ha anche l\'IBS <span class="fonte">[C51, C52]</span>. Se anche tu urini spesso, dillo allo stesso medico: pavimento pelvico, retto e vescica si valutano insieme, e una fisioterapia del pavimento pelvico può lavorare su tutti e tre.<br><br><i>Una precisazione onesta: gli studi sul biofeedback sono soprattutto su pazienti con stipsi, non con alvo diarroico. Che il problema meccanico sia frequente anche nell\'IBS-D è documentato; che il biofeedback funzioni altrettanto bene in questo sottotipo è un\'estrapolazione ragionevole, non verificata direttamente. Per il resto valgono gli esami che le linee guida chiedono comunque con l\'alvo diarroico: celiachia e calprotectina <span class="fonte">[C01, C03]</span>.</i>'
     },
     {
       id: 'fermenti',
@@ -4192,8 +4164,7 @@ var NUTRIZIONE = {
              'gestibili. Aiuta anche a distribuire le proteine in dosi da 30-37 g, che è il range che ' +
              'massimizza la sintesi proteica.' },
         { t: 'Il pasto della sera',
-          d: 'Le proteine pre-sonno (30-35 g) hanno senso per l\'ipertrofia, ma con il reflusso vanno ' +
-             'anticipate: lascia almeno <b>3 ore</b> fra l\'ultimo pasto e il momento in cui ti corichi, ' +
+          d: 'Le proteine prima di dormire non aumentano la sintesi proteica rispetto al placebo <span class="fonte">[B04]</span>: non è un pasto da aggiungere. Con il reflusso vale il contrario, anticipare: lascia almeno <b>3 ore</b> fra l\'ultimo pasto e il momento in cui ti corichi, ' +
              'e alza la testiera del letto di 15-20 cm. Se ti serve una fonte proteica tardi, scegli ' +
              'qualcosa di poco voluminoso e povero di grassi.' },
         { t: 'Cosa peggiora il reflusso, secondo l\'evidenza',
@@ -4201,7 +4172,9 @@ var NUTRIZIONE = {
              'e il coricarsi subito dopo mangiato. Il calo di peso aiuta chi è in sovrappeso, ma tu sei ' +
              'normopeso: nel tuo caso le leve sono volume dei pasti, grassi e timing. Nota: l\'olio di ' +
              'menta piperita, spesso consigliato per l\'IBS, <b>peggiora</b> il reflusso — nel tuo caso ' +
-             'è un rimedio da evitare.' }
+             'è un rimedio da evitare.' },
+        { t: 'Carboidrati: quanti, davvero',
+          d: 'I 400 g del piano non sono un requisito. Una meta-analisi del 2026 su 11 studi non trova alcun effetto indipendente dei carboidrati sull\'ipertrofia a pari proteine <span class="fonte">[B26]</span>, e i carboidrati prima della seduta aiutano la prestazione solo in sedute lunghe oltre i 45 minuti o a digiuno da 8 ore <span class="fonte">[B27]</span>. Sono il modo più comodo di riempire le calorie, e per l\'intestino riso e patate sono più sicuri di tanti grassi. Ma se il reflusso resta alto, spostare 40-50 g di carboidrati della cena verso grassi buoni (olio, frutta secca) ha qualche appoggio: nei pochi studi disponibili le diete più basse in carboidrati riducono l\'esposizione acida dell\'esofago <span class="fonte">[C55]</span>. Non scendere sotto 80 g di grassi al giorno: le diete povere di grassi abbassano il testosterone <span class="fonte">[B30]</span>.' }
       ]
     },
     {
@@ -4225,6 +4198,21 @@ var NUTRIZIONE = {
              'tempo, con benefici che negli studi di follow-up si mantengono per anni. L\'allenamento con ' +
              'i pesi non è controindicato: quello che può dare fastidio acutamente sono i carichi molto ' +
              'elevati con apnea prolungata. La progressione graduale di questa scheda è già la risposta.' }
+      ]
+    },
+    {
+      id: 'vescica',
+      titolo: 'Liquidi, notte e vescica',
+      testo: 'Urinare ogni <b>3 ore circa</b> e svegliarsi di notte con la vescica piena, a 26 anni e normopeso, non è normale ma è frequente: la nicturia riguarda il <b>20-44%</b> degli uomini fra 20 e 40 anni <span class="fonte">[C43]</span>. Le cause si dividono in <b>quattro famiglie</b>: troppa urina in totale (oltre 3 litri al giorno, o 40 mL per kg), troppa urina di notte (più del <b>20%</b> del totale delle 24 ore alla tua età), una vescica che avvisa presto (vescica iperattiva), o un sonno leggero che ti sveglia e poi ti manda in bagno <span class="fonte">[C43, C44]</span>. Ognuna si cura in modo diverso, e la sola cosa che le distingue è un <b>diario minzionale di 3 giorni</b>: ora e volume di ogni minzione (basta un bicchiere graduato) e cosa bevi.',
+      voci: [
+        { t: 'Cosa fare da subito, con le prove',
+          d: '<b>Bevi di giorno, non di sera.</b> In uno studio crossover chi ha ridotto i liquidi del 25% ha avuto meno minzioni, meno urgenza e meno nicturia; aumentarli del 25% ha peggiorato la frequenza diurna <span class="fonte">[C45]</span>. Il punto non è bere poco: è concentrare l\'acqua fra il risveglio e il tardo pomeriggio e ridurre a sorsi nelle <b>3-4 ore prima di dormire</b> <span class="fonte">[C43]</span>. In 65 uomini con nicturia, portare l\'urina sotto 30 mL per kg al giorno (per te circa 2,2 litri) ha migliorato il 67% dei casi, e contava il bere <b>diurno</b>, non solo quello serale <span class="fonte">[C47]</span>. <b>Caffeina.</b> Abbassa il volume a cui la vescica avvisa e aumenta la diuresi già a 4,5 mg per kg <span class="fonte">[C49]</span>; togliere caffeina riduce urgenza, frequenza e nicturia in una revisione di 7 studi randomizzati <span class="fonte">[C46]</span>. Caffè solo al mattino, niente dopo pranzo. <b>Sale.</b> Da 10,7 a 8 grammi al giorno la nicturia è passata da 2,3 a 1,4 episodi in 321 pazienti, anziani e senza gruppo di controllo, quindi una prova debole; il meccanismo però è chiaro: il sale in eccesso di giorno viene eliminato di notte, con l\'acqua <span class="fonte">[C48]</span>. <b>Alcol</b> la sera: evitalo. <b>Non andare in bagno «per sicurezza»</b>: la vescica si abitua ai volumi piccoli.' },
+        { t: 'Il tuo lean bulk e la vescica',
+          d: 'Il piano da 2850 kcal porta con sé molta acqua: 400 g di carboidrati la trattengono, 130 g di proteine producono urea che il rene elimina <b>con acqua</b>, e l\'acqua della seduta si somma. Nessuna di queste cose va tagliata: le proteine sono già alla soglia utile (1,8 g/kg) e non c\'è margine da togliere. Va <b>spostata</b>: se ti alleni la sera, l\'acqua che bevi in palestra è quella che ti sveglia alle tre. Bevi di più al mattino e a pranzo, in palestra sorsi piccoli (che è anche la regola del reflusso), e dopo cena solo quanto serve. Il Diario dell\'app conta i bicchieri: segnali anche l\'ora.' },
+        { t: 'Cosa chiedere al medico, e cosa deve escludere',
+          d: 'Portagli il diario minzionale di 3 giorni. Gli esami di primo livello sono l\'<b>esame delle urine</b> (sempre), <b>glicemia ed emoglobina glicata</b> (il diabete si presenta anche così), <b>creatinina ed elettroliti</b> <span class="fonte">[C43, C44]</span>. Se il diario mostra oltre 3 litri al giorno con urine molto diluite, il medico valuta un diabete insipido o una polidipsia; se mostra tante minzioni piccole (sotto 200-250 mL), è la vescica che avvisa presto e la strada è l\'urologo, con il <b>training vescicale</b> e la fisioterapia del pavimento pelvico, che nel tuo caso si lega al dolore dopo la defecazione. A 26 anni la prostata è raramente in causa, ma una <b>prostatite</b> o un\'infezione vanno escluse con le urine. I farmaci (desmopressina, anticolinergici) vengono <b>dopo</b> le misure sui liquidi e solo dal medico <span class="fonte">[C44]</span>.' },
+        { t: 'Perché conta per i muscoli',
+          d: 'Una notte senza sonno riduce la sintesi proteica muscolare del <b>18%</b>, alza il cortisolo del 21% e abbassa il testosterone del 24% <span class="fonte">[B22]</span>; cinque notti da 4 ore la riducono di altrettanto <span class="fonte">[B21]</span>. La nicturia non è una notte in bianco, ma interrompe il <b>primo tratto di sonno</b>, quello con più sonno profondo, ed è la durata di quel primo tratto a predire come stai il giorno dopo <span class="fonte">[C43]</span>. Sistemare i liquidi è recupero, tanto quanto le proteine.' }
       ]
     },
     {
@@ -4272,7 +4260,8 @@ var NUTRIZIONE = {
     'Ho con me acqua da bere a piccoli sorsi, non da scolare tutta insieme',
     'Se ho preso caffeina, non era a stomaco vuoto',
     'Nei giorni con sintomi attivi ho ridotto i carichi invece di saltare la seduta',
-    'Non ho mangiato niente di grasso nelle due ore prima: sono i grassi, più delle calorie, a rallentare lo stomaco'
+    'Non ho mangiato niente di grasso nelle due ore prima: sono i grassi, più delle calorie, a rallentare lo stomaco',
+    'L\'acqua della giornata l\'ho bevuta soprattutto prima di sera: dopo cena solo sorsi'
   ]
 };
 
@@ -13964,7 +13953,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmu4xk6ep';
+var BUILD = 'vmu61wm9j';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -14228,7 +14217,7 @@ function giornateDiProva() {
 
 function statoCiclo() {
   var inizio = inizioCiclo();
-  if (!inizio) return { settimana: 1, nelBlocco: 1, indice: 0, scarico: false, nuovo: true };
+  if (!inizio) return { settimana: 1, nelBlocco: 1, indice: 0, scarico: false, verifica: false, nuovo: true };
   var ms = Date.now() - new Date(inizio + 'T00:00:00').getTime();
   var sett = Math.max(1, Math.floor(ms / (7 * 24 * 3600 * 1000)) + 1);
   var perBlocco = SCHEDA.settimanePerBlocco;
@@ -14236,7 +14225,11 @@ function statoCiclo() {
   var nelBlocco = ((sett - 1) % perBlocco) + 1;
   var giro = Math.floor((sett - 1) / (perBlocco * SCHEDA.blocchi.length)) + 1;
   return { settimana: sett, nelBlocco: nelBlocco, indice: indice, giro: giro,
-           scarico: nelBlocco === SCHEDA.settimanaScarico, nuovo: false };
+           /* v14: lo scarico non e' piu' automatico. La sesta settimana e' quella in
+              cui l'app lo propone (`verifica`); si attiva solo se l'utente lo sceglie,
+              e vale per la settimana assoluta in cui l'ha scelto. */
+           scarico: S.profilo.scaricoSett === sett,
+           verifica: nelBlocco === SCHEDA.settimanaScarico, nuovo: false };
 }
 
 function bloccoCorrente() { return SCHEDA.blocchi[statoCiclo().indice]; }
@@ -14338,7 +14331,7 @@ function durataCore() {
   return Math.round(sec / 60);
 }
 
-/* Nella settimana di scarico le serie sono dimezzate (carichi invariati). */
+/* Nella settimana di scarico (scelta dall'utente, v14) le serie sono dimezzate, carichi invariati. */
 function serieDi(e) {
   return statoCiclo().scarico ? Math.max(1, Math.round(e.serie / 2)) : e.serie;
 }
@@ -14620,9 +14613,15 @@ function vHome() {
   h += '</div>';
 
   if (c.scarico) {
-    h += '<div class="hint warm"><b>Settimana di scarico.</b> Stessi carichi, ma <b>metà delle ' +
-         'serie</b> — le trovi già dimezzate qui sotto. Serve a farti ripartire più forte la ' +
-         'settimana prossima, non è tempo perso.</div>';
+    h += '<div class="hint warm"><b>Settimana di scarico, scelta da te.</b> Stessi carichi, <b>metà ' +
+         'delle serie</b>: le trovi già dimezzate qui sotto. ' +
+         '<button class="ghost" id="scarico-toggle">Ho cambiato idea: serie complete</button></div>';
+  } else if (c.verifica) {
+    h += '<div class="hint warm"><b>Sesta settimana: vuoi lo scarico?</b> Non è più automatico: due ' +
+         'studi randomizzati (Coleman 2024, Pancar 2026) non gli trovano un vantaggio sulla crescita. ' +
+         'Fallo se i carichi sono fermi da due settimane, se dormi male o se arrivi in palestra ' +
+         'svuotato. Altrimenti tira dritto. ' +
+         '<button class="ghost" id="scarico-toggle">Attiva lo scarico per questa settimana</button></div>';
   } else if (c.nuovo) {
     h += '<div class="hint">Benvenuto. Il ciclo parte quando registri la prima serie: da lì l\'app ' +
          'conta le settimane e cambia blocco da sola ogni ' + SCHEDA.settimanePerBlocco + '.</div>';
@@ -17315,6 +17314,11 @@ function vImpostazioni() {
          'riparti da qui</button>';
     h += '<p class="dim" style="margin-top:8px">Se invece hai saltato o recuperato settimane, ' +
          'correggi con i pulsanti qui sotto.</p>';
+    h += '<p class="dim" style="margin-top:8px">Settimana di scarico (metà delle serie, stessi carichi): ' +
+         (c.scarico ? '<b>attiva</b> per questa settimana.'
+                    : 'non attiva. Dalla versione 14 la decidi tu: da qui in qualunque settimana, o dalla Home nella sesta.') + '</p>';
+    h += '<button class="ghost" id="scarico-toggle">' +
+         (c.scarico ? 'Togli lo scarico' : 'Attiva lo scarico per questa settimana') + '</button>';
   }
   h += '<label class="field"><span>Sono nella settimana</span><div class="seg" id="s-settimana">';
   for (var w = 1; w <= SCHEDA.settimanePerBlocco; w++) {
@@ -17559,6 +17563,14 @@ function collega() {
   if (S.vista === 'diario') collegaDiario();
   if (S.vista === 'dispensa') collegaDispensa();
   if (S.vista === 'progressi') collegaProgressi();
+  /* scarico su richiesta (v14): lo stesso pulsante vive in Home e in Impostazioni */
+  var sct = document.getElementById('scarico-toggle');
+  if (sct) sct.onclick = function () {
+    var c = statoCiclo();
+    if (c.scarico) { S.profilo.scaricoSett = null; toast('Scarico tolto: serie complete'); }
+    else { S.profilo.scaricoSett = c.settimana; toast('Scarico attivo per questa settimana: metà delle serie'); }
+    save(); render();
+  };
   if (S.vista === 'impostazioni') collegaImpostazioni();
 }
 
