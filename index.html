@@ -3836,7 +3836,7 @@ var SCHEDA = {
   /* obiettivi di volume settimanale per gruppo, conteggio frazionario
      (serie dirette = 1, serie indirette = 0,5) */
   target: {
-    Bicipiti: [12, 17], Tricipiti: [12, 17],
+    Bicipiti: [12, 18], Tricipiti: [12, 18],
     Petto: [8, 12], Dorso: [8, 12], Spalle: [8, 12],
     Quadricipiti: [5, 9], Femorali: [4, 6], Glutei: [4, 6], Polpacci: [4, 6]
   },
@@ -3868,7 +3868,7 @@ var SCHEDA = {
               nota: 'Il bicipite lavora con la spalla estesa, quindi più allungato. Onestà sui dati: l\'idea che questo faccia crescere di più la parte alta del bicipite poggia su uno studio su donne non allenate con differenze di un decimo di centimetro (Kassiano 2025), e lo studio più controllato, del 2026, non trova nessuna differenza fra spalla estesa e neutra (Larsen 2026). Resta un ottimo curl, non l\'esercizio decisivo: carichi leggeri, posizione perfetta.' },
             { ex: 'overhead-extension', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '1', rec: '90 sec',
               tecnica_speciale: 'capo lungo del tricipite', superset: 'in superserie con il curl, se vuoi finire prima',
-              nota: 'Nell\'unico confronto diretto il tricipite è cresciuto del 19,9% con il braccio sopra la testa contro il 13,5% con il pushdown, su 21 persone non allenate (Maeo 2023): è il dato più forte a favore del lavoro in allungamento, e per questo l\'overhead ha più serie del pushdown. Ultima serie: 3-4 ripetizioni parziali in basso quando non chiudi più il movimento completo.' },
+              nota: 'Nell\'unico confronto diretto il tricipite è cresciuto del 19,9% con il braccio sopra la testa contro il 13,9% con il pushdown, su 21 persone non allenate (Maeo 2023): è il dato più forte a favore del lavoro in allungamento, e per questo l\'overhead ha più serie del pushdown. Ultima serie: 3-4 ripetizioni parziali in basso quando non chiudi più il movimento completo.' },
             { ex: 'alzate-laterali', blocco: 'Spalle', serie: 3, rip: '12-15', rir: '0-1', rec: '1 min' }
           ]
         },
@@ -3876,7 +3876,7 @@ var SCHEDA = {
           id: 'B', nome: 'Seduta B', focus: 'Spalle · Dorso · Gambe · Braccia · Petto',
           nota: 'Blocchi per gruppo muscolare. Nel blocco braccia puoi alternare preacher curl e ' +
                 'pushdown senza pausa fra i due: mentre lavora un muscolo l\'altro recupera, e ' +
-                'togli una decina di minuti alla seduta.',
+                'togli 3-5 minuti alla seduta.',
           esercizi: [
             { avvicinamento: 3, ex: 'shoulder-press', blocco: 'Spalle', serie: 3, rip: '6-8', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti'],
               nota: 'Seduto con schienale, non in piedi: riduce la pressione addominale e quindi il rischio di reflusso.' },
@@ -3987,7 +3987,7 @@ var SCHEDA = {
           id: 'A', nome: 'Seduta A', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
           esercizi: [
             { avvicinamento: 3, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '6-8', rir: '1-2', rec: '3 min', indiretti: ['Tricipiti', 'Spalle'],
-              nota: 'Ripetizioni medio-basse, non un record: sotto le 6 il carico impone di trattenere il fiato, e quell\'apnea è ciò che spinge il contenuto dello stomaco verso l\'alto. Espira mentre spingi. Sono le uniche serie della seduta in cui i 3 minuti pieni servono davvero.' },
+              nota: 'Ripetizioni medio-basse, non un record: oltre l\'80% del massimale, cioè sotto le 6 ripetizioni, una breve apnea diventa inevitabile (Hackett 2013), e l\'apnea alza la pressione dentro l\'addome, quella che spinge il contenuto dello stomaco verso l\'alto. Espira mentre spingi. Sono le uniche serie della seduta in cui i 3 minuti pieni servono davvero.' },
             { ex: 'trazioni', blocco: 'Dorso', serie: 3, rip: '5-10', rir: '1', rec: '2-3 min', indiretti: ['Bicipiti'],
               nota: 'Se non arrivi a 5 ripetizioni pulite usa la lat machine assistita e torna a provarle ogni settimana.' },
             { avvicinamento: 2, ex: 'leg-press', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '2-3 min', indiretti: ['Glutei'] },
@@ -4312,15 +4312,21 @@ var SCHEDA = {
   ],
 
   principi: [
+    { t: 'Aggiornamento del 23 settembre 2026: 29 articoli letti per intero',
+      d: 'Hai procurato i testi completi di 29 articoli che fino a ieri conoscevamo solo dall\'abstract. <b>La scheda non cambia</b>: volume, frequenza, recuperi, cadenza, ordine degli esercizi e struttura full body sono confermati dai numeri veri. Sono cambiati dettagli: il tricipite nello studio di Maeo è cresciuto del 19,9% contro il 13,9% (non 13,5%); lo studio sull\'ordine degli esercizi del 2019 è di Avelar, non di Nunes, e trova un piccolo vantaggio per la coscia iniziando dal multiarticolare, che è quello che già fai; la cadenza conta pochissimo fra 0,3 e 4,5 secondi a ripetizione (Enes 2025, 14 studi); la periodizzazione non cambia la crescita (Moesgaard 2022, 35 studi), quindi i tre blocchi servono alla testa e alla progressione, non ai muscoli. Le correzioni sulla nutrizione sono nella sezione Nutrizione.' },
     { t: 'Revisione di settembre 2026: che cosa è cambiato e perché',
-      d: 'La letteratura è stata riletta da capo, con le pubblicazioni fino a settembre 2026 e senza partire da ciò che c\'era scritto. Cinque cose sono cambiate. <b>1.</b> RIR 1-2 sui multiarticolari invece di 2 fisso (Grgic 2022, Hermann 2025). <b>2.</b> Scarico su richiesta, non automatico (Coleman 2024, Pancar 2026). <b>3.</b> Hip thrust a 3 serie: glutei e femorali erano alla soglia minima efficace (Pelland 2025). <b>4.</b> Panca del Blocco 3 a 6-8 ripetizioni invece di 5-7: sotto le 6 il carico impone l\'apnea, e l\'apnea è pressione sullo stomaco. <b>5.</b> Le note sull\'incline curl dicono la verità sui dati: la prova che la spalla estesa faccia crescere di più il bicipite è debole (Larsen 2026, Varović 2025). Tutto il resto, volume, frequenza, range di ripetizioni, recuperi e cadenza, ha retto al confronto.' },
+      d: 'La letteratura è stata riletta da capo, con le pubblicazioni fino a settembre 2026 e senza partire da ciò che c\'era scritto. Cinque cose sono cambiate. <b>1.</b> RIR 1-2 sui multiarticolari invece di 2 fisso (Grgic 2022, Hermann 2025). <b>2.</b> Scarico su richiesta, non automatico (Coleman 2024, Pancar 2026). <b>3.</b> Hip thrust a 3 serie: glutei e femorali erano alla soglia minima efficace (Pelland 2025). <b>4.</b> Panca del Blocco 3 a 6-8 ripetizioni invece di 5-7: oltre l\'80% del massimale una breve apnea è inevitabile (Hackett 2013), e l\'apnea è pressione sullo stomaco. <b>5.</b> Le note sull\'incline curl dicono la verità sui dati: la prova che la spalla estesa faccia crescere di più il bicipite è debole (Larsen 2026, Varović 2025). Tutto il resto, volume, frequenza, range di ripetizioni, recuperi e cadenza, ha retto al confronto.' },
     { t: 'Perché la scheda cambia da sola ogni 6 settimane',
       d: 'Non perché il corpo "si abitui" — è un mito. Il motivo vero è che dopo qualche settimana ' +
          'la progressione sullo stesso esercizio rallenta, e cambiare angolo o attrezzo ti permette ' +
          'di ripartire con margine di crescita. In più tiene la testa fresca, che a distanza di mesi ' +
          'conta più di quanto sembri. La struttura e i volumi restano identici: cambiano gli ' +
          'esercizi, non i principi. Dopo i tre blocchi si ricomincia dal primo, con i carichi ' +
-         'che nel frattempo sono saliti.' },
+         'che nel frattempo sono saliti.<br><br>Onestà: cambiare le variabili nel tempo, cioè ' +
+         'periodizzare, non fa crescere di più. In 35 studi a volume pari la crescita è la stessa ' +
+         'con o senza periodizzazione, e fra lineare e ondulata; il vantaggio c\'è solo sulla ' +
+         'forza massima degli allenati (Moesgaard 2022). I blocchi restano per la progressione e ' +
+         'per non annoiarti, non perché i muscoli lo chiedano.' },
     { t: 'La settimana di scarico',
       d: 'Da settembre 2026 <b>non è più automatica</b>. Due studi randomizzati l\'hanno messa alla prova: in 39 allenati una settimana di scarico a metà di un programma di 9 non ha cambiato l\'ipertrofia e ha leggermente frenato la forza (Coleman 2024); in 19 principianti due scarichi in 8 settimane non hanno né aiutato né nuociuto (Pancar 2026). Quindi lo scarico non fa crescere: serve quando serve, cioè quando i carichi sono fermi da due settimane, dormi male o arrivi in palestra svuotato. La sesta settimana di ogni blocco resta segnata come <b>momento in cui decidere</b>: l\'app te lo chiede lì, e se attivi lo scarico dimezza le serie per quella settimana, stessi carichi.' },
     { t: 'Perché gli esercizi sono raggruppati per muscolo',
@@ -4328,8 +4334,10 @@ var SCHEDA = {
          'blocco fai tutto quello che riguarda quel muscolo prima di passare al successivo. Non ' +
          'torni mai due volte alla stessa postazione.<br><br>Il motivo non è l\'ipertrofia: su quella ' +
          'l\'ordine degli esercizi non cambia i risultati, né fra multiarticolari e monoarticolari ' +
-         'né in generale (Nunes 2020, meta-analisi; Nunes 2019, RCT — nessuno dei due letto in ' +
-         'testo completo: sono a pagamento, e il secondo non siamo riusciti a procurarlo). ' +
+         'né in generale (Nunes 2020, meta-analisi di 11 studi). L\'unico studio randomizzato ' +
+         'diretto (Avelar 2019, 36 uomini, 6 settimane) trova il bicipite cresciuto uguale nei due ' +
+         'ordini, e la coscia cresciuta in modo significativo solo iniziando dal multiarticolare: ' +
+         'un piccolo punto in più per la regola che segui già. ' +
          'Quello che l\'ordine cambia è ' +
          'la <b>forza espressa</b>: l\'esercizio che fai per primo è quello su cui progredisci di ' +
          'più, perché lo affronti riposato. Da qui le due regole della tua scheda: il ' +
@@ -4354,30 +4362,41 @@ var SCHEDA = {
          'multiarticolari.<br><br>Perciò: 3 minuti pieni solo sulla pressa e sulla panca a ' +
          'ripetizioni basse, 2-3 minuti sugli altri multiarticolari, 60-90 secondi su curl, ' +
          'estensioni, alzate e polpacci. Sui curl passare da 2 minuti a 90 secondi costa quasi ' +
-         'nulla in crescita e toglie diversi minuti alla seduta.' },
+         'nulla in crescita e toglie diversi minuti alla seduta.<br><br>Lo studio di Schoenfeld ' +
+         'è anche il più vicino a te: uomini allenati, tre sedute total body a settimana, 3 × 8-12 ' +
+         'su sette esercizi.' },
 
     { t: 'Perché full body e non uno split',
       d: 'A parità di volume settimanale, allenare un muscolo 1, 2 o 3 volte a settimana produce ' +
          'la stessa crescita: la frequenza serve a distribuire il volume, non è una leva di crescita ' +
-         'a sé (Schoenfeld 2019, Pelland 2025). Con 3 sedute il full body è la struttura che ti fa ' +
+         'a sé (Schoenfeld 2019, Pelland 2025). Il confronto diretto lo conferma: in 14 studi, a ' +
+         'volume pari, split e full body fanno crescere uguale tricipiti, bicipiti e cosce ' +
+         '(Ramos-Campo 2024). Con 3 sedute il full body è la struttura che ti fa ' +
          'allenare bicipiti e tricipiti <b>3 volte a settimana</b> invece di una. Uno split ' +
          'upper/lower su 3 giorni ti darebbe le gambe una volta e mezza a settimana e meno ' +
          'occasioni per le braccia.' },
     { t: 'Cosa cambia rispetto a quello che facevi',
-      d: 'Nelle tue schede le braccia ricevevano circa <b>6 serie dirette a settimana</b>, quasi tutte in triset di fine seduta. Qui arrivano a 15-17 in conteggio frazionario. La meta-regressione di riferimento (Pelland 2025, 67 studi) dà i livelli: sotto 4 serie a settimana la crescita non è nemmeno rilevabile, fra 5 e 10 ogni serie rende molto, fra 11 e 18 rende ancora ma meno, oltre 19 sempre meno. Le braccia stanno nella fascia intermedia, che è quella giusta per una priorità; petto, dorso e spalle nella fascia alta; gambe e polpacci appena sopra la soglia minima, e per questo l\'hip thrust è passato a 3 serie, così glutei e femorali salgono a 4,5.' },
+      d: 'Nelle tue schede le braccia ricevevano circa <b>6 serie dirette a settimana</b>, quasi tutte in triset di fine seduta. Qui arrivano a 14,5-17,5 in conteggio frazionario, secondo il blocco. La meta-regressione di riferimento (Pelland 2025, 67 studi) dà i livelli: sotto 4 serie a settimana la crescita non è nemmeno rilevabile, fra 5 e 10 ogni serie rende molto, fra 11 e 18 rende ancora ma meno, oltre 19 sempre meno. Le braccia stanno nella fascia intermedia, che è quella giusta per una priorità; petto, dorso e spalle nella fascia alta; gambe e polpacci appena sopra la soglia minima, e per questo l\'hip thrust è passato a 3 serie, così glutei e femorali salgono a 4,5.' },
     { t: 'Perché questi esercizi per le braccia',
-      d: 'La regola pratica non cambia: incline curl, preacher, curl ai cavi e hammer coprono angoli e prese diverse, e una variazione sistematica di questo tipo aiuta senza danni (Kassiano 2022). Cambia quanto ci si può credere. Nel confronto diretto (Kassiano 2025, 63 donne non allenate) le differenze regionali fra incline e preacher sono di 0,08 e 0,10 cm; la meta-analisi del 2025 su lunghezza muscolare e crescita regionale trova effetti triviali, 0,05-0,09 di effetto standardizzato (Varović 2025); e nel 2026 uno studio che ha pareggiato il profilo di resistenza fra curl al cavo con spalla estesa e neutra non ha trovato differenze, in 24 uomini non allenati (Larsen 2026). Quindi l\'incline curl resta perché è un buon esercizio, non perché «fa crescere la parte alta». A favore dell\'allungamento restano due cose solide: i parziali nella metà bassa battono i parziali nella metà alta (Strey 2026, 8 studi) e il tricipite con il braccio sopra la testa è cresciuto del 19,9% contro il 13,5% del pushdown (Maeo 2023, non allenati). Per questo l\'overhead extension tiene le sue 4 serie e il pushdown resta per capo laterale e mediale.' },
+      d: 'La regola pratica non cambia: incline curl, preacher, curl ai cavi e hammer coprono angoli e prese diverse, e una variazione sistematica di questo tipo aiuta senza danni (Kassiano 2022). Cambia quanto ci si può credere. Nel confronto diretto (Kassiano 2025, 63 donne non allenate) le differenze regionali fra incline e preacher sono di 0,08 e 0,10 cm; la meta-analisi del 2025 su lunghezza muscolare e crescita regionale trova effetti triviali, 0,05-0,09 di effetto standardizzato (Varović 2025); e nel 2026 uno studio che ha pareggiato il profilo di resistenza fra curl al cavo con spalla estesa e neutra non ha trovato differenze, in 24 uomini non allenati (Larsen 2026). Quindi l\'incline curl resta perché è un buon esercizio, non perché «fa crescere la parte alta». A favore dell\'allungamento restano due cose solide: i parziali nella metà bassa battono i parziali nella metà alta (Strey 2026, 8 studi, quasi tutti su non allenati e sulla coscia) e il tricipite con il braccio sopra la testa è cresciuto del 19,9% contro il 13,9% del pushdown (Maeo 2023, non allenati). Per questo l\'overhead extension tiene le sue 4 serie e il pushdown resta per capo laterale e mediale.' },
     { t: 'Quanto vicino al cedimento',
       d: 'Per l\'ipertrofia il beneficio aumenta avvicinandosi al cedimento, per la forza no (Robinson 2024). Negli allenati arrivare al cedimento dà un piccolo vantaggio misurabile, 0,15 di effetto (Grgic 2022), confermato nel 2025 in 42 allenati con una serie sola per esercizio (Hermann 2025): modesto, ma nella direzione giusta. Da settembre 2026 la scheda dice <b>RIR 1-2</b> sui multiarticolari, 2 nelle prime serie e 1 nell\'ultima, e <b>RIR 0-1</b> sugli isolamenti. Arrivare ogni tanto al cedimento su un rematore a petto appoggiato non è un errore; farlo su panca e shoulder press a ogni serie costa tecnica e recupero senza guadagno proporzionale.' },
     { t: 'Come progredire',
       d: 'Doppia progressione: resti sullo stesso carico finché non chiudi <b>tutte</b> le serie al ' +
          'massimo del range; allora sali (+2,5 kg sui bilancieri, +1-2 kg sui manubri) e riparti dal ' +
-         'basso. L\'app te lo calcola da sola e te lo dice quando apri l\'esercizio.' },
+         'basso. L\'app te lo calcola da sola e te lo dice quando apri l\'esercizio.<br><br>' +
+         '<b>Cadenza:</b> discesa controllata di circa 2 secondi, salita normale. Non serve di più: ' +
+         'fra 0,3 e 4,5 secondi a ripetizione la crescita è la stessa, con un vantaggio triviale ' +
+         'per le ripetizioni più veloci (Enes 2025, 14 studi).' },
     { t: 'Gli adattamenti per il reflusso',
       d: 'Sono fuori dalla scheda il rematore con manubrio piegato in avanti, il T-bar e ' +
-         'l\'iperestensione: busto flesso a lungo o testa sotto il livello dell\'addome sono fra i ' +
-         'trigger più costanti. Al loro posto varianti a busto supportato, che danno lo stesso ' +
-         'stimolo. Anche lo shoulder press è seduto con schienale, e la panca non è mai declinata.' }
+         'l\'iperestensione: busto flesso a lungo o testa sotto il livello dell\'addome. Sono ' +
+         'precauzioni, e va detto: nessuno studio ha misurato il reflusso durante questi esercizi. ' +
+         'Quello che è misurato è la pressione dentro l\'addome, che sale con l\'apnea dei carichi ' +
+         'pesanti (Hackett 2013) ed è più alta nello squat che nella pressa (Blazek 2019), e il ' +
+         'fatto che comprimere l\'addome moltiplica il reflusso (Mitchell 2017). Al loro posto ' +
+         'varianti a busto supportato, che danno lo stesso stimolo. Anche lo shoulder press è ' +
+         'seduto con schienale, e la panca non è mai declinata.' }
   ]
 };
 
@@ -4402,7 +4421,7 @@ var NUTRIZIONE = {
   sezioni: [
     {
       titolo: 'Una cosa da chiedere al gastroenterologo',
-      testo: 'Il fastidio che arriva <b>dopo</b> aver finito, non prima, ha più di un riscontro in letteratura, e conviene portarli tutti alla visita.<br><br><b>1. Dissinergia del pavimento pelvico.</b> Presente nel <b>41%</b> dei pazienti con IBS contro il 5% dei controlli, <b>39%</b> nell\'alvo diarroico <span class="fonte">[C04]</span>: il pavimento pelvico non si rilassa bene durante l\'evacuazione e lascia una sensazione di svuotamento incompleto e uno spasmo residuo. Si verifica con la <b>manometria anorettale</b> e il test di espulsione del palloncino; se c\'è, si tratta con il <b>biofeedback</b>, efficace nel 70-80% dei casi <span class="fonte">[C31, C32]</span>.<br><br><b>2. Ipersensibilità rettale.</b> Il <b>94%</b> dei pazienti con IBS percepisce come dolorosa una distensione del retto che gli altri non sentono <span class="fonte">[C54]</span>: dopo la scarica retto e colon si contraggono ancora per qualche minuto, e in chi è ipersensibile quella contrazione fa male.<br><br><b>3. Dolore anorettale funzionale (Roma IV).</b> Se il dolore dura <b>più di 30 minuti</b> e peggiora da seduto si chiama sindrome dell\'elevatore dell\'ano; se dura pochi minuti ed è raro, proctalgia fugax. Nel primo caso il medico lo riconosce toccando il muscolo puborettale, e il biofeedback funziona in oltre il 90% dei casi nel breve periodo <span class="fonte">[C53]</span>.<br><br><b>Un collegamento che vale la pena nominare.</b> Colon e vescica condividono i nervi sensitivi: chi ha l\'IBS ha una probabilità <b>2,4 volte</b> maggiore di avere una vescica iperattiva <span class="fonte">[C50]</span>, e un terzo di chi ha la vescica iperattiva ha anche l\'IBS <span class="fonte">[C51, C52]</span>. Se anche tu urini spesso, dillo allo stesso medico: pavimento pelvico, retto e vescica si valutano insieme, e una fisioterapia del pavimento pelvico può lavorare su tutti e tre.<br><br><i>Una precisazione onesta: gli studi sul biofeedback sono soprattutto su pazienti con stipsi, non con alvo diarroico. Che il problema meccanico sia frequente anche nell\'IBS-D è documentato; che il biofeedback funzioni altrettanto bene in questo sottotipo è un\'estrapolazione ragionevole, non verificata direttamente. Per il resto valgono gli esami che le linee guida chiedono comunque con l\'alvo diarroico: celiachia e calprotectina <span class="fonte">[C01, C03]</span>.</i>'
+      testo: 'Il fastidio che arriva <b>dopo</b> aver finito, non prima, ha più di un riscontro in letteratura, e conviene portarli tutti alla visita.<br><br><b>1. Dissinergia del pavimento pelvico.</b> Presente nel <b>41%</b> dei pazienti con IBS contro il 5% dei controlli, <b>39%</b> nell\'alvo diarroico <span class="fonte">[C04]</span>: il pavimento pelvico non si rilassa bene durante l\'evacuazione e lascia una sensazione di svuotamento incompleto e uno spasmo residuo. Si verifica con la <b>manometria anorettale</b> e il test di espulsione del palloncino; se c\'è, si tratta con il <b>biofeedback</b>: nello studio randomizzato di riferimento ha corretto la dissinergia nel <b>79%</b> dei pazienti, contro il 4% del finto trattamento <span class="fonte">[C31]</span>, e il risultato si manteneva a un anno <span class="fonte">[C32]</span>.<br><br><b>2. Ipersensibilità rettale.</b> Il <b>94%</b> dei pazienti con IBS ha una percezione del retto alterata: il fastidio arriva a una distensione più piccola, si sente più forte o si sente in punti insoliti della pancia <span class="fonte">[C54]</span>. Riguarda le distensioni rapide, come uno spasmo, non lo stimolo normale ad andare in bagno, e segue la gravità dei sintomi nel tempo. Che sia questo a far male <i>dopo</i> la scarica è un\'ipotesi ragionevole da portare al medico, non un dato dello studio.<br><br><b>3. Dolore anorettale funzionale (Roma IV).</b> Se il dolore dura <b>più di 30 minuti</b> e peggiora da seduto si chiama sindrome dell\'elevatore dell\'ano; se dura pochi minuti ed è raro, proctalgia fugax. Nel primo caso il medico lo riconosce toccando il muscolo puborettale <span class="fonte">[C53]</span>. Nell\'unico studio randomizzato il biofeedback ha dato sollievo adeguato all\'<b>87%</b>, contro il 45% dell\'elettrostimolazione e il 22% del massaggio, con risultati mantenuti a un anno; senza dolorabilità alla visita invece nessun trattamento funzionava <span class="fonte">[C59]</span>.<br><br><b>Un collegamento che vale la pena nominare.</b> Colon e vescica condividono i nervi sensitivi: chi ha l\'IBS ha una probabilità <b>2,4 volte</b> maggiore di avere una vescica iperattiva <span class="fonte">[C50]</span>, e un terzo di chi ha la vescica iperattiva ha anche l\'IBS <span class="fonte">[C51, C52]</span>. Se anche tu urini spesso, dillo allo stesso medico: pavimento pelvico, retto e vescica si valutano insieme, e una fisioterapia del pavimento pelvico può lavorare su tutti e tre.<br><br><i>Una precisazione onesta: gli studi sul biofeedback sono soprattutto su pazienti con stipsi, non con alvo diarroico. Che il problema meccanico sia frequente anche nell\'IBS-D è documentato; che il biofeedback funzioni altrettanto bene in questo sottotipo è un\'estrapolazione ragionevole, non verificata direttamente. Per il resto valgono gli esami che le linee guida chiedono comunque con l\'alvo diarroico: celiachia e calprotectina <span class="fonte">[C01, C03]</span>.</i>'
     },
     {
       id: 'fermenti',
@@ -4413,7 +4432,7 @@ var NUTRIZIONE = {
              'per i sintomi globali dell\'IBS, con certezza dell\'evidenza molto bassa, e l\'AGA li ' +
              'riserva al contesto degli studi clinici: il motivo è che l\'effetto è legato al <b>singolo ' +
              'ceppo</b>, non alla specie, e su 76 studi con 44 ceppi diversi quasi ogni risultato ' +
-             'positivo viene da un solo studio, che nessuno ha ripetuto <span class="fonte">[C01, C33]</span>. ' +
+             'positivo viene da un solo studio, che nessuno ha ripetuto; l\'unico ceppo provato in più studi sul dolore, <i>S. boulardii</i>, non ha fatto meglio del placebo <span class="fonte">[C01, C33]</span>. ' +
              'Il ceppo con la certezza più alta resta quello di <b>Escherichia</b> (verosimilmente ' +
              'Nissle 1917) <span class="fonte">[C10]</span>.<br><br>' +
              '<b>Sul Biofil che prendi.</b> Dichiara <i>Lactobacillus acidophilus</i> LA-14 e ' +
@@ -4424,7 +4443,9 @@ var NUTRIZIONE = {
              '52% delle persone contro il 28% di <i>B. lactis</i> UABla-12, pur essendo "cugini" ' +
              '<span class="fonte">[C34]</span>. Uno studio del 2026 su LA-5 + BB-12 nell\'IBS non ' +
              'stitico mostra miglioramenti già a quattro settimane, ed è il dato più vicino al tuo ' +
-             'caso — ma LA-5 non è LA-14 <span class="fonte">[C35]</span>.<br><br>' +
+             'caso — ma LA-5 non è LA-14, lo ha finanziato il produttore e l\'esito principale è ' +
+             'appena significativo: risposta nel 19% contro il 9% del placebo, che gli autori stessi ' +
+             'chiamano modesta <span class="fonte">[C35]</span>.<br><br>' +
              '<b>Se vuoi fare una prova che voglia dire qualcosa:</b>' +
              '<br>• <b>un prodotto alla volta</b>, senza aggiungere altro nello stesso periodo;' +
              '<br>• almeno <b>4 settimane</b>, non più di 8: sotto le quattro non si capisce niente;' +
@@ -4475,8 +4496,8 @@ var NUTRIZIONE = {
              'proteica raggiunge facilmente. Preferisci prodotti dolcificati con stevia o sucralosio.' },
         { t: 'La fibra: solubile sì, insolubile no',
           d: 'Nell\'IBS solo la fibra <b>solubile</b> (psillio) ha beneficio dimostrato, con un NNT di 7. ' +
-             'La fibra <b>insolubile</b> (crusca) non aiuta e può peggiorare i sintomi, soprattutto con ' +
-             'alvo diarroico. Se aggiungi fibra per il surplus calorico, scegli avena e psillio, non crusca. ' +
+             'La fibra <b>insolubile</b> (crusca) non ha dato benefici; la meta-analisi non le trova danni, ' +
+             'ma con l\'alvo diarroico non c\'è motivo di aggiungerla <span class="fonte">[C07]</span>. Se aggiungi fibra per il surplus calorico, scegli avena e psillio, non crusca. ' +
              'La dose di psillio con supporto in letteratura è <b>5-15 g al giorno</b>, da introdurre ' +
              'gradualmente e con acqua abbondante.' }
       ]
@@ -4498,12 +4519,19 @@ var NUTRIZIONE = {
              'qualcosa di poco voluminoso e povero di grassi.' },
         { t: 'Cosa peggiora il reflusso, secondo l\'evidenza',
           d: 'Pasti abbondanti e ricchi di grassi, alcol, cioccolato, menta, agrumi, bevande gassate, ' +
-             'e il coricarsi subito dopo mangiato. Il calo di peso aiuta chi è in sovrappeso, ma tu sei ' +
-             'normopeso: nel tuo caso le leve sono volume dei pasti, grassi e timing. Nota: l\'olio di ' +
+             'e il coricarsi subito dopo mangiato. Sull\'alcol il dato misurato è preciso: sfintere ed ' +
+             'esofago cambiano da circa 6-7 bicchieri in su, sotto i 70 mg/dl di alcolemia nessun ' +
+             'effetto <span class="fonte">[C28]</span>; tienilo lontano dalla sera per la vescica, più che per lo stomaco. ' +
+             '<b>Il peso conta anche a te.</b> Chi è salito di mezzo punto di BMI o più ha avuto meno ' +
+             'probabilità che il reflusso sparisse <span class="fonte">[C30]</span>, e nelle donne normopeso ' +
+             'salire di oltre 3,5 punti ha quasi triplicato il reflusso frequente <span class="fonte">[C58]</span>. ' +
+             'Il lean bulk ti porta su di 3-5 kg, cioè 1-1,7 punti: sono studi sul peso, che non distingue ' +
+             'muscolo e grasso, ma è una ragione in più per il surplus piccolo e per guardare il ' +
+             'giro vita oltre alla bilancia. Nota: l\'olio di ' +
              'menta piperita, spesso consigliato per l\'IBS, <b>peggiora</b> il reflusso — nel tuo caso ' +
              'è un rimedio da evitare.' },
         { t: 'Carboidrati: quanti, davvero',
-          d: 'I 400 g del piano non sono un requisito. Una meta-analisi del 2026 su 11 studi non trova alcun effetto indipendente dei carboidrati sull\'ipertrofia a pari proteine <span class="fonte">[B26]</span>, e i carboidrati prima della seduta aiutano la prestazione solo in sedute lunghe oltre i 45 minuti o a digiuno da 8 ore <span class="fonte">[B27]</span>. Sono il modo più comodo di riempire le calorie, e per l\'intestino riso e patate sono più sicuri di tanti grassi. Ma se il reflusso resta alto, spostare 40-50 g di carboidrati della cena verso grassi buoni (olio, frutta secca) ha qualche appoggio: nei pochi studi disponibili le diete più basse in carboidrati riducono l\'esposizione acida dell\'esofago <span class="fonte">[C55]</span>. Non scendere sotto 80 g di grassi al giorno: le diete povere di grassi abbassano il testosterone <span class="fonte">[B30]</span>.' }
+          d: 'I 400 g del piano non sono un requisito. Una meta-analisi del 2026 su 11 studi non trova alcun effetto indipendente dei carboidrati sull\'ipertrofia a pari proteine <span class="fonte">[B26]</span>, e i carboidrati prima della seduta aiutano la prestazione solo in sedute lunghe oltre i 45 minuti o a digiuno da 8 ore <span class="fonte">[B27]</span>. Sono il modo più comodo di riempire le calorie, e per l\'intestino riso e patate sono più sicuri di tanti grassi. Ma se il reflusso resta alto, spostare 40-50 g di carboidrati della cena verso grassi buoni (olio, frutta secca) ha qualche appoggio: nei pochi studi disponibili le diete più basse in carboidrati riducono l\'esposizione acida dell\'esofago <span class="fonte">[C55]</span>. Non scendere sotto i 79 g di grassi del piano, circa il 25% delle calorie: nelle diete che hanno abbassato il testosterone i grassi erano al 20% <span class="fonte">[B30]</span>.' }
       ]
     },
     {
@@ -4524,7 +4552,10 @@ var NUTRIZIONE = {
              '100-150 mg, mai a stomaco vuoto, e saltala nei giorni in cui i sintomi sono già attivi.' },
         { t: 'La buona notizia sull\'esercizio',
           d: 'L\'attività fisica regolare a intensità moderata <b>migliora</b> i sintomi dell\'IBS nel ' +
-             'tempo, con benefici che negli studi di follow-up si mantengono per anni. L\'allenamento con ' +
+             'tempo: in 12 settimane chi ha aumentato l\'attività (cammino, bici, nuoto, 20-60 minuti 3-5 ' +
+             'volte a settimana) ha ridotto il punteggio dei sintomi di 51 punti contro 5 <span class="fonte">[C13]</span>, ' +
+             'e rivisti dopo 5 anni stavano ancora meglio di prima, anche se senza un gruppo di ' +
+             'confronto <span class="fonte">[C57]</span>. Erano attività aerobiche, non pesi. L\'allenamento con ' +
              'i pesi non è controindicato: quello che può dare fastidio acutamente sono i carichi molto ' +
              'elevati con apnea prolungata. La progressione graduale di questa scheda è già la risposta.' }
       ]
@@ -4535,13 +4566,13 @@ var NUTRIZIONE = {
       testo: 'Urinare ogni <b>3 ore circa</b> e svegliarsi di notte con la vescica piena, a 26 anni e normopeso, non è normale ma è frequente: la nicturia riguarda il <b>20-44%</b> degli uomini fra 20 e 40 anni <span class="fonte">[C43]</span>. Le cause si dividono in <b>quattro famiglie</b>: troppa urina in totale (oltre 3 litri al giorno, o 40 mL per kg), troppa urina di notte (più del <b>20%</b> del totale delle 24 ore alla tua età), una vescica che avvisa presto (vescica iperattiva), o un sonno leggero che ti sveglia e poi ti manda in bagno <span class="fonte">[C43, C44]</span>. Ognuna si cura in modo diverso, e la sola cosa che le distingue è un <b>diario minzionale di 3 giorni</b>: ora e volume di ogni minzione (basta un bicchiere graduato) e cosa bevi.',
       voci: [
         { t: 'Cosa fare da subito, con le prove',
-          d: '<b>Bevi di giorno, non di sera.</b> In uno studio crossover chi ha ridotto i liquidi del 25% ha avuto meno minzioni, meno urgenza e meno nicturia; aumentarli del 25% ha peggiorato la frequenza diurna <span class="fonte">[C45]</span>. Il punto non è bere poco: è concentrare l\'acqua fra il risveglio e il tardo pomeriggio e ridurre a sorsi nelle <b>3-4 ore prima di dormire</b> <span class="fonte">[C43]</span>. In 65 uomini con nicturia, portare l\'urina sotto 30 mL per kg al giorno (per te circa 2,2 litri) ha migliorato il 67% dei casi, e contava il bere <b>diurno</b>, non solo quello serale <span class="fonte">[C47]</span>. <b>Caffeina.</b> Abbassa il volume a cui la vescica avvisa e aumenta la diuresi già a 4,5 mg per kg <span class="fonte">[C49]</span>; togliere caffeina riduce urgenza, frequenza e nicturia in una revisione di 7 studi randomizzati <span class="fonte">[C46]</span>. Caffè solo al mattino, niente dopo pranzo. <b>Sale.</b> Da 10,7 a 8 grammi al giorno la nicturia è passata da 2,3 a 1,4 episodi in 321 pazienti, anziani e senza gruppo di controllo, quindi una prova debole; il meccanismo però è chiaro: il sale in eccesso di giorno viene eliminato di notte, con l\'acqua <span class="fonte">[C48]</span>. <b>Alcol</b> la sera: evitalo. <b>Non andare in bagno «per sicurezza»</b>: la vescica si abitua ai volumi piccoli.' },
+          d: '<b>Bevi di giorno, non di sera.</b> In uno studio crossover chi ha ridotto i liquidi del 25% ha avuto meno minzioni, meno urgenza e meno nicturia; aumentarli del 25% ha peggiorato la frequenza diurna <span class="fonte">[C45]</span>. Il punto non è bere poco: è concentrare l\'acqua fra il risveglio e il tardo pomeriggio e ridurre a sorsi nelle <b>3-4 ore prima di dormire</b> <span class="fonte">[C43]</span>. In 65 uomini con nicturia, portare l\'urina sotto 30 mL per kg al giorno (per te circa 2,2 litri) ha migliorato il 67% dei casi, e contava il bere <b>diurno</b>, non solo quello serale <span class="fonte">[C47]</span>. Attenzione a quanto è lontano da te: avevano in media 72 anni, producevano già più di 30 mL/kg e bevevano comunque almeno un litro d\'acqua. Vale solo se il tuo diario mostra una diuresi alta, e non in palestra: disidratarsi del 2-4% del peso toglie il 5-6% di forza e l\'8% di resistenza <span class="fonte">[B31]</span>. <b>Caffeina.</b> Abbassa il volume a cui la vescica avvisa e aumenta la diuresi già a 4,5 mg per kg <span class="fonte">[C49]</span>; togliere caffeina riduce urgenza, frequenza e nicturia in una revisione di 7 studi randomizzati <span class="fonte">[C46]</span>. Caffè solo al mattino, niente dopo pranzo. <b>Sale.</b> Da 10,7 a 8 grammi al giorno la nicturia è passata da 2,3 a 1,4 episodi nei 223 pazienti, su 321, che sono riusciti a ridurlo (età media 64 anni, senza gruppo di controllo), quindi una prova debole; il meccanismo però è chiaro: il sale in eccesso di giorno viene eliminato di notte, con l\'acqua <span class="fonte">[C48]</span>. <b>Alcol</b> la sera: evitalo. <b>Non andare in bagno «per sicurezza»</b>: la vescica si abitua ai volumi piccoli.' },
         { t: 'Il tuo lean bulk e la vescica',
-          d: 'Il piano da 2850 kcal porta con sé molta acqua: 400 g di carboidrati la trattengono, 130 g di proteine producono urea che il rene elimina <b>con acqua</b>, e l\'acqua della seduta si somma. Nessuna di queste cose va tagliata: le proteine sono già alla soglia utile (1,8 g/kg) e non c\'è margine da togliere. Va <b>spostata</b>: se ti alleni la sera, l\'acqua che bevi in palestra è quella che ti sveglia alle tre. Bevi di più al mattino e a pranzo, in palestra sorsi piccoli (che è anche la regola del reflusso), e dopo cena solo quanto serve. Il Diario dell\'app conta i bicchieri: segnali anche l\'ora.' },
+          d: 'Il piano da 2850 kcal porta con sé molta acqua: 400 g di carboidrati la trattengono, le proteine producono urea che il rene elimina <b>con acqua</b>, e l\'acqua della seduta si somma. Un margine c\'è, ed è nelle proteine: il piano ne chiede 130 g (1,8 g/kg), la giornata tipo ne porta 177. Quei 45-50 g in più non fanno crescere di più e sono il primo taglio da provare se la notte ti svegli; sotto i 130 g invece non scendere. Il resto va <b>spostato</b>: se ti alleni la sera, l\'acqua che bevi in palestra è quella che ti sveglia alle tre. Bevi di più al mattino e a pranzo, in palestra sorsi piccoli (che è anche la regola del reflusso), e dopo cena solo quanto serve. Il Diario dell\'app conta i bicchieri: segnali anche l\'ora.' },
         { t: 'Cosa chiedere al medico, e cosa deve escludere',
           d: 'Portagli il diario minzionale di 3 giorni. Gli esami di primo livello sono l\'<b>esame delle urine</b> (sempre), <b>glicemia ed emoglobina glicata</b> (il diabete si presenta anche così), <b>creatinina ed elettroliti</b> <span class="fonte">[C43, C44]</span>. Se il diario mostra oltre 3 litri al giorno con urine molto diluite, il medico valuta un diabete insipido o una polidipsia; se mostra tante minzioni piccole (sotto 200-250 mL), è la vescica che avvisa presto e la strada è l\'urologo, con il <b>training vescicale</b> e la fisioterapia del pavimento pelvico, che nel tuo caso si lega al dolore dopo la defecazione. A 26 anni la prostata è raramente in causa, ma una <b>prostatite</b> o un\'infezione vanno escluse con le urine. I farmaci (desmopressina, anticolinergici) vengono <b>dopo</b> le misure sui liquidi e solo dal medico <span class="fonte">[C44]</span>.' },
         { t: 'Perché conta per i muscoli',
-          d: 'Una notte senza sonno riduce la sintesi proteica muscolare del <b>18%</b>, alza il cortisolo del 21% e abbassa il testosterone del 24% <span class="fonte">[B22]</span>; cinque notti da 4 ore la riducono di altrettanto <span class="fonte">[B21]</span>. La nicturia non è una notte in bianco, ma interrompe il <b>primo tratto di sonno</b>, quello con più sonno profondo, ed è la durata di quel primo tratto a predire come stai il giorno dopo <span class="fonte">[C43]</span>. Sistemare i liquidi è recupero, tanto quanto le proteine.' }
+          d: 'Una notte senza sonno riduce la sintesi proteica muscolare del <b>18%</b>, alza il cortisolo del 21% e abbassa il testosterone del 24% <span class="fonte">[B22]</span>; cinque notti da 4 ore la riducono di altrettanto <span class="fonte">[B21]</span>. La nicturia non è una notte in bianco, ma interrompe il <b>primo tratto di sonno</b>, quello con più sonno profondo, ed è la durata di quel primo tratto a predire come stai il giorno dopo <span class="fonte">[C43]</span>. E più notti di sonno corto di fila abbassano la forza proprio sui multiarticolari, non sugli isolamenti <span class="fonte">[B32]</span>. Sistemare i liquidi è recupero, tanto quanto le proteine.' }
       ]
     },
     {
@@ -4578,7 +4609,7 @@ var NUTRIZIONE = {
           d: 'Funzionano in modo ceppo-specifico. Alcuni hanno qualche evidenza nell\'IBS ' +
              '(nella meta-analisi più recente il grado di certezza più alto va ai ceppi di ' +
              '<b>Escherichia</b>, verosimilmente Nissle 1917), ma la qualità complessiva ' +
-             'delle prove è bassa. Se un giorno vorrai provarne uno, dai a un singolo ceppo almeno ' +
+             'delle prove è bassa <span class="fonte">[C10, C33]</span>. Se un giorno vorrai provarne uno, dai a un singolo ceppo almeno ' +
              '4 settimane e annota i sintomi nel diario: è l\'unico modo per capire se funziona per te.' }
       ]
     }
@@ -5037,8 +5068,9 @@ var PASTI = {
   ],
 
   notaGiornata: 'Le calorie sono in linea con il tuo obiettivo, le proteine sono <b>più alte del ' +
-    'necessario</b>: 177 g sono 2,5 g per kg, mentre oltre 1,6 g/kg non ci sono guadagni ' +
-    'aggiuntivi. Non è dannoso, ma è spesa inutile. Se vuoi centrare il bersaglio esatto, togli ' +
+    'necessario</b>: 177 g sono 2,5 g per kg, mentre oltre 1,6 g/kg i guadagni aggiuntivi sono ' +
+    'minimi <span class="fonte">[B02, B28]</span>. Non è dannoso, ma è spesa inutile, e nel tuo caso anche ' +
+    'acqua in più da smaltire di notte: vedi «Liquidi, notte e vescica». Se vuoi centrare il bersaglio esatto, togli ' +
     'circa 50 g di carne o pesce fra pranzo e cena, oppure usa una sola scatoletta di tonno a ' +
     'metà mattina: resti comunque abbondantemente coperto e recuperi le calorie con pane o riso, ' +
     'che costano molto meno.'
@@ -14282,7 +14314,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmubrfwdm';
+var BUILD = 'vmuda7spz';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -16239,7 +16271,11 @@ function vNutrizione() {
     h += '<div class="hint">Calcolato su <b>' + eta() + ' anni</b>, ' + S.profilo.peso + ' kg, ' +
          S.profilo.altezza + ' cm. Mantenimento stimato ' + f.tdee + ' kcal, più un surplus di ' +
          f.surplus + '. Obiettivo di crescita: <b>+0,25-0,35% del peso a settimana</b>, cioè ' +
-         Math.round(S.profilo.peso * 2.5) + '-' + Math.round(S.profilo.peso * 3.5) + ' g.</div>';
+         Math.round(S.profilo.peso * 2.5) + '-' + Math.round(S.profilo.peso * 3.5) + ' g. ' +
+         'Il mantenimento è una <b>stima</b>: la formula usata (Mifflin-St Jeor) sottostima il consumo ' +
+         'di chi si allena, negli atleti universitari in media di 600 kcal ' +
+         '<span class="fonte">[B06]</span>. Il numero vero lo dice la bilancia: media di 7 giorni, e ' +
+         'se per due settimane non si muove aggiungi 100-150 kcal al giorno.</div>';
 
     h += '<h2>Una giornata intera</h2><div class="card"><table class="hist">';
     PASTI.giornata.forEach(function (r, i2) {
