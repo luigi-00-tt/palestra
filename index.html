@@ -6062,20 +6062,32 @@ if (false) module.exports = { generaScheda: generaScheda, REGOLE: REGOLE, CONDIZ
 
 /* ===== nutrizione.js ===== */
 /* ============================================================
-   NUTRIZIONE — lean bulk con IBS-D/M e reflusso
+   NUTRIZIONE — lean bulk con reflusso e sospetto colon irritabile
    Contenuti tratti dai file letteratura/04, 05, 06, 07.
    ============================================================ */
+
+/* Colon irritabile «da verificare» (28/9/2026): era un'autodiagnosi. */
+var NOTA_IBS_DA_VERIFICARE = 'Il <b>colon irritabile</b> invece <b>non è stato diagnosticato</b>. Il semaforo FODMAP delle ricette, il diario dei cibi e il diario del bagno restano, ma usali per <b>raccogliere dati da portare al gastroenterologo</b>, non come una cura. Se il medico escluderà il colon irritabile, le restrizioni sui FODMAP non ti serviranno più.';
+
+/* I dettagli della diagnosi stanno su questa riga sola: build.js la riscrive
+   in forma generica nella copia pubblica (sito/). Non spezzarla. */
+/*__CLINICA__*/
+var CLINICA_SU_MISURA = { nota: 'Il reflusso è confermato dal medico; il colon irritabile non è stato diagnosticato.', titolo: 'Reflusso confermato, colon irritabile da verificare', testo: 'Il medico ha confermato il <b>reflusso</b>: le indicazioni per il reflusso in questa pagina e nella scheda restano tutte valide.<br><br>' + NOTA_IBS_DA_VERIFICARE };
 
 var NUTRIZIONE = {
 
   disclaimer: 'Queste indicazioni sono informative e derivano dalla letteratura scientifica raccolta ' +
-    'nella cartella letteratura/. Non sono una diagnosi né una terapia. Il dolore addominale dopo la ' +
-    'defecazione e il reflusso ricorrente meritano l\'inquadramento di un gastroenterologo, anche per ' +
+    'nella cartella letteratura/. Non sono una diagnosi né una terapia. ' + CLINICA_SU_MISURA.nota + ' Il dolore ' +
+    'addominale dopo la defecazione e il reflusso meritano di essere seguiti dal gastroenterologo, anche per ' +
     'escludere celiachia, intolleranza al lattosio, SIBO e malattie infiammatorie intestinali, che hanno ' +
     'criteri diagnostici precisi. La frequenza urinaria e i risvegli notturni per urinare vanno inquadrati dal medico di base o dall\'urologo. La dieta low FODMAP va condotta con un dietista e mai prolungata a ' +
     'tempo indefinito.',
 
   sezioni: [
+    {
+      titolo: CLINICA_SU_MISURA.titolo,
+      testo: CLINICA_SU_MISURA.testo
+    },
     {
       titolo: 'Una cosa da chiedere al gastroenterologo',
       testo: 'Il fastidio che arriva <b>dopo</b> aver finito, non prima, ha più di un riscontro in letteratura, e conviene portarli tutti alla visita.<br><br><b>1. Dissinergia del pavimento pelvico.</b> Presente nel <b>41%</b> dei pazienti con IBS contro il 5% dei controlli, <b>39%</b> nell\'alvo diarroico <span class="fonte">[C04]</span>: il pavimento pelvico non si rilassa bene durante l\'evacuazione e lascia una sensazione di svuotamento incompleto e uno spasmo residuo. Si verifica con la <b>manometria anorettale</b> e il test di espulsione del palloncino; se c\'è, si tratta con il <b>biofeedback</b>: nello studio randomizzato di riferimento ha corretto la dissinergia nel <b>79%</b> dei pazienti, contro il 4% del finto trattamento <span class="fonte">[C31]</span>, e il risultato si manteneva a un anno <span class="fonte">[C32]</span>.<br><br><b>2. Ipersensibilità rettale.</b> Il <b>94%</b> dei pazienti con IBS ha una percezione del retto alterata: il fastidio arriva a una distensione più piccola, si sente più forte o si sente in punti insoliti della pancia <span class="fonte">[C54]</span>. Riguarda le distensioni rapide, come uno spasmo, non lo stimolo normale ad andare in bagno, e segue la gravità dei sintomi nel tempo. Che sia questo a far male <i>dopo</i> la scarica è un\'ipotesi ragionevole da portare al medico, non un dato dello studio.<br><br><b>3. Dolore anorettale funzionale (Roma IV).</b> Se il dolore dura <b>più di 30 minuti</b> e peggiora da seduto si chiama sindrome dell\'elevatore dell\'ano; se dura pochi minuti ed è raro, proctalgia fugax. Nel primo caso il medico lo riconosce toccando il muscolo puborettale <span class="fonte">[C53]</span>. Nell\'unico studio randomizzato il biofeedback ha dato sollievo adeguato all\'<b>87%</b>, contro il 45% dell\'elettrostimolazione e il 22% del massaggio, con risultati mantenuti a un anno; senza dolorabilità alla visita invece nessun trattamento funzionava <span class="fonte">[C59]</span>.<br><br><b>Un collegamento che vale la pena nominare.</b> Colon e vescica condividono i nervi sensitivi: chi ha l\'IBS ha una probabilità <b>2,4 volte</b> maggiore di avere una vescica iperattiva <span class="fonte">[C50]</span>, e un terzo di chi ha la vescica iperattiva ha anche l\'IBS <span class="fonte">[C51, C52]</span>. Se anche tu urini spesso, dillo allo stesso medico: pavimento pelvico, retto e vescica si valutano insieme, e una fisioterapia del pavimento pelvico può lavorare su tutti e tre.<br><br><i>Una precisazione onesta: gli studi sul biofeedback sono soprattutto su pazienti con stipsi, non con alvo diarroico. Che il problema meccanico sia frequente anche nell\'IBS-D è documentato; che il biofeedback funzioni altrettanto bene in questo sottotipo è un\'estrapolazione ragionevole, non verificata direttamente. Per il resto valgono gli esami che le linee guida chiedono comunque con l\'alvo diarroico: celiachia e calprotectina <span class="fonte">[C01, C03]</span>.</i>'
@@ -16534,7 +16546,7 @@ function sezioneSchedaImpostazioni() {
   var h = '<h2>La tua scheda</h2><div class="card">';
   if (suMisura()) {
     h += '<p><b>Scheda su misura</b>, scritta a mano per te: full body 3× con priorità braccia, ' +
-      'adattata a reflusso e colon irritabile.</p>';
+      'adattata al reflusso e al sospetto colon irritabile, da verificare.</p>';
   } else if (S.questionario) {
     h += '<p><b>' + esc(SCHEDA.nome) + '</b>, costruita dalle risposte del ' +
       esc(S.questionario.compilato || '') + '.</p>';
@@ -16579,7 +16591,7 @@ function righePerTe(righe) {
 }
 
 function sottotitoloNutrizione() {
-  if (suMisura()) return 'lean bulk con IBS e reflusso';
+  if (suMisura()) return 'lean bulk con reflusso e sospetto IBS';
   var o = { dimagrire: 'dimagrimento', massa: 'massa muscolare', ricomp: 'ricomposizione',
             mantenere: 'mantenimento', forza: 'forza', salute: 'salute' }[S.profilo.obiettivo] || 'il tuo piano';
   var c = [];
@@ -16731,7 +16743,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmul6a3y1';
+var BUILD = 'vmulkq69w';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -18859,7 +18871,7 @@ function vRicetta() {
     '<b>' + SEM_ETICHETTA[liv] + '.</b> ' +
     (liv === 'verde' ? 'Niente FODMAP alti e niente che alimenti il reflusso.' :
      liv === 'giallo' ? 'Si può mangiare, ma con una correzione o in porzione contenuta.' :
-     'Con il tuo colon irritabile e il tuo reflusso, questa è da lasciar perdere.') + '</div>';
+     (suMisura() ? 'Col reflusso, e col sospetto colon irritabile, questa è da lasciar perdere.' : 'Con il tuo colon irritabile e il tuo reflusso, questa è da lasciar perdere.')) + '</div>';
 
   if (ha('ibs') && mot.length) {
     h += '<div class="card"><table class="hist">';
@@ -19406,7 +19418,7 @@ function baseCentograni(c) {
 function pannelloQuantita(a, i, mod) {
   var q = S.ctx.qta !== undefined ? S.ctx.qta : (a.u || 100);
   var v = calcolaAlimento(a, q);
-  var avv = !semaforoAttivo() ? '' : a.fodmap === 'alto' ? 'Alto in FODMAP: con l\'IBS meglio poca quantit&agrave;.' :
+  var avv = !semaforoAttivo() ? '' : a.fodmap === 'alto' ? 'Alto in FODMAP: se l\'intestino ne soffre, meglio poca quantit&agrave;.' :
             a.fodmap === 'attenzione' ? 'FODMAP moderati: tollerabile in porzioni piccole.' :
             a.reflusso === 'attenzione' ? 'Grasso o acido: pu&ograve; alimentare il reflusso, meglio non a cena.' : '';
   return '<div class="card calc' + (mod ? ' in-mod' : '') + '" data-i="' + esc(i) + '">' +
