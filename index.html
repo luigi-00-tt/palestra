@@ -5457,9 +5457,9 @@ var CONDIZIONI = {
   spalla:       { evita: ['spalla'], fonti: ['D15'], aggiungi: ['extrarotazione-cavo'],
                   nota: 'La spalla soffre per l\'angolo, non per l\'esercizio: alzate laterali fino all\'altezza delle spalle, spinte sopra la testa con i manubri a presa neutra e mai dietro la nuca. In più, lavoro sugli extrarotatori, che proteggono.' },
   gomito:       { evita: ['gomito'], fonti: ['D21'],
-                  nota: 'Un tendine si cura caricandolo, non fermandolo: prima della seduta 4-5 tenute isometriche da 30-45 secondi senza dolore, poi carichi lenti. Per ora restano fuori gli esercizi che caricano di più il gomito.' },
+                  nota: 'Un tendine si cura caricandolo, non fermandolo: carichi lenti e progressivi, pesanti quanto il dolore permette (sui tendini di Achille e rotuleo i programmi con più prove sono questi). Per ora restano fuori gli esercizi che caricano di più il gomito.' },
   tendinite:    { evita: [], fonti: ['D21'],
-                  nota: 'Un tendine si cura caricandolo, non fermandolo: tenute isometriche prima della seduta, poi movimenti lenti e pesanti, senza salti o scatti finché fa male.' },
+                  nota: 'Un tendine si cura caricandolo, non fermandolo: movimenti lenti e pesanti, aumentati poco alla volta, senza salti o scatti finché fa male. Se il dolore non cala in qualche settimana, serve un fisioterapista.' },
   strappo:      { evita: [], fonti: ['D22'],
                   nota: 'Il muscolo strappato torna al carico pieno solo quando la forza è uguale all\'altro lato, non quando smette di fare male: nelle prime settimane carichi leggeri e movimenti lenti su quella zona.' },
   squilibri:    { evita: [], fonti: [], nota: '' },
@@ -16105,8 +16105,10 @@ function nutrizioneGenerale() {
       '(«diet break») non fanno perdere più grasso, ma se aiutano a tenere duro si possono fare.' + fz(['E04']) });
   if (o === 'ricomp') sez.push({ titolo: 'Ricomposizione: a chi funziona',
     testo: 'Perdere grasso e mettere muscolo insieme riesce soprattutto a chi comincia, a chi riprende dopo una pausa ' +
-      'e a chi ha qualche chilo in più. Servono calorie al mantenimento o poco sotto, proteine da 2,2 g per kg in su ' +
-      'e un allenamento che progredisce davvero.' + fz(['E05', 'E06']) });
+      'e a chi ha qualche chilo in più. È stata vista con calorie sotto, al mantenimento e perfino sopra: qui si parte ' +
+      'poco sotto il mantenimento, che è il modo per perdere grasso intanto. Servono proteine alte (la revisione dice ' +
+      '2,6-3,5 g per kg di massa magra, cioè circa 2,2 g per kg di peso in su) e un allenamento che progredisce davvero.' +
+      fz(['E05', 'E06']) });
   if (o === 'massa') sez.push({ titolo: 'Il surplus giusto',
     testo: 'Un surplus piccolo, circa il 10% sopra il mantenimento, fa crescere quanto uno grande ma fa ingrassare ' +
       'molto meno.' + fz(['B05', 'B25']) });
@@ -16729,7 +16731,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmukc7tic';
+var BUILD = 'vmul6a3y1';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
