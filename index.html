@@ -16743,7 +16743,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmulkq69w';
+var BUILD = 'vmun617jc';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -19066,6 +19066,25 @@ function paroleDi(testo) {
   return out;
 }
 
+/* Il nome vero di un ingrediente, senza le descrizioni che lo seguono.
+   Nell'archivio del Gambero Rosso le patate si chiamano «Patate non novelle
+   possibilmente a pasta bianca e farinosa»: confrontando tutte le parole, la
+   pasta in dispensa le faceva risultare presenti (v20). */
+var MARCATORI_DESCRIZIONE = /\s*(?:\(|,|;|:|\s-\s|\bpossibilmente\b|\bpreferibilmente\b|\bmeglio se\b|\boppure\b|\bo in alternativa\b|\btipo\b|\ba pasta\b|\bnon novell)/i;
+function testaIngrediente(nome) {
+  var t = String(nome || '').split(MARCATORI_DESCRIZIONE)[0].trim();
+  return t || String(nome || '').trim();
+}
+
+/* Righe della lista ingredienti che non sono ingredienti: titoletti
+   («Per il demi souffle», «Per completare il piatto»), note sulle dosi e
+   aggettivi rimasti soli dopo la divisione automatica («Bianco» del pepe). */
+function nonEIngrediente(nome) {
+  var n = fodNorm(nome);
+  return /^(per |le dosi|la dose|dosi |occorrente|inoltre|infine)/.test(n) ||
+    /^(bianco|bianca|nero|nera|rosso|rossa|verde|fresco|fresca|secco|secca|dolce|forte|grosso|fine)$/.test(n);
+}
+
 function eDiBase(nome) {
   /* confronto a parola intera, con la stessa funzione del semaforo: con un
      indexOf, «pepe» starebbe dentro «peperoni» e i peperoni diventerebbero un
@@ -19112,7 +19131,9 @@ function ricetteDallaDispensa(quante) {
          attaccate alla ricetta: qui si gira su 880 ricette a ogni render */
       if (!v._pw) {
         v._pw = (v.ing || []).map(function (r) {
-          return eDiBase(r[0]) ? null : { nome: r[0], parole: Object.keys(paroleDi(r[0])) };
+          if (nonEIngrediente(r[0]) || eDiBase(r[0])) return null;
+          var testa = testaIngrediente(r[0]);
+          return { nome: testa, parole: Object.keys(paroleDi(testa)) };
         }).filter(function (x) { return x && x.parole.length; });
       }
       var hai = [], mancano = [], inScadenza = [];
@@ -19233,9 +19254,9 @@ function vDispensa() {
            costruita intorno verrebbe sgrammaticata una volta su due */
         (r.scade.length ? '<span class="usa-subito">in scadenza: ' +
           esc(r.scade.slice(0, 2).join(', ').toLowerCase()) + '</span>' : '') +
-        (r.mancano.length ? '<span class="manca">manca: ' +
-          esc(r.mancano.slice(0, 2).join(', ')) +
-          (r.mancano.length > 2 ? ' e altri ' + (r.mancano.length - 2) : '') + '</span>' :
+        /* tutti, non i primi due: è la lista della spesa per quella ricetta */
+        (r.mancano.length ? '<span class="manca">' + (r.mancano.length === 1 ? 'manca: ' : 'mancano: ') +
+          esc(r.mancano.join(', ').toLowerCase()) + '</span>' :
           '<span class="ok-v">hai tutto</span>') +
         '</div></div>';
     });
