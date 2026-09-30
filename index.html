@@ -1098,6 +1098,18 @@ nav.cinque button svg { width: 20px; height: 20px; }
 .trucchi { margin: 0; padding-left: 18px; }
 .trucchi li { margin: 6px 0; line-height: 1.45; }
 .ing-tit td { padding-top: 10px; color: var(--accent, inherit); }
+
+/* v21: controllo dei dolori al cambio di blocco e «mi dà fastidio» */
+.cd { border-left: 3px solid var(--accent); margin-bottom: 14px; }
+.cd p { margin: 8px 0 2px; }
+.cd-z + .cd-z { border-top: 1px solid var(--line); margin-top: 8px; }
+.cd-esito { margin: 8px 0; padding-left: 18px; }
+.cd-esito li { margin: 4px 0; }
+.cd button.ghost, .fd button.ghost, .fd button.primary { width: 100%; margin-top: 8px; }
+.cd-sc { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+.fd-apri { width: 100%; margin: 14px 0 4px; }
+.fd { margin-top: 14px; border-left: 3px solid var(--warm, #e0a040); }
+.fd .ex.fd-alt { margin: 8px 0; cursor: default; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -6191,6 +6203,133 @@ var REGOLE_DOLORE = {
   fonti: ['H01', 'H02', 'H05', 'H06']
 };
 
+/* ---------- v21: rientro dopo il dolore ----------
+   Quando il dolore è passato, gli esercizi che la zona escludeva non
+   rientrano tutti insieme. La fase dipende da quanto tempo è passato
+   all'inizio del blocco in corso (la calcola l'app e la passa in
+   `q.rientri`, così dentro un blocco la scheda non cambia sotto i piedi):
+     neutri       meno di 6 settimane: esclusioni come col dolore attivo
+     moderati     6 settimane - 3 mesi: rientrano gli esercizi di RIENTRO[z]
+     impegnativi  3-6 mesi: rientra tutto, con un margine in più
+     standard     oltre 6 mesi: scheda normale, occhio alle recidive
+   Le soglie le ha chieste l'utente (poco = sotto 2-3 mesi, molto = oltre
+   3-6); dove gli studi non le fissano sono prudenza dichiarata.
+   Fonti: letteratura/16-rientro-dopo-il-dolore.md. */
+var FASI_RIENTRO = {
+  neutri:      { settimane: 6,  nome: 'da meno di 6 settimane' },
+  moderati:    { settimane: 13, nome: 'da 6 settimane a 3 mesi' },
+  impegnativi: { settimane: 26, nome: 'da 3 a 6 mesi' },
+  standard:    { settimane: Infinity, nome: 'da più di 6 mesi' }
+};
+function faseRientro(settimane) {
+  if (settimane < FASI_RIENTRO.neutri.settimane) return 'neutri';
+  if (settimane < FASI_RIENTRO.moderati.settimane) return 'moderati';
+  if (settimane < FASI_RIENTRO.impegnativi.settimane) return 'impegnativi';
+  return 'standard';
+}
+/* Per ogni zona, gli esercizi esclusi che caricano meno e rientrano per
+   primi (fase «moderati»); gli altri esclusi dalla zona sono «impegnativi». */
+var RIENTRO = {
+  polso:       { moderati: ['panca-manubri', 'panca-inclinata-manubri', 'farmer-walk', 'push-up-inclinati'] },
+  gomito:      { moderati: ['french-press-manubrio'] },
+  'spalla-ant':{ moderati: ['chest-press', 'panca-manubri-neutra', 'alzate-cavo', 'alzate-scapolari', 'hammer-curl', 'overhead-extension', 'push-up-inclinati'] },
+  spalla:      { moderati: ['chest-press', 'panca-manubri-neutra', 'alzate-cavo', 'alzate-scapolari', 'hammer-curl', 'push-up-inclinati'] },
+  collo:       { moderati: ['shoulder-press-macchina', 'overhead-extension', 'hack-squat'] },
+  schiena:     { moderati: ['rematore-manubrio', 'stacco-rumeno-manubri', 'hack-squat', 'stacco-una-gamba', 'crunch-cavo'] },
+  anca:        { moderati: ['leg-press', 'goblet-squat', 'affondi'] },
+  ginocchio:   { moderati: ['goblet-squat', 'hack-squat', 'affondi', 'squat-corpo-libero'] },
+  caviglia:    { moderati: ['squat-jump', 'box-jump', 'skip-sprint'] }
+};
+var REGOLE_RIENTRO = {
+  fonti: ['H01', 'H02', 'H03', 'D21'],
+  moderati: 'Gli esercizi che caricano di più la zona restano fuori ancora per un blocco; rientrano quelli meno impegnativi.',
+  impegnativi: 'Rientrano anche gli esercizi più impegnativi per la zona: le prime due settimane con circa il 70-80% del carico di prima e una ripetizione in più di margine, poi si risale.',
+  standard: 'La scheda è di nuovo quella normale. Nei primi mesi un dolore che torna è comune: se succede, segnalalo dall\'esercizio e la scheda si adatta di nuovo.'
+};
+/* Le zone in rientro, senza quelle che fanno male adesso (vince il dolore). */
+function rientriAttivi(q) {
+  var r = q.rientri || {}, att = doloriAttivi(q), out = {};
+  for (var z in r) if (DOLORI[z] && FASI_RIENTRO[r[z]] && att.indexOf(z) < 0) out[z] = r[z];
+  return out;
+}
+/* Un esercizio carica questa zona? (ha un'etichetta che la zona esclude) */
+function caricaZona(id, z) {
+  var c = CATALOGO[id];
+  return !!(c && DOLORI[z] && c.f.some(function (f) { return DOLORI[z].evita.indexOf(f) >= 0; }));
+}
+function piuMargine(rir) {
+  return String(rir).replace(/\d+/g, function (n) { return String(+n + 1); });
+}
+
+/* ---------- v21: «questo esercizio mi dà fastidio» ----------
+   Prima di proporre un'alternativa si prova a modificare: è quello che fa
+   un fisioterapista, e spesso basta. Poi un esercizio dello stesso schema
+   (o almeno dello stesso gruppo) che non carica la zona. */
+var MODIFICA_DOLORE = {
+  polso: 'Polso dritto in linea con l\'avambraccio, manubri o presa neutra al posto del bilanciere, carico più basso del 20-30%.',
+  gomito: 'Carico più basso del 20-30%, discesa lenta, niente scatto a braccio teso; sui curl presa neutra (a martello).',
+  'spalla-ant': 'Arco più corto (le mani non vanno dietro la linea del corpo), gomiti a circa 45° dal busto invece che larghi, carico più basso del 20-30%.',
+  spalla: 'Arco più corto, braccia sotto l\'altezza delle spalle, niente dietro la nuca, carico più basso del 20-30%.',
+  collo: 'Sguardo dritto, spalle lontane dalle orecchie, niente carichi appoggiati sul trapezio, carico più basso del 20-30%.',
+  schiena: 'Schiena appoggiata dove si può, niente flessione del busto sotto carico, carico più basso del 20-30%.',
+  anca: 'Scendi solo fino a prima del fastidio, piedi un po\' più larghi e punte in fuori, carico più basso del 20-30%.',
+  ginocchio: 'Scendi solo nell\'arco che non fa male, discesa lenta, carico più basso del 20-30%.',
+  caviglia: 'Niente salti, movimento lento, arco ridotto in fondo alla discesa.'
+};
+/* Etichetta del catalogo → zone che di solito protestano. Servono a
+   mettere per prime, nella domanda «dove?», le zone plausibili. */
+var ZONE_DI_FLAG = {
+  polso: ['polso'], gomito: ['gomito'], 'spalla-ant': ['spalla-ant', 'spalla'], spalla: ['spalla'],
+  sopratesta: ['spalla', 'collo'], assiale: ['schiena', 'collo'], lombare: ['schiena'], flesso: ['schiena'],
+  anca: ['anca'], ginocchio: ['ginocchio'], caviglia: ['caviglia'], salto: ['caviglia', 'ginocchio'], impatto: ['ginocchio', 'caviglia']
+};
+var ZONE_DI_GRUPPO = {
+  Petto: ['spalla-ant', 'spalla', 'polso'], Dorso: ['schiena', 'gomito', 'spalla'], Spalle: ['spalla', 'spalla-ant', 'collo'],
+  Bicipiti: ['gomito', 'polso'], Tricipiti: ['gomito', 'spalla'], Quadricipiti: ['ginocchio', 'anca'],
+  Femorali: ['schiena', 'ginocchio'], Glutei: ['anca', 'schiena'], Polpacci: ['caviglia']
+};
+function zonePlausibili(id) {
+  var z = [], c = CATALOGO[id] || { f: [] }, g = ESERCIZI[id] && ESERCIZI[id].gruppo;
+  c.f.forEach(function (f) { (ZONE_DI_FLAG[f] || []).forEach(function (x) { if (z.indexOf(x) < 0) z.push(x); }); });
+  (ZONE_DI_GRUPPO[g] || []).forEach(function (x) { if (z.indexOf(x) < 0) z.push(x); });
+  return z;
+}
+
+/* Le alternative a `id` per chi sente `tipo` ('dolore', 'fastidio',
+   'limitazione') alla zona `zona`. `q` è la persona (attrezzi, esperienza,
+   condizioni, dolori); `presenti` gli esercizi già nella seduta.
+   Restituisce { lista, modifica, nota, fonti }: la lista è ordinata dalla
+   migliore, per il pulsante «mostrami un'altra». */
+function alternativaPer(id, zona, tipo, q, presenti) {
+  var qq = {}; for (var k in q) qq[k] = q[k];
+  var dol = doloriAttivi(q).slice();
+  if (DOLORI[zona] && dol.indexOf(zona) < 0) dol.push(zona);
+  qq.dolori = dol;
+  var esclusi = flagEsclusi(qq), fam = famiglia(q.obiettivo), c = CATALOGO[id];
+  presenti = presenti || [];
+  var ok = function (x) { return x !== id && presenti.indexOf(x) < 0 && !motivoEsclusione(x, qq, esclusi) && ESERCIZI[x]; };
+  var lista = c ? candidati(c.s, qq, fam, esclusi).filter(ok) : [];
+  /* nessuno dello stesso schema: stesso gruppo muscolare, ma mai cardio o salti */
+  if (!lista.length && ESERCIZI[id]) {
+    var gr = ESERCIZI[id].gruppo;
+    lista = Object.keys(CATALOGO).filter(function (x) {
+      return ok(x) && ESERCIZI[x].gruppo === gr && !/^(cardio|plio|sprint|agilita)/.test(CATALOGO[x].s);
+    }).sort(function (a, b) { return punteggio(b, qq, fam) - punteggio(a, qq, fam); });
+  }
+  /* movimento limitato: prima gli esercizi che non chiedono l'arco estremo
+     (niente braccia sopra la testa, niente posizione di massimo allungamento) */
+  if (tipo === 'limitazione') {
+    var peso = function (x) { return (CATALOGO[x].len ? 1 : 0) + (CATALOGO[x].f.indexOf('sopratesta') >= 0 ? 1 : 0); };
+    lista = lista.map(function (x, i) { return [x, i]; })
+      .sort(function (a, b) { return (peso(a[0]) - peso(b[0])) || (a[1] - b[1]); })
+      .map(function (p) { return p[0]; });
+  }
+  var d = DOLORI[zona] || { nota: '', fonti: [] };
+  return { lista: lista, modifica: MODIFICA_DOLORE[zona] || '', nota: d.nota,
+           fonti: d.fonti.concat(REGOLE_DOLORE.fonti.filter(function (f) { return d.fonti.indexOf(f) < 0; })),
+           carica: caricaZona(id, zona) };
+}
+
 /* Come le zone compaiono nel questionario, nell'ordine delle pillole. */
 var ZONE_DOLORE = [['polso', 'Polso'], ['gomito', 'Gomito'], ['spalla-ant', 'Spalla davanti (deltoide anteriore)'],
   ['spalla', 'Spalla (in generale)'], ['collo', 'Collo'], ['schiena', 'Schiena bassa'], ['anca', 'Anca o inguine'],
@@ -6445,6 +6584,12 @@ function flagEsclusi(q) {
   doloriAttivi(q).forEach(function (z) {
     DOLORI[z].evita.forEach(function (x) { (f[x] = f[x] || []).push('dolore:' + z); });
   });
+  /* v21: le zone da cui il dolore è passato da poco escludono ancora */
+  var ri = rientriAttivi(q);
+  Object.keys(ri).forEach(function (z) {
+    if (ri[z] !== 'neutri' && ri[z] !== 'moderati') return;
+    DOLORI[z].evita.forEach(function (x) { (f[x] = f[x] || []).push('rientro:' + z); });
+  });
   condizioniAttive(q).forEach(function (k) {
     CONDIZIONI[k].evita.forEach(function (x) { (f[x] = f[x] || []).push('condizione:' + k); });
   });
@@ -6461,7 +6606,10 @@ function notaSostituzione(ideale, esclusi) {
   });
   var dol = motivi.filter(function (m) { return m.indexOf('dolore:') === 0; }).map(function (m) { return DOLORI[m.split(':')[1]]; });
   var cond = motivi.filter(function (m) { return m.indexOf('condizione:') === 0; }).map(function (m) { return CONDIZIONI[m.split(':')[1]]; });
+  var rie = motivi.filter(function (m) { return m.indexOf('rientro:') === 0; }).map(function (m) { return DOLORI[m.split(':')[1]]; });
   var t = dol.length ? 'Per il dolore ' + dol.map(function (d) { return d.al; }).join(' e ') + '. ' : '';
+  if (rie.length) t += 'Il dolore ' + rie.map(function (d) { return d.al; }).join(' e ') +
+    ' è passato da poco: per ora resta fuori, rientra gradualmente nei prossimi blocchi se tutto resta tranquillo. ';
   return t + dol.concat(cond).map(function (r) { return r.nota || ''; }).join(' ');
 }
 
@@ -6473,7 +6621,19 @@ function motivoEsclusione(id, q, esclusi) {
   var liv = q.esperienza | 0;
   if (c.liv === 3 && liv < 2) return 'tecnica';
   if (c.liv === 2 && liv < 1) return 'tecnica';
-  for (var i = 0; i < c.f.length; i++) if (esclusi[c.f[i]]) return esclusi[c.f[i]][0];
+  var ri = null;
+  for (var i = 0; i < c.f.length; i++) {
+    var m = esclusi[c.f[i]] || [];
+    for (var j = 0; j < m.length; j++) {
+      /* in fase «moderati» gli esercizi della tabella RIENTRO sono già ammessi */
+      if (m[j].indexOf('rientro:') === 0) {
+        var z = m[j].slice(8);
+        ri = ri || rientriAttivi(q);
+        if (ri[z] === 'moderati' && RIENTRO[z] && RIENTRO[z].moderati.indexOf(id) >= 0) continue;
+      }
+      return m[j];
+    }
+  }
   return null;
 }
 
@@ -6656,11 +6816,19 @@ function costruisciGiorno(tipo, quota, q, fam, blocco, esclusi, perche, occorren
       var ideale = migliorePossibile(c.s, q, fam);
       if (ideale && ideale !== id) {
         var mot = motivoEsclusione(ideale, q, esclusi);
-        if (mot && (mot.indexOf('condizione:') === 0 || mot.indexOf('dolore:') === 0)) {
+        if (mot && (mot.indexOf('condizione:') === 0 || mot.indexOf('dolore:') === 0 || mot.indexOf('rientro:') === 0)) {
           voce.nota = 'Al posto di: ' + ESERCIZI[ideale].nome.toLowerCase() + '. ' + notaSostituzione(ideale, esclusi) +
             (mot.indexOf('dolore:') === 0 ? ' Anche qui: se durante la serie il dolore supera 3 su 10, o il giorno dopo è peggiorato, salta l\'esercizio.' : '') +
             ' Parlane comunque con il tuo medico o fisioterapista.';
         }
+      }
+      /* v21: esercizio che rientra dopo un dolore passato da 3-6 mesi */
+      var ri = rientriAttivi(q), zr = Object.keys(ri).filter(function (z) { return ri[z] === 'impegnativi' && caricaZona(id, z); });
+      if (zr.length) {
+        voce.rir = piuMargine(voce.rir);
+        voce.rientro = zr;
+        voce.nota = (voce.nota ? voce.nota + ' ' : '') + 'Rientra dopo il dolore ' + zr.map(function (z) { return DOLORI[z].al; }).join(' e ') + '. ' +
+          REGOLE_RIENTRO.impegnativi + ' Se il fastidio torna sopra 3 su 10, segnalalo con il pulsante qui sotto.';
       }
       if (c.m) primo = false;
       es.push(voce);
@@ -6728,6 +6896,12 @@ function aggiungiPerCondizione(giorni, tipi, q, esclusi) {
   });
   doloriAttivi(q).forEach(function (z) {
     (DOLORI[z].aggiungi || []).forEach(function (a) { richieste.push(['dolore:' + z, a]); });
+  });
+  /* v21: nel primo rientro il lavoro protettivo (extrarotatori) resta */
+  var ri = rientriAttivi(q);
+  Object.keys(ri).forEach(function (z) {
+    if (ri[z] !== 'neutri' && ri[z] !== 'moderati') return;
+    (DOLORI[z].aggiungi || []).forEach(function (a) { richieste.push(['rientro:' + z, a]); });
   });
   var fatti = {};
   richieste.forEach(function (r) {
@@ -7001,6 +7175,17 @@ function spiega(q, fam, str, target, esclusi, perche, blocchi) {
       ' ' + REGOLE_DOLORE.testo + fonti(fontiDol) +
       ' Queste indicazioni sono informative: se il dolore dura più di qualche settimana, peggiora o ti sveglia di notte, fatti vedere da un medico o da un fisioterapista.']);
   }
+  /* v21: il rientro dopo un dolore passato */
+  var ri = rientriAttivi(q), zri = Object.keys(ri);
+  if (zri.length) {
+    V.push(['Il rientro dopo il dolore',
+      zri.map(function (z) {
+        return 'Il dolore ' + DOLORI[z].al + ' è passato ' + FASI_RIENTRO[ri[z]].nome + ': ' +
+          (ri[z] === 'neutri' ? 'per questo blocco la scheda resta come se ci fosse ancora, e la zona si ricarica con esercizi neutri.' : REGOLE_RIENTRO[ri[z]]);
+      }).join(' ') +
+      ' A ogni cambio di blocco l\'app ti chiede come va e la scheda fa un passo avanti. I tempi sono prudenti: gli studi dicono che il carico va ripreso gradualmente, non fissano le settimane esatte.' +
+      fonti(REGOLE_RIENTRO.fonti)]);
+  }
   if (fam === 'sport') {
     var sp = sportDi(q), st = stagioneDi(q), R = REGOLE.sport;
     V.push(['Una scheda per ' + sp.nome, sp.nota + fonti(sp.fonti)]);
@@ -7065,7 +7250,8 @@ function spiega(q, fam, str, target, esclusi, perche, blocchi) {
 }
 
 if (false) module.exports = { generaScheda: generaScheda, REGOLE: REGOLE, CONDIZIONI: CONDIZIONI,
-  volumeSettimana: volumeSettimana, durataGiorno: durataGiorno, motivoEsclusione: motivoEsclusione, flagEsclusi: flagEsclusi };
+  volumeSettimana: volumeSettimana, durataGiorno: durataGiorno, motivoEsclusione: motivoEsclusione, flagEsclusi: flagEsclusi,
+  alternativaPer: alternativaPer, zonePlausibili: zonePlausibili, faseRientro: faseRientro, RIENTRO: RIENTRO };
 
 
 /* ===== nutrizione.js ===== */
@@ -19497,6 +19683,414 @@ function nutrizioneGenerale() {
 }
 
 
+/* ===== dolori.js ===== */
+/* ============================================================
+   DOLORI — storico, rientro graduale, «questo esercizio mi dà fastidio»
+   (versione 21)
+
+   Tre pezzi:
+   1. S.dolori, lo storico delle zone che hanno fatto male, per tutti (anche
+      per la scheda su misura):
+        { polso: { stato: 'attivo'|'segnalato'|'passato', dal, passatoDa,
+                   fonte: 'questionario'|'esercizio', esercizi: [id…] } }
+      «segnalato» = detto da un esercizio, non ancora confermato: non toglie
+      niente dalla scheda, ma al cambio di blocco l'app lo richiede.
+   2. S.scambi, le sostituzioni accettate: { idOriginale: { con, alt, zona,
+      tipo, dal } }. Si applicano SOPRA la scheda, su una copia: la scheda su
+      misura scritta a mano (SCHEDA_SU_MISURA) non viene mai toccata.
+   3. Il controllo a ogni cambio di blocco (S.controlloBlocco): «Hai ancora
+      dolore al polso?», e se è passato, da quanto. La fase di rientro
+      (motore.js, FASI_RIENTRO) si calcola dall'inizio del blocco, così dentro
+      un blocco la scheda resta ferma.
+   Informativo, mai diagnostico: ogni pannello rimanda al medico o al
+   fisioterapista se il dolore non passa.
+   ============================================================ */
+
+/* «Da quanto ti è passato?» → settimane fa (il centro della fascia). */
+var FASCE_PASSATO = [['<1m', 'Meno di 1 mese', 2], ['1-3m', 'Da 1 a 3 mesi', 8],
+                     ['3-6m', 'Da 3 a 6 mesi', 18], ['>6m', 'Più di 6 mesi', 30]];
+var TIPI_FASTIDIO = [['dolore', 'Dolore'], ['fastidio', 'Fastidio'], ['limitazione', 'Non riesco a fare tutto il movimento']];
+var SETTIMANE_BLOCCO = 6;   // come SCHEDA.settimanePerBlocco, in tutte le schede
+var GIORNI_RIPRESA = 14;    // le due settimane più leggere quando un esercizio rientra
+
+function isoMenoGiorni(iso, giorni) {
+  var d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() - giorni);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function dataDaFascia(k) {
+  var f = FASCE_PASSATO.filter(function (x) { return x[0] === k; })[0] || FASCE_PASSATO[0];
+  return isoMenoGiorni(oggi(), f[2] * 7);
+}
+function nomeZona(z) { return (DOLORI[z] && DOLORI[z].nome) || z; }
+function alZona(z) { return (DOLORI[z] && DOLORI[z].al) || z; }
+
+/* Il giorno in cui è cominciato il blocco in corso. Senza ciclo avviato è oggi. */
+function inizioBloccoCorrente() {
+  var i = inizioCiclo();
+  if (!i) return oggi();
+  var sett = Math.max(1, Math.floor(giorniTra(i, oggi()) / 7) + 1);
+  return isoMenoGiorni(i, -Math.floor((sett - 1) / SETTIMANE_BLOCCO) * SETTIMANE_BLOCCO * 7);
+}
+
+/* Le zone passate e la loro fase, calcolata all'inizio del blocco. */
+function rientriCalcolati() {
+  var out = {}, ib = inizioBloccoCorrente();
+  for (var z in (S.dolori || {})) {
+    var d = S.dolori[z];
+    if (d.stato !== 'passato' || !d.passatoDa || !DOLORI[z]) continue;
+    out[z] = faseRientro(giorniTra(d.passatoDa, ib) / 7);
+  }
+  return out;
+}
+function zoneAttive() {
+  return Object.keys(S.dolori || {}).filter(function (z) { return S.dolori[z].stato === 'attivo'; });
+}
+
+/* La persona per cui si cercano le alternative: le risposte del
+   questionario, oppure la palestra e il reflusso della scheda su misura. */
+function personaApp() {
+  if (S.questionario && !S.questionario.preset) return S.questionario;
+  return { attrezzi: tuttiGliAttrezzi().filter(function (a) { return a !== 'calfs'; }), esperienza: 3,
+           obiettivo: 'massa', condizioni: { reflusso: {} }, dolori: zoneAttive() };
+}
+
+/* Le risposte passate al motore, con le fasi di rientro. */
+function qConRientri(q) {
+  var c = {}; for (var k in q) c[k] = q[k];
+  c.rientri = rientriCalcolati();
+  return c;
+}
+
+/* Il questionario (v20) tiene i dolori in q.dolori; lo storico li deve avere
+   uguali. Chiamata all'avvio: chi ha già dichiarato un dolore non deve
+   ritrovarsi con lo storico vuoto. */
+function migraDolori() {
+  var cambiato = false;
+  if (!S.dolori) { S.dolori = {}; cambiato = true; }
+  if (!S.scambi) { S.scambi = {}; cambiato = true; }
+  if (!S.riprese) { S.riprese = {}; cambiato = true; }
+  var q = S.questionario;
+  if (q && !q.preset) doloriAttivi(q).forEach(function (z) {
+    if (!S.dolori[z] || S.dolori[z].stato !== 'attivo') {
+      S.dolori[z] = { stato: 'attivo', dal: q.compilato || oggi(), fonte: 'questionario', esercizi: [] };
+      cambiato = true;
+    }
+  });
+  return cambiato;
+}
+
+/* Allinea lo storico alle risposte appena date al questionario. */
+function doloriDaQuestionario(d) {
+  (d.dolori || []).forEach(function (z) {
+    var v = S.dolori[z];
+    if (!v || v.stato !== 'attivo') S.dolori[z] = { stato: 'attivo', dal: oggi(), fonte: 'questionario', esercizi: (v && v.esercizi) || [] };
+  });
+  Object.keys(S.dolori).forEach(function (z) {
+    var v = S.dolori[z];
+    if ((v.stato === 'attivo' || v.stato === 'segnalato') && (d.dolori || []).indexOf(z) < 0) {
+      v.stato = 'passato';
+      v.passatoDa = dataDaFascia(d['passato-' + z] || '<1m');
+    }
+  });
+}
+
+/* ---------- gli scambi, sopra la scheda ---------- */
+
+function applicaScambi(base) {
+  var sc = S.scambi || {};
+  if (!Object.keys(sc).length) return base;
+  var s = {}; for (var k in base) s[k] = base[k];
+  var giornata = function (g) {
+    var gg = {}; for (var k in g) gg[k] = g[k];
+    var presenti = g.esercizi.map(function (e) { return e.ex; });
+    gg.esercizi = g.esercizi.map(function (e) {
+      var x = sc[e.ex];
+      if (!x) return e;
+      /* il sostituto non deve essere già nella seduta: le serie si salvano per id */
+      var con = [x.con].concat(x.alt || []).filter(function (id) { return ESERCIZI[id] && presenti.indexOf(id) < 0; })[0];
+      if (!con) return e;
+      presenti.push(con);
+      var n = {}; for (var k in e) n[k] = e[k];
+      n.ex = con; n.scambiato = e.ex;
+      if (!CATALOGO[con] || !CATALOGO[con].m) delete n.avvicinamento;
+      n.nota = 'Al posto di: ' + ESERCIZI[e.ex].nome.toLowerCase() + ', per ' +
+        (x.tipo === 'limitazione' ? 'il movimento limitato' : x.tipo === 'fastidio' ? 'il fastidio' : 'il dolore') + ' ' +
+        alZona(x.zona) + ' (dal ' + dataBreve(x.dal) + '). ' + (e.nota && !/^Al posto di/.test(e.nota) ? e.nota : '');
+      return n;
+    });
+    return gg;
+  };
+  s.blocchi = base.blocchi.map(function (b) {
+    var bb = {}; for (var k in b) bb[k] = b[k];
+    bb.giorni = b.giorni.map(giornata);
+    return bb;
+  });
+  if (base.core) { s.core = {}; for (var c in base.core) s.core[c] = base.core[c]; s.core.esercizi = giornata(base.core).esercizi; }
+  return s;
+}
+function dataBreve(iso) {
+  var p = String(iso || '').split('-');
+  return p.length === 3 ? (+p[2]) + '/' + (+p[1]) : iso;
+}
+
+/* Toglie uno scambio. Se l'esercizio rientra dopo un dolore, le prime due
+   settimane sono più leggere (S.riprese). */
+function tornaAllOriginale(orig, dopoDolore) {
+  var x = S.scambi[orig];
+  if (!x) return;
+  delete S.scambi[orig];
+  if (dopoDolore) S.riprese[orig] = isoMenoGiorni(oggi(), -GIORNI_RIPRESA);
+}
+
+/* ---------- il controllo a ogni cambio di blocco ---------- */
+
+function chiaveBlocco() { var c = statoCiclo(); return (c.giro || 1) + '-' + c.indice; }
+
+/* Zone da chiedere: quelle che fanno male o sono state segnalate, e quelle
+   passate da meno di 6 mesi (per accorgersi di una recidiva). */
+function zoneDaControllare() {
+  return Object.keys(S.dolori || {}).filter(function (z) {
+    var d = S.dolori[z];
+    if (d.stato === 'attivo' || d.stato === 'segnalato') return true;
+    return d.stato === 'passato' && d.passatoDa && giorniTra(d.passatoDa, oggi()) < 26 * 7;
+  });
+}
+
+var CD_RIMANDATO = false;   // «rispondi dopo»: fino alla prossima apertura
+var CD_ESITO = null;        // quello che è cambiato, mostrato una volta
+var CD_NO = {};             // zone per cui ha risposto «è passato» e manca il «da quanto»
+
+/* Le zone ancora da chiedere in questo blocco. */
+function zoneDaChiedere() {
+  var k = chiaveBlocco();
+  return zoneDaControllare().filter(function (z) { return S.dolori[z].controllato !== k; });
+}
+function serveControllo() {
+  if (CD_RIMANDATO) return false;
+  if (!S.controlloBlocco) { S.controlloBlocco = chiaveBlocco(); save(); return false; }
+  return S.controlloBlocco !== chiaveBlocco() && zoneDaChiedere().length > 0;
+}
+
+function riquadroControlloDolori() {
+  var h = '';
+  if (CD_ESITO) {
+    h += '<div class="card cd"><b>La scheda è aggiornata</b><ul class="cd-esito">' +
+      CD_ESITO.righe.map(function (r) { return '<li>' + r + '</li>'; }).join('') + '</ul>';
+    CD_ESITO.torna.forEach(function (o) {
+      h += '<button class="ghost" data-torna="' + o + '" data-dopo-dolore="1">Rimetti ' + esc(ESERCIZI[o].nome.toLowerCase()) + '</button>';
+    });
+    h += '<button class="link" id="cd-chiudi">Chiudi</button></div>';
+    return h;
+  }
+  if (!serveControllo()) return '';
+  h += '<div class="card cd"><b>Nuovo blocco: com\'è andata con i dolori?</b>' +
+       '<p class="dim">La scheda si adatta alle risposte. Serve un minuto.</p>';
+  zoneDaChiedere().forEach(function (z) {
+    var d = S.dolori[z];
+    var dove = d.stato === 'segnalato' && d.esercizi && d.esercizi.length
+      ? ', che avevi segnalato su ' + d.esercizi.map(function (id) { return ESERCIZI[id] ? ESERCIZI[id].nome.toLowerCase() : id; }).join(' e ') : '';
+    h += '<div class="cd-z" data-cd-zona="' + z + '">';
+    if (d.stato === 'passato') {
+      h += '<p>Il dolore ' + esc(alZona(z)) + ' è tornato?</p><div class="qz-pills">' +
+        '<button class="pill" data-cd-r="bene">No, tutto bene</button><button class="pill" data-cd-r="tornato">Sì, è tornato</button></div>';
+    } else if (CD_NO[z]) {
+      h += '<p>Da quanto ti è passato il dolore ' + esc(alZona(z)) + '?</p><div class="qz-pills">' +
+        FASCE_PASSATO.map(function (f) { return '<button class="pill" data-cd-fascia="' + f[0] + '">' + esc(f[1]) + '</button>'; }).join('') + '</div>';
+    } else {
+      h += '<p>Hai ancora dolore ' + esc(alZona(z)) + esc(dove) + '?</p><div class="qz-pills">' +
+        '<button class="pill" data-cd-r="si">Sì, ce l\'ho ancora</button><button class="pill" data-cd-r="no">No, mi è passato</button></div>';
+    }
+    h += '</div>';
+  });
+  h += '<button class="link" id="cd-dopo">Rispondi dopo</button></div>';
+  return h;
+}
+
+/* Una risposta del controllo. Ogni risposta si applica subito; quando non
+   resta niente da chiedere il blocco è segnato come controllato. */
+function rispostaControllo(z, r, fascia) {
+  var d = S.dolori[z], q = S.questionario, motore = q && !q.preset;
+  var dolQ = function () { if (motore && !Array.isArray(q.dolori)) q.dolori = doloriAttivi(q).slice(); return motore ? q.dolori : []; };
+  if (r === 'no') { CD_NO[z] = true; return false; }
+  if (!CD_ESITO) CD_ESITO = { righe: [], torna: [] };
+  if (r === 'si' || r === 'tornato') {
+    var eraPassato = d.stato === 'passato';
+    d.stato = 'attivo'; d.confermato = oggi();
+    if (eraPassato) { d.dal = oggi(); delete d.passatoDa; }
+    if (motore && dolQ().indexOf(z) < 0) q.dolori.push(z);
+    CD_ESITO.righe.push('Dolore ' + esc(alZona(z)) + ': ' + (motore
+      ? 'la scheda lascia fuori gli esercizi che caricano la zona.'
+      : 'restano le sostituzioni che hai scelto.') +
+      ' Se dura da settimane o peggiora, fatti vedere da un medico o da un fisioterapista.');
+  } else if (r === 'bene') {
+    d.confermato = oggi();
+    CD_ESITO.righe.push('Dolore ' + esc(alZona(z)) + ': tutto bene, la scheda va avanti.');
+  } else if (fascia) {
+    delete CD_NO[z];
+    d.stato = 'passato'; d.passatoDa = dataDaFascia(fascia);
+    if (motore) { var a = dolQ(), i = a.indexOf(z); if (i >= 0) a.splice(i, 1); }
+    var fase = faseRientro(giorniTra(d.passatoDa, oggi()) / 7);
+    CD_ESITO.righe.push('Dolore ' + esc(alZona(z)) + ' passato ' + FASI_RIENTRO[fase].nome + ': ' +
+      (fase === 'neutri' ? 'per questo blocco gli esercizi che caricano la zona restano fuori; rientrano poco alla volta nei prossimi.'
+                         : REGOLE_RIENTRO[fase]));
+    /* gli scambi fatti per questa zona: si propone di tornare all'originale
+       quando la fase lo permette */
+    Object.keys(S.scambi).forEach(function (o) {
+      var x = S.scambi[o];
+      if (x.zona !== z || fase === 'neutri') return;
+      if (fase === 'moderati' && !(RIENTRO[z] && RIENTRO[z].moderati.indexOf(o) >= 0)) return;
+      CD_ESITO.torna.push(o);
+    });
+  }
+  d.controllato = chiaveBlocco();
+  if (!zoneDaChiedere().length) S.controlloBlocco = chiaveBlocco();
+  applicaScheda();
+  save();
+  return true;
+}
+
+/* ---------- «Questo esercizio mi dà fastidio» ---------- */
+
+var FD = null;   // { ex, passo, tipo, zona, i, altre }
+
+function pannelloFastidio(e, g) {
+  var id = e.ex, orig = e.scambiato || e.ex;
+  if (!CATALOGO[id] || e.extra) return '';
+  var h = '';
+  if (S.riprese && S.riprese[id] && S.riprese[id] >= oggi()) {
+    h += '<div class="hint warm"><b>Rientra dopo il dolore.</b> Fino al ' + dataBreve(S.riprese[id]) +
+      ' circa il 70-80% del carico di prima e una ripetizione in più di margine, poi risali. Se il fastidio torna sopra 3 su 10, segnalalo qui sotto.</div>';
+  }
+  if (e.scambiato) {
+    h += '<button class="link" data-torna="' + orig + '">Torna a ' + esc(ESERCIZI[orig].nome.toLowerCase()) + '</button>';
+  }
+  if (!FD || FD.ex !== id) {
+    return h + '<button class="ghost fd-apri" id="fd-apri">Questo esercizio mi dà fastidio</button>';
+  }
+  h += '<div class="card fd" id="fd">';
+  if (FD.passo === 1) {
+    h += '<b>Che cosa senti?</b><div class="qz-pills">' + TIPI_FASTIDIO.map(function (t) {
+      return '<button class="pill" data-fd-tipo="' + t[0] + '">' + esc(t[1]) + '</button>';
+    }).join('') + '</div>';
+  } else if (FD.passo === 2) {
+    var prima = zonePlausibili(id).filter(function (z) { return DOLORI[z]; });
+    var altre = ZONE_DOLORE.map(function (z) { return z[0]; }).filter(function (z) { return prima.indexOf(z) < 0; });
+    var pill = function (z) {
+      var lab = ZONE_DOLORE.filter(function (x) { return x[0] === z; })[0];
+      return '<button class="pill" data-fd-zona="' + z + '">' + esc(lab ? lab[1] : z) + '</button>';
+    };
+    h += '<b>Dove?</b><div class="qz-pills">' + prima.map(pill).join('') + '</div>';
+    if (altre.length) h += (FD.altre ? '<div class="qz-pills">' + altre.map(pill).join('') + '</div>'
+                                     : '<button class="link" id="fd-altre">Un\'altra zona</button>');
+  } else {
+    var presenti = eserciziDi(g).map(function (x) { return x.ex; });
+    var r = alternativaPer(id, FD.zona, FD.tipo, personaApp(), presenti);
+    if (!r.carica) h += '<p class="dim">Di solito questo esercizio non carica molto ' + esc(nomeZona(FD.zona)) +
+      ': il fastidio può venire dal carico, dalla tecnica o dalla regolazione della macchina.</p>';
+    if (r.modifica) h += '<div class="hint"><b>' + (FD.tipo === 'dolore' ? 'Oppure, se è lieve, prova così:' : 'Prima prova così:') +
+      '</b> ' + esc(r.modifica) + '</div>';
+    if (r.lista.length) {
+      var alt = r.lista[FD.i % r.lista.length], ea = ESERCIZI[alt];
+      h += '<b>Al suo posto ti propongo:</b><div class="ex fd-alt"><div class="thumb">' + miniatura(alt, ea.nome) + '</div>' +
+        '<div class="t"><b>' + esc(ea.nome) + '</b><span>' + esc(ea.gruppo) + ' · ' + e.serie + ' × ' + esc(e.rip) + '</span></div></div>';
+      h += '<p class="dim">' + esc(r.nota) + ' <span class="fonte">[' + r.fonti.join(', ') + ']</span></p>';
+      h += '<button class="primary" data-fd-accetta="' + alt + '">Accetta la sostituzione</button>';
+      if (r.lista.length > 1) h += '<button class="ghost" id="fd-altra">Mostrami un\'altra (' + ((FD.i % r.lista.length) + 1) + ' di ' + r.lista.length + ')</button>';
+      FD.lista = r.lista;
+    } else {
+      h += '<div class="hint warm">Con la tua attrezzatura non trovo un esercizio dello stesso tipo che non carichi ' +
+        esc(nomeZona(FD.zona)) + '. Oggi salta questo esercizio e parlane con un fisioterapista.</div>';
+    }
+    h += '<button class="ghost" id="fd-no">No, tengo questo</button>';
+    if (FD.tipo === 'dolore') h += '<p class="dim">' + esc(REGOLE_DOLORE.testo) + ' Un dolore forte o improvviso, o che non passa in qualche settimana, va fatto vedere a un medico o a un fisioterapista.</p>';
+  }
+  h += '<button class="link" id="fd-chiudi">Annulla</button></div>';
+  return h;
+}
+
+/* Registra la segnalazione nello storico (anche se la sostituzione viene
+   rifiutata: al cambio di blocco l'app lo richiede). */
+function segnalaDolore(zona, orig) {
+  var d = S.dolori[zona];
+  if (!d || d.stato === 'passato') {
+    S.dolori[zona] = d = { stato: 'segnalato', dal: oggi(), fonte: 'esercizio', esercizi: (d && d.esercizi) || [] };
+  }
+  if (!d.esercizi) d.esercizi = [];
+  if (d.esercizi.indexOf(orig) < 0) d.esercizi.push(orig);
+}
+
+function collegaDolori() {
+  var clic = function (sel, fn) { document.querySelectorAll(sel).forEach(function (n) { n.onclick = function () { fn(n); }; }); };
+  /* controllo del blocco */
+  clic('[data-cd-r]', function (n) { rispostaControllo(n.closest('[data-cd-zona]').dataset.cdZona, n.dataset.cdR); render(); });
+  clic('[data-cd-fascia]', function (n) { rispostaControllo(n.closest('[data-cd-zona]').dataset.cdZona, null, n.dataset.cdFascia); render(); });
+  clic('#cd-dopo', function () { CD_RIMANDATO = true; render(); });
+  clic('#cd-chiudi', function () { CD_ESITO = null; render(); });
+  /* torna all'esercizio originale (dalla scheda esercizio, dal controllo, dalle Impostazioni) */
+  clic('[data-torna]', function (n) {
+    var o = n.dataset.torna, x = S.scambi[o];
+    if (!x) return;
+    var eraQui = S.vista === 'esercizio' && S.ctx.ex === x.con;
+    tornaAllOriginale(o, !!n.dataset.dopoDolore || (S.dolori[x.zona] && S.dolori[x.zona].stato === 'passato'));
+    if (CD_ESITO) CD_ESITO.torna = CD_ESITO.torna.filter(function (t) { return t !== o; });
+    applicaScheda(); save();
+    toast('Di nuovo ' + ESERCIZI[o].nome.toLowerCase());
+    if (eraQui && giornoDi(S.ctx.giorno)) applica('esercizio', { giorno: S.ctx.giorno, ex: o }); else render();
+  });
+  /* pannello del fastidio */
+  clic('#fd-apri', function () { FD = { ex: S.ctx.ex, passo: 1, i: 0 }; render(); scorriA('fd'); });
+  clic('#fd-chiudi', function () { FD = null; render(); });
+  clic('[data-fd-tipo]', function (n) { FD.tipo = n.dataset.fdTipo; FD.passo = 2; render(); scorriA('fd'); });
+  clic('#fd-altre', function () { FD.altre = true; render(); scorriA('fd'); });
+  clic('[data-fd-zona]', function (n) { FD.zona = n.dataset.fdZona; FD.passo = 3; render(); scorriA('fd'); });
+  clic('#fd-altra', function () { FD.i++; render(); scorriA('fd'); });
+  clic('#fd-no', function () {
+    var g = giornoDi(S.ctx.giorno), e = g && eserciziDi(g).filter(function (x) { return x.ex === S.ctx.ex; })[0];
+    segnalaDolore(FD.zona, (e && e.scambiato) || S.ctx.ex);
+    FD = null; save(); toast('Segnalato: te lo richiedo al prossimo blocco'); render();
+  });
+  clic('[data-fd-accetta]', function (n) {
+    var g = giornoDi(S.ctx.giorno), e = eserciziDi(g).filter(function (x) { return x.ex === S.ctx.ex; })[0];
+    var orig = e.scambiato || e.ex, con = n.dataset.fdAccetta;
+    S.scambi[orig] = { con: con, alt: (FD.lista || []).filter(function (x) { return x !== con; }).slice(0, 4),
+                       zona: FD.zona, tipo: FD.tipo, dal: oggi() };
+    delete S.riprese[orig];
+    segnalaDolore(FD.zona, orig);
+    FD = null;
+    applicaScheda(); save();
+    var nuovo = eserciziDi(giornoDi(g.id)).filter(function (x) { return x.scambiato === orig; })[0];
+    toast('Sostituito: ' + ESERCIZI[con].nome.toLowerCase());
+    applica('esercizio', { giorno: g.id, ex: nuovo ? nuovo.ex : con });
+  });
+}
+function scorriA(id) {
+  var n = document.getElementById(id);
+  if (n && n.scrollIntoView) n.scrollIntoView({ block: 'center' });
+}
+
+/* Impostazioni: lo storico e gli scambi, annullabili. */
+function sezioneDoloriImpostazioni() {
+  var zone = Object.keys(S.dolori || {}), sc = Object.keys(S.scambi || {});
+  if (!zone.length && !sc.length) return '';
+  var h = '<h2>Dolori e sostituzioni</h2><div class="card">';
+  if (zone.length) h += '<ul class="cd-esito">' + zone.map(function (z) {
+    var d = S.dolori[z];
+    return '<li><b>' + esc(nomeZona(z)) + '</b>: ' +
+      (d.stato === 'attivo' ? 'fa male dal ' + dataBreve(d.dal)
+       : d.stato === 'segnalato' ? 'segnalato il ' + dataBreve(d.dal) + ', da confermare al prossimo blocco'
+       : 'passato (circa dal ' + dataBreve(d.passatoDa) + ')') + '</li>';
+  }).join('') + '</ul>';
+  sc.forEach(function (o) {
+    var x = S.scambi[o];
+    h += '<div class="cd-sc"><span>' + esc(ESERCIZI[o].nome) + ' → <b>' + esc(ESERCIZI[x.con] ? ESERCIZI[x.con].nome : x.con) + '</b></span>' +
+      '<button class="link" data-torna="' + o + '">Torna a ' + esc(ESERCIZI[o].nome.toLowerCase()) + '</button></div>';
+  });
+  h += '<p class="dim">A ogni cambio di blocco l\'app ti chiede come vanno i dolori; se uno è passato, gli esercizi rientrano poco alla volta.</p></div>';
+  return h;
+}
+
+
 /* ===== questionario.js ===== */
 /* ============================================================
    QUESTIONARIO — la prima cosa che vede chi apre l'app per la prima volta
@@ -19594,14 +20188,21 @@ function haStomaco() { return ha('reflusso') || ha('ibs') || ha('gastrite') || h
 
 /* Quale scheda è in uso. Chiamata all'avvio e dopo ogni questionario. */
 function applicaScheda() {
-  if (!S.questionario || suMisura()) { SCHEDA = SCHEDA_SU_MISURA; return; }
-  try {
-    SCHEDA = generaScheda(S.questionario);
-  } catch (e) {
-    /* un motore che si rompe non deve lasciare l'app senza scheda */
-    SCHEDA = SCHEDA_SU_MISURA;
-    SCHEDA_ERRORE = e.message;
+  var base;
+  if (!S.questionario || suMisura()) base = SCHEDA_SU_MISURA;
+  else {
+    try {
+      /* v21: con le fasi di rientro dei dolori passati (dolori.js) */
+      base = generaScheda(qConRientri(S.questionario));
+    } catch (e) {
+      /* un motore che si rompe non deve lasciare l'app senza scheda */
+      base = SCHEDA_SU_MISURA;
+      SCHEDA_ERRORE = e.message;
+    }
   }
+  /* v21: le sostituzioni scelte da «mi dà fastidio», sopra una copia:
+     SCHEDA_SU_MISURA non viene mai modificata */
+  SCHEDA = applicaScambi(base);
 }
 var SCHEDA_ERRORE = null;
 
@@ -19677,6 +20278,16 @@ function vQuestionario() {
     h += '<h2>Hai dolore da qualche parte, adesso?</h2>' +
       '<p class="dim">Anche solo un fastidio. Viene prima di tutto il resto: dalla scheda esce ogni esercizio che carica quella zona.</p>' +
       pillole('dolori', ZONE_DOLORE, d.dolori);
+    /* v21: i dolori dell'ultima volta. Spento = passato, e serve sapere da quanto */
+    var storico = Object.keys(S.dolori || {}).filter(function (z) { return S.dolori[z].stato === 'attivo' || S.dolori[z].stato === 'segnalato'; });
+    if (storico.length) {
+      h += '<div class="hint">L\'ultima volta avevi dolore ' + storico.map(alZona).join(', ') +
+        '. Se c\'è ancora, lascialo acceso; se è passato, spegnilo e dimmi da quanto.</div>';
+      storico.filter(function (z) { return d.dolori.indexOf(z) < 0; }).forEach(function (z) {
+        h += '<div class="field"><span>Da quanto ti è passato il dolore ' + esc(alZona(z)) + '?</span>' +
+          pillole('passato-' + z, FASCE_PASSATO, d['passato-' + z] || '', true) + '</div>';
+      });
+    }
     h += '<p>Hai uno di questi problemi? Se non ne hai, vai avanti: la scheda non conterrà ' +
       'niente che non ti riguarda.</p>';
     QZ_CONDIZIONI.forEach(function (g) {
@@ -19851,6 +20462,8 @@ function collegaQuestionario() {
     S.questionario = JSON.parse(JSON.stringify(d));
     S.questionario.compilato = oggi();
     if (eraSuMisura) S.questionario.eraSuMisura = true;
+    /* v21: lo storico dei dolori segue le risposte (quelli spenti sono passati) */
+    doloriDaQuestionario(d);
     /* il profilo delle calorie si allinea alle risposte */
     S.profilo.nascita = d.nascita; S.profilo.peso = d.peso; S.profilo.altezza = d.altezza;
     S.profilo.sesso = d.sesso; S.profilo.obiettivo = d.obiettivo; S.profilo.impostato = true;
@@ -20064,7 +20677,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmunggoao';
+var BUILD = 'vmuny4z2k';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -20090,6 +20703,10 @@ var S = {
   cibiMiei: {},   // { 'Cipolla': 'male' } la prova dell'utente, che vince sulla tabella
   dispensa: {},   // { '8000500310427': {n,marca,ean,q,unita,scad,agg} } cosa c'e' in casa
   questionario: null, // v18: le risposte da cui il motore costruisce la scheda, o { preset: 'su-misura' }
+  dolori: {},     // v21: { polso: {stato, dal, passatoDa, fonte, esercizi} } storico dei dolori (dolori.js)
+  scambi: {},     // v21: { 'panca-piana': {con, alt, zona, tipo, dal} } sostituzioni accettate
+  riprese: {},    // v21: { 'panca-piana': 'AAAA-MM-GG' } rientro più leggero fino a quella data
+  controlloBlocco: null, // v21: '<giro>-<blocco>' dell'ultimo controllo dei dolori
   vista: 'home', ctx: {}
 };
 
@@ -20162,11 +20779,15 @@ function datiDaSalvare() {
     preferiti: S.preferiti,
     cibiMiei: S.cibiMiei,
     dispensa: S.dispensa,
-    questionario: S.questionario
+    questionario: S.questionario,
+    dolori: S.dolori,
+    scambi: S.scambi,
+    riprese: S.riprese,
+    controlloBlocco: S.controlloBlocco
   };
 }
 var CHIAVI_DATI = ['profilo', 'log', 'diario', 'ultimo', 'prodotti', 'exExtra',
-                   'preferiti', 'cibiMiei', 'dispensa', 'questionario'];
+                   'preferiti', 'cibiMiei', 'dispensa', 'questionario', 'dolori', 'scambi', 'riprese'];
 
 /* Se il salvataggio fallisce l'utente DEVE saperlo: prima la cosa passava in
    silenzio e ci si accorgeva dei dati persi solo alla riapertura. */
@@ -20654,6 +21275,8 @@ function applica(v, ctx) {
   chiudiLente();
   fermaAlterna();
   S.vista = v; S.ctx = ctx || {};
+  /* il pannello «mi dà fastidio» si chiude uscendo dall'esercizio */
+  if (FD && (v !== 'esercizio' || S.ctx.ex !== FD.ex)) FD = null;
   render();
   window.scrollTo(0, 0);
 }
@@ -20677,6 +21300,8 @@ function render() {
        invece di lasciare la schermata bloccata */
     if (v === 'giorno' && !giornoDi(S.ctx.giorno)) v = 'home';
     if (v === 'esercizio' && (!giornoDi(S.ctx.giorno) || !esercizioDi(S.ctx.ex))) v = 'home';
+    /* v21: un esercizio sostituito non è più nella seduta: si torna alla seduta */
+    if (v === 'esercizio' && !eserciziDiOggi(giornoDi(S.ctx.giorno)).some(function (x) { return x.ex === S.ctx.ex; })) S.vista = v = 'giorno';
 
     /* v18: chi non ha ancora una scheda comincia dal questionario */
     if (!S.questionario && v !== 'impostazioni') v = 'questionario';
@@ -20706,6 +21331,7 @@ function render() {
   collega();
   collegaQuestionario();
   collegaSchedaImpostazioni();
+  collegaDolori();
 }
 
 function giornoDi(id) {
@@ -20760,6 +21386,8 @@ function vHome() {
 
   var c = statoCiclo(), b = bloccoCorrente();
   var h = testata(SCHEDA.nome, b.nome) + '<main>';
+  /* v21: a ogni cambio di blocco, due domande sui dolori */
+  h += riquadroControlloDolori();
 
   /* v15: il conteggio delle settimane scorre sul calendario, non sulle sedute
      fatte (e' cosi' apposta: assorbe una seduta saltata senza chiedere nulla).
@@ -21042,6 +21670,7 @@ function vGiorno() {
   var oggiLog = S.log[oggi()];
   var pieno = durataSeduta(g), massimo = durataMax(g), rapido = durataSeduta(g, true);
   var h = testata(g.nome, g.focus + ' · ' + pieno + '-' + massimo + ' minuti', 'home') + '<main>';
+  h += riquadroControlloDolori();
 
   var R = SCHEDA.riscaldamento;
   h += '<details class="risc"><summary>' + esc(R.titolo) + ' &middot; ' + esc(R.durata) + '</summary><div>';
@@ -21480,6 +22109,8 @@ function vEsercizio() {
   h += '<div class="note">I numeri in grigio sono la tua ultima prestazione su questo esercizio. ' +
        'Il segno di spunta salva la serie e fa partire il timer di recupero. ' +
        'Tutto viene salvato sul telefono da solo: puoi uscire quando vuoi.</div>';
+  /* v21: segnalare un fastidio e farsi proporre un'alternativa */
+  h += pannelloFastidio(e, g);
 
   if (ex.setup) {
     var righeSetup = ex.setup.filter(function (r) { return ha('reflusso') || !/reflusso/i.test(r[0] + ' ' + r[1]); });
@@ -21611,6 +22242,8 @@ function applicaBackup(testo) {
   migraDiario();
   /* v18: un backup di prima del questionario porta con sé la scheda su misura */
   migraQuestionario();
+  if (typeof d.controlloBlocco === 'string') S.controlloBlocco = d.controlloBlocco;
+  migraDolori();
   applicaScheda();
   save();
   return null;
@@ -23580,6 +24213,7 @@ function vProgressi() {
 function vImpostazioni() {
   var h = testata('Impostazioni', 'installazione, ciclo e backup', 'home') + '<main>';
   h += sezioneSchedaImpostazioni();
+  h += sezioneDoloriImpostazioni();
 
   /* ---------- profilo ----------
      Nella copia pubblica dell'app i dati personali non ci sono: e' qui che si
@@ -24668,6 +25302,7 @@ load();
    poi si decide quale scheda è SCHEDA. Fuori da load(), che al primo avvio
    assoluto esce subito perché non c'è niente da leggere. */
 migraQuestionario();
+if (migraDolori()) save();
 applicaScheda();
 var iniziale = (location.hash || '').replace('#', '');
 if (['nutrizione', 'diario', 'progressi', 'impostazioni'].indexOf(iniziale) >= 0) S.vista = iniziale;
