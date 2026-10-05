@@ -5531,7 +5531,7 @@ if (false) module.exports = { CATALOGO: CATALOGO, ATTREZZI: ATTREZZI, tuttiGliAt
    ============================================================ */
 
 var SCHEDA_SU_MISURA = {
-  versione: '3.0',
+  versione: '4.0',
   nome: 'Full body 3× — priorità braccia',
   settimanePerBlocco: 6,      // la sesta è di scarico
   settimanaScarico: 6,
@@ -5540,81 +5540,94 @@ var SCHEDA_SU_MISURA = {
      (serie dirette = 1, serie indirette = 0,5) */
   target: {
     Bicipiti: [12, 18], Tricipiti: [12, 18],
-    Petto: [8, 12], Dorso: [8, 12], Spalle: [8, 12],
+    /* v22: petto da 8 a 6 come minimo, per stare nell'ora e lasciare più spazio
+       al dorso alto (cifosi); resta sopra la soglia di 4 serie [A01] */
+    Petto: [6, 12], Dorso: [8, 12], Spalle: [8, 12],
     Quadricipiti: [5, 9], Femorali: [4, 6], Glutei: [4, 6], Polpacci: [4, 6]
   },
 
+  /* v22 (6 ottobre 2026): la scheda sta nell'ora. Le sedute vere misurate
+     dall'orologio duravano 1 h 20 - 2 h contro una stima di 62-67 minuti. Scelte,
+     dalla revisione del 5/10 (letteratura/revisioni/revisione-2026-10-05-allenamento.md):
+     - 6-7 serie in meno a settimana, nessun gruppo sotto la soglia di 4 serie
+       frazionarie [A01]; ogni serie tolta costa circa lo 0,4% del guadagno [J19],
+       e le braccia restano nella fascia 12-18 [J18, I01];
+     - recuperi: 2 minuti sui multiarticolari, 75 secondi sugli isolamenti
+       [A11, A12: gli isolamenti risentono meno di recuperi più corti];
+     - una serie di avvicinamento in meno;
+     - pec deck e croci lasciano il posto al face pull (cifosi: il rinforzo del
+       dorso alto funziona, lo stretching no [D19, J01, J02]);
+     - le alzate laterali passano dalla A alla B, che era più corta;
+     - gli esercizi a un braccio o una gamba hanno `unilaterale: true` e il tempo
+       delle serie si conta per lato.
+     Le superserie restano facoltative: Luigi le ha scartate (5/10/2026). */
   blocchi: [
     {
       id: 1, nome: 'Blocco 1 — costruire la base',
-      idea: 'Carichi solidi sui fondamentali e primo grosso aumento di volume sulle braccia. ' +
-            'Range di ripetizioni medio-bassi sui multiarticolari: qui costruisci la forza che ' +
-            'ti servirà nei blocchi successivi.',
+      idea: 'Carichi solidi sui fondamentali e braccia in priorità. Range di ripetizioni medio-bassi ' +
+            'sui multiarticolari: qui costruisci la forza che ti servirà nei blocchi successivi.',
       giorni: [
         {
-          id: 'A', nome: 'Seduta A', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
+          id: 'A', nome: 'Seduta A', focus: 'Petto · Dorso · Gambe · Braccia',
           nota: 'La seduta è divisa in blocchi per gruppo muscolare: finisci tutto quello di un ' +
                 'muscolo prima di passare al successivo, così non torni due volte alla stessa ' +
                 'postazione. Le braccia stanno dopo le gambe e non alla fine: l\'ordine non cambia ' +
                 'l\'ipertrofia, ma il blocco gambe fa da stacco fra la lat machine e i curl, ' +
                 'e ci arrivi con il bicipite riposato.',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '6-8', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'],
+            { avvicinamento: 2, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '6-8', rir: '1-2', rec: '2 min', indiretti: ['Tricipiti', 'Spalle'],
               nota: 'Primo esercizio della settimana: qui cerchi il carico.' },
-            { ex: 'lat-machine', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Bicipiti'] },
-            { avvicinamento: 2, ex: 'leg-press', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1-2', rec: '3 min', indiretti: ['Glutei'],
-              nota: 'Ferma la discesa prima che il bacino si stacchi: oltre quel punto comprimi l\'addome e favorisci il reflusso. La pressa resta comunque preferibile allo squat pesante: 161 mmHg di pressione addominale di picco contro 219. È l\'unico esercizio in cui i 3 minuti pieni di recupero sono ripagati da un dato sperimentale.' },
+            { ex: 'lat-machine', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'],
+              nota: 'In fondo al movimento porta le scapole indietro e in basso e tienile un secondo: è il lavoro che serve anche alla postura.' },
+            { avvicinamento: 1, ex: 'leg-press', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1-2', rec: '2 min', indiretti: ['Glutei'],
+              nota: 'Ferma la discesa prima che il bacino si stacchi: oltre quel punto comprimi l\'addome e favorisci il reflusso. La pressa resta comunque preferibile allo squat pesante: 161 mmHg di pressione addominale di picco contro 219. Recupero di 2 minuti e non 3 per stare nell\'ora: con i recuperi più lunghi si cresce un po\' di più, ma la differenza è piccola.' },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '0-1', rec: '60 sec',
               nota: 'Non ti alzi nemmeno: è la stessa macchina di sopra. Scarichi il peso, porti solo gli avampiedi sul bordo della pedana, gambe quasi tese, e spingi di caviglia. Il calf da seduto è uscito dalla scheda perché in palestra quella macchina non c\'è — e ci hai guadagnato: a ginocchio teso lavora il gastrocnemio, quello che si vede da fuori, che da seduto non lavorava.' },
-            { ex: 'incline-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '90 sec',
+            { ex: 'incline-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec',
               tecnica_speciale: 'capo lungo in allungamento',
               nota: 'Il bicipite lavora con la spalla estesa, quindi più allungato. Onestà sui dati: l\'idea che questo faccia crescere di più la parte alta del bicipite poggia su uno studio su donne non allenate con differenze di un decimo di centimetro (Kassiano 2025), e lo studio più controllato, del 2026, non trova nessuna differenza fra spalla estesa e neutra (Larsen 2026). Resta un ottimo curl, non l\'esercizio decisivo: carichi leggeri, posizione perfetta.' },
-            { ex: 'overhead-extension', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '1', rec: '90 sec',
+            { ex: 'overhead-extension', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec',
               tecnica_speciale: 'capo lungo del tricipite', superset: 'in superserie con il curl, se vuoi finire prima',
-              nota: 'Nell\'unico confronto diretto il tricipite è cresciuto del 19,9% con il braccio sopra la testa contro il 13,9% con il pushdown, su 21 persone non allenate (Maeo 2023): è il dato più forte a favore del lavoro in allungamento, e per questo l\'overhead ha più serie del pushdown. Ultima serie: 3-4 ripetizioni parziali in basso quando non chiudi più il movimento completo.' },
-            { ex: 'alzate-laterali', blocco: 'Spalle', serie: 3, rip: '12-15', rir: '0-1', rec: '1 min' }
+              nota: 'Nell\'unico confronto diretto il tricipite è cresciuto del 19,9% con il braccio sopra la testa contro il 13,9% con il pushdown, su 21 persone non allenate (Maeo 2023): è il dato più forte a favore del lavoro in allungamento. Ultima serie: 3-4 ripetizioni parziali in basso quando non chiudi più il movimento completo.' }
           ]
         },
         {
-          id: 'B', nome: 'Seduta B', focus: 'Spalle · Dorso · Gambe · Braccia · Petto',
+          id: 'B', nome: 'Seduta B', focus: 'Spalle · Dorso · Gambe · Braccia',
           nota: 'Blocchi per gruppo muscolare. Nel blocco braccia puoi alternare preacher curl e ' +
                 'pushdown senza pausa fra i due: mentre lavora un muscolo l\'altro recupera, e ' +
-                'togli 3-5 minuti alla seduta.',
+                'togli 3-5 minuti alla seduta. Il face pull in fondo è il lavoro per la postura.',
           esercizi: [
-            { avvicinamento: 3, ex: 'shoulder-press', blocco: 'Spalle', serie: 3, rip: '6-8', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti'],
-              nota: 'Seduto con schienale, non in piedi: riduce la pressione addominale e quindi il rischio di reflusso.' },
-            { ex: 'chest-supported-row', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Bicipiti'],
-              nota: 'Il petto appoggiato sostituisce il rematore con manubrio piegato in avanti: stesso stimolo sul dorso senza la posizione che scatena il reflusso.' },
-            { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1', rec: '90 sec' },
+            { avvicinamento: 2, ex: 'shoulder-press', blocco: 'Spalle', serie: 2, rip: '6-8', rir: '1-2', rec: '2 min', indiretti: ['Tricipiti'],
+              nota: 'Seduto con schienale, non in piedi: riduce la pressione addominale e quindi il rischio di reflusso. Due serie: le spalle lavorano già nelle spinte, nelle alzate e nel face pull.' },
+            { ex: 'alzate-laterali', blocco: 'Spalle', serie: 2, rip: '12-15', rir: '0-1', rec: '1 min' },
+            { ex: 'face-pull', blocco: 'Spalle', serie: 2, rip: '12-15', rir: '1', rec: '1 min',
+              nota: 'Ha preso il posto del pec deck: per la postura il rinforzo del dorso alto funziona, mentre più petto non serve. Corda all\'altezza del viso, tira verso la fronte aprendo le mani.' },
+            { ex: 'chest-supported-row', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'],
+              nota: 'Il petto appoggiato sostituisce il rematore con manubrio piegato in avanti: stesso stimolo sul dorso senza la posizione che scatena il reflusso. Scapole indietro e un secondo di pausa in fondo.' },
+            { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1', rec: '75 sec' },
             { ex: 'hip-thrust', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1', rec: '2 min', indiretti: ['Femorali'],
-              nota: 'Accorpato al leg curl per non tornare due volte nella zona gambe. Tre serie e non due: glutei e femorali stavano sulla soglia minima efficace, 4 serie frazionarie a settimana (Pelland 2025); con la terza la superano entrambi, e costa due minuti e mezzo.' },
-            { ex: 'preacher-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '90 sec',
+              nota: 'Accorpato al leg curl per non tornare due volte nella zona gambe. Tre serie e non due: glutei e femorali stanno sulla soglia minima efficace, 4 serie frazionarie a settimana (Pelland 2025); con la terza la superano entrambi.' },
+            { ex: 'preacher-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec',
               tecnica_speciale: 'brachiale e porzione distale',
               nota: 'Complementare all\'incline curl: qui il picco di carico è nella parte bassa e colpisce il brachiale, il muscolo che spinge in fuori il bicipite.' },
             { ex: 'pushdown', blocco: 'Braccia', serie: 3, rip: '12-15', rir: '0-1', rec: '1 min',
-              superset: 'in superserie con il preacher, se vuoi finire prima' },
-            { ex: 'pec-deck', blocco: 'Petto', serie: 3, rip: '10-12', rir: '1', rec: '90 sec',
-              nota: 'Chiude la seduta: è un isolamento e non ha bisogno di tricipiti freschi, quindi sta bene dopo le braccia.' }
+              superset: 'in superserie con il preacher, se vuoi finire prima' }
           ]
         },
         {
           id: 'C', nome: 'Seduta C', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
-          nota: 'La seduta con più volume sulle braccia della settimana: il blocco braccia è di tre ' +
-                'esercizi di fila. Se il tempo stringe, taglia le alzate o i polpacci, mai bicipiti ' +
-                'e tricipiti.',
+          nota: 'Se il tempo stringe, taglia i polpacci, mai bicipiti e tricipiti.',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-inclinata-manubri', blocco: 'Petto', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'],
+            { avvicinamento: 2, ex: 'panca-inclinata-manubri', blocco: 'Petto', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Tricipiti', 'Spalle'],
               nota: 'Inclinazione 30 gradi, mai declinata: la panca declinata mette la testa sotto il livello dello stomaco ed è uno dei trigger più diretti del reflusso.' },
-            { ex: 'pulley-basso', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Bicipiti'] },
-            { ex: 'leg-extension', blocco: 'Gambe', serie: 3, rip: '10-15', rir: '1', rec: '90 sec' },
+            { ex: 'pulley-basso', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'] },
+            { ex: 'leg-extension', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '1', rec: '75 sec' },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '0-1', rec: '60 sec' },
-            { ex: 'curl-cavo-basso', blocco: 'Braccia', serie: 3, rip: '10-15', rir: '0-1', rec: '90 sec',
+            { ex: 'curl-cavo-basso', blocco: 'Braccia', serie: 3, rip: '10-15', rir: '0-1', rec: '75 sec',
               tecnica_speciale: 'tensione costante',
               nota: 'Il cavo tiene tensione anche in basso, dove il manubrio la perde. Ultima serie: 3-4 parziali nella parte bassa quando non chiudi più.' },
-            { ex: 'hammer-curl', blocco: 'Braccia', serie: 2, rip: '10-12', rir: '0-1', rec: '90 sec',
-              nota: 'Presa neutra per brachiale e brachioradiale: sono loro a dare la larghezza del braccio vista di lato. Di fila al curl ai cavi: stesso muscolo, si cambia solo attrezzo.' },
-            { ex: 'french-press', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '90 sec',
-              superset: 'in superserie con l\'hammer curl, se vuoi finire prima' },
+            { ex: 'french-press', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec',
+              superset: 'in superserie con il curl ai cavi, se vuoi finire prima' },
             { ex: 'face-pull', blocco: 'Spalle', serie: 2, rip: '12-15', rir: '1', rec: '1 min' }
           ]
         }
@@ -5623,57 +5636,59 @@ var SCHEDA_SU_MISURA = {
 
     {
       id: 2, nome: 'Blocco 2 — cambio di angoli',
-      idea: 'Stessi muscoli, attrezzi e angoli diversi. Il bicipite passa al curl concentrato e ' +
-            'al curl inverso, il tricipite al manubrio sopra la testa, le gambe agli affondi. ' +
-            'Serve a stimolare le fibre da direzioni nuove e a spezzare la noia.',
+      idea: 'Stessi muscoli, attrezzi e angoli diversi. Il bicipite passa al curl concentrato, il ' +
+            'tricipite al manubrio sopra la testa, le gambe agli affondi. Serve a stimolare le fibre ' +
+            'da direzioni nuove e a spezzare la noia. Le serie sono quelle del primo blocco.',
       giorni: [
         {
-          id: 'A', nome: 'Seduta A', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
-          nota: 'Gli affondi sostituiscono la pressa: busto eretto, quindi anche meglio per il reflusso.',
+          id: 'A', nome: 'Seduta A', focus: 'Petto · Dorso · Gambe · Braccia',
+          nota: 'Gli affondi sostituiscono la pressa: busto eretto, quindi anche meglio per il reflusso. ' +
+                'Negli esercizi a una gamba o a un braccio passa all\'altro lato subito, senza pausa: ' +
+                'il recupero si fa dopo i due lati.',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-inclinata-bilanciere', blocco: 'Petto', serie: 3, rip: '6-8', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'] },
-            { ex: 'lat-machine-neutra', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Bicipiti'] },
-            { avvicinamento: 2, ex: 'affondi', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1-2', rec: '2-3 min', indiretti: ['Glutei'],
+            { avvicinamento: 2, ex: 'panca-inclinata-bilanciere', blocco: 'Petto', serie: 3, rip: '6-8', rir: '1-2', rec: '2 min', indiretti: ['Tricipiti', 'Spalle'] },
+            { ex: 'lat-machine-neutra', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'] },
+            { avvicinamento: 1, ex: 'affondi', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1-2', rec: '2 min', indiretti: ['Glutei'], unilaterale: true,
               nota: 'Le ripetizioni sono per gamba. Se la stabilità è precaria, tienile più alte e il carico più basso.' },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '0-1', rec: '60 sec',
               nota: 'Oggi le gambe le hai fatte con gli affondi, quindi alla pressa ci vai solo per questo: carico basso, avampiedi sul bordo della pedana, talloni nel vuoto. Se è occupata, in piedi su un rialzo con un manubrio in mano.' },
-            { ex: 'curl-concentrato', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '90 sec',
+            { ex: 'curl-concentrato', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec', unilaterale: true,
               tecnica_speciale: 'isolamento totale',
-              nota: 'Nessuno slancio possibile: è il suo pregio. Carichi bassi, esecuzione lenta.' },
-            { ex: 'french-press-manubrio', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '1', rec: '90 sec',
+              nota: 'Nessuno slancio possibile: è il suo pregio. Carichi bassi, esecuzione lenta; un braccio dopo l\'altro senza pausa.' },
+            { ex: 'french-press-manubrio', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec',
               tecnica_speciale: 'capo lungo del tricipite',
-              superset: 'in superserie con il curl concentrato, se vuoi finire prima' },
-            { ex: 'alzate-cavo', blocco: 'Spalle', serie: 3, rip: '12-15', rir: '0-1', rec: '1 min',
-              nota: 'Al cavo la tensione c\'è anche in basso, dove il manubrio non ne ha praticamente.' }
+              superset: 'in superserie con il curl concentrato, se vuoi finire prima' }
           ]
         },
         {
-          id: 'B', nome: 'Seduta B', focus: 'Spalle · Dorso · Gambe · Braccia · Petto',
+          id: 'B', nome: 'Seduta B', focus: 'Spalle · Dorso · Gambe · Braccia',
           esercizi: [
-            { avvicinamento: 3, ex: 'shoulder-press', blocco: 'Spalle', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti'] },
-            { ex: 'rematore-mono-cavo', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'],
-              nota: 'Un braccio alla volta: più allungamento e correggi gli squilibri fra i due lati.' },
-            { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '10-15', rir: '1', rec: '90 sec' },
+            { avvicinamento: 2, ex: 'shoulder-press', blocco: 'Spalle', serie: 2, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Tricipiti'] },
+            { ex: 'alzate-laterali', blocco: 'Spalle', serie: 2, rip: '12-15', rir: '0-1', rec: '1 min',
+              nota: 'Con i manubri, tutte e due le braccia insieme: al cavo, un braccio alla volta, costavano il doppio del tempo.' },
+            { ex: 'face-pull', blocco: 'Spalle', serie: 2, rip: '12-15', rir: '1', rec: '1 min',
+              nota: 'Al posto delle croci ai cavi: per la postura conta il dorso alto, non il petto.' },
+            { ex: 'chest-supported-row', blocco: 'Dorso', serie: 3, rip: '10-12', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'],
+              nota: 'Torna il rematore con il petto appoggiato del primo blocco, con ripetizioni più alte: il rematore a un braccio costava il doppio del tempo, e cambiare esercizio a ogni blocco non fa crescere di più.' },
+            { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '10-15', rir: '1', rec: '75 sec' },
             { ex: 'hip-thrust', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1', rec: '2 min', indiretti: ['Femorali'] },
-            { ex: 'incline-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '90 sec',
+            { ex: 'incline-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec',
               tecnica_speciale: 'capo lungo in allungamento' },
             { ex: 'pushdown', blocco: 'Braccia', serie: 3, rip: '12-15', rir: '0-1', rec: '1 min',
-              superset: 'in superserie con l\'incline curl, se vuoi finire prima' },
-            { ex: 'croci-cavi', blocco: 'Petto', serie: 3, rip: '12-15', rir: '1', rec: '90 sec' }
+              superset: 'in superserie con l\'incline curl, se vuoi finire prima' }
           ]
         },
         {
           id: 'C', nome: 'Seduta C', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti', 'Spalle'] },
-            { ex: 'pulley-basso', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Bicipiti'] },
-            { ex: 'leg-extension', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '90 sec' },
+            { avvicinamento: 2, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Tricipiti', 'Spalle'] },
+            { ex: 'pulley-basso', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'] },
+            { ex: 'leg-extension', blocco: 'Gambe', serie: 2, rip: '12-15', rir: '1', rec: '75 sec' },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '0-1', rec: '60 sec' },
-            { ex: 'hammer-curl', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '0-1', rec: '90 sec' },
-            { ex: 'curl-inverso', blocco: 'Braccia', serie: 2, rip: '10-12', rir: '0-1', rec: '90 sec',
-              nota: 'Userai molto meno carico: è normale. Serve alla parte del braccio che di solito resta indietro. Di fila all\'hammer curl: stessa presa, stesso attrezzo.' },
-            { ex: 'overhead-extension', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '1', rec: '90 sec',
-              superset: 'in superserie con il curl inverso, se vuoi finire prima' },
+            { ex: 'hammer-curl', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '0-1', rec: '75 sec',
+              nota: 'Presa neutra per brachiale e brachioradiale: sono loro a dare la larghezza del braccio vista di lato.' },
+            { ex: 'overhead-extension', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '1', rec: '75 sec',
+              superset: 'in superserie con l\'hammer curl, se vuoi finire prima' },
             { ex: 'face-pull', blocco: 'Spalle', serie: 2, rip: '12-15', rir: '1', rec: '1 min' }
           ]
         }
@@ -5682,54 +5697,53 @@ var SCHEDA_SU_MISURA = {
 
     {
       id: 3, nome: 'Blocco 3 — ripetizioni alte e picco',
-      idea: 'Tornano gli esercizi del primo blocco, ma con ripetizioni più alte e ancora più ' +
-            'volume sulle braccia. È il blocco in cui i carichi del primo ti sembreranno leggeri. ' +
+      idea: 'Tornano gli esercizi del primo blocco, ma con ripetizioni più alte e una serie in più ' +
+            'sull\'incline curl. È il blocco in cui i carichi del primo ti sembreranno leggeri. ' +
             'Dopo questo si riparte dal blocco 1 con numeri più alti.',
       giorni: [
         {
-          id: 'A', nome: 'Seduta A', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
+          id: 'A', nome: 'Seduta A', focus: 'Petto · Dorso · Gambe · Braccia',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '6-8', rir: '1-2', rec: '3 min', indiretti: ['Tricipiti', 'Spalle'],
-              nota: 'Ripetizioni medio-basse, non un record: oltre l\'80% del massimale, cioè sotto le 6 ripetizioni, una breve apnea diventa inevitabile (Hackett 2013), e l\'apnea alza la pressione dentro l\'addome, quella che spinge il contenuto dello stomaco verso l\'alto. Espira mentre spingi. Sono le uniche serie della seduta in cui i 3 minuti pieni servono davvero.' },
-            { ex: 'trazioni', blocco: 'Dorso', serie: 3, rip: '5-10', rir: '1', rec: '2-3 min', indiretti: ['Bicipiti'],
+            { avvicinamento: 2, ex: 'panca-piana', blocco: 'Petto', serie: 3, rip: '6-8', rir: '1-2', rec: '3 min', indiretti: ['Tricipiti', 'Spalle'],
+              nota: 'Ripetizioni medio-basse, non un record: oltre l\'80% del massimale, cioè sotto le 6 ripetizioni, una breve apnea diventa inevitabile (Hackett 2013), e l\'apnea alza la pressione dentro l\'addome, quella che spinge il contenuto dello stomaco verso l\'alto. Espira mentre spingi. Sono le uniche serie della scheda in cui i 3 minuti pieni servono davvero.' },
+            { ex: 'trazioni', blocco: 'Dorso', serie: 3, rip: '5-10', rir: '1', rec: '2 min', indiretti: ['Bicipiti'],
               nota: 'Se non arrivi a 5 ripetizioni pulite usa la lat machine assistita e torna a provarle ogni settimana.' },
-            { avvicinamento: 2, ex: 'leg-press', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '2-3 min', indiretti: ['Glutei'] },
+            { avvicinamento: 1, ex: 'leg-press', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '2 min', indiretti: ['Glutei'] },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '0-1', rec: '60 sec' },
-            { ex: 'incline-curl', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '0-1', rec: '90 sec',
+            { ex: 'incline-curl', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '0-1', rec: '75 sec',
               tecnica_speciale: 'capo lungo + parziali finali',
               nota: 'Quattro serie: è il blocco in cui il bicipite riceve più volume di tutto il ciclo. Ultima serie con parziali in allungamento.' },
-            { ex: 'overhead-extension', blocco: 'Braccia', serie: 4, rip: '10-14', rir: '0-1', rec: '90 sec',
+            { ex: 'overhead-extension', blocco: 'Braccia', serie: 3, rip: '10-14', rir: '0-1', rec: '75 sec',
               tecnica_speciale: 'capo lungo + parziali finali',
-              superset: 'in superserie con l\'incline curl, se vuoi finire prima' },
-            { ex: 'alzate-laterali', blocco: 'Spalle', serie: 3, rip: '15-20', rir: '0-1', rec: '1 min' }
+              superset: 'in superserie con l\'incline curl, se vuoi finire prima' }
           ]
         },
         {
-          id: 'B', nome: 'Seduta B', focus: 'Spalle · Dorso · Gambe · Braccia · Petto',
+          id: 'B', nome: 'Seduta B', focus: 'Spalle · Dorso · Gambe · Braccia',
           esercizi: [
-            { avvicinamento: 3, ex: 'shoulder-press', blocco: 'Spalle', serie: 3, rip: '8-10', rir: '1-2', rec: '2-3 min', indiretti: ['Tricipiti'] },
+            { avvicinamento: 2, ex: 'shoulder-press', blocco: 'Spalle', serie: 2, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Tricipiti'] },
+            { ex: 'alzate-laterali', blocco: 'Spalle', serie: 2, rip: '15-20', rir: '0-1', rec: '1 min' },
+            { ex: 'face-pull', blocco: 'Spalle', serie: 2, rip: '15-20', rir: '1', rec: '1 min' },
             { ex: 'chest-supported-row', blocco: 'Dorso', serie: 3, rip: '10-12', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'] },
-            { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '90 sec' },
+            { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '75 sec' },
             { ex: 'hip-thrust', blocco: 'Gambe', serie: 3, rip: '10-15', rir: '1', rec: '2 min', indiretti: ['Femorali'] },
-            { ex: 'preacher-curl', blocco: 'Braccia', serie: 3, rip: '10-14', rir: '0-1', rec: '90 sec' },
-            { ex: 'french-press', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '1', rec: '90 sec',
-              superset: 'in superserie con il preacher, se vuoi finire prima' },
-            { ex: 'pec-deck', blocco: 'Petto', serie: 3, rip: '12-15', rir: '0-1', rec: '90 sec' }
+            { ex: 'preacher-curl', blocco: 'Braccia', serie: 3, rip: '10-14', rir: '0-1', rec: '75 sec' },
+            { ex: 'french-press', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '1', rec: '75 sec',
+              superset: 'in superserie con il preacher, se vuoi finire prima' }
           ]
         },
         {
           id: 'C', nome: 'Seduta C', focus: 'Petto · Dorso · Gambe · Braccia · Spalle',
           esercizi: [
-            { avvicinamento: 3, ex: 'panca-inclinata-manubri', blocco: 'Petto', serie: 3, rip: '10-12', rir: '1-2', rec: '2 min', indiretti: ['Tricipiti', 'Spalle'] },
+            { avvicinamento: 2, ex: 'panca-inclinata-manubri', blocco: 'Petto', serie: 3, rip: '10-12', rir: '1-2', rec: '2 min', indiretti: ['Tricipiti', 'Spalle'] },
             { ex: 'lat-machine', blocco: 'Dorso', serie: 3, rip: '10-12', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'] },
-            { avvicinamento: 2, ex: 'affondi', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '1', rec: '2 min', indiretti: ['Glutei'] },
+            { avvicinamento: 1, ex: 'affondi', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '1', rec: '2 min', indiretti: ['Glutei'], unilaterale: true },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '12-15', rir: '0-1', rec: '60 sec',
               nota: 'Oggi le gambe le hai fatte con gli affondi, quindi alla pressa ci vai solo per questo: carico basso, avampiedi sul bordo della pedana, talloni nel vuoto. Se è occupata, in piedi su un rialzo con un manubrio in mano.' },
             { ex: 'curl-cavo-basso', blocco: 'Braccia', serie: 3, rip: '12-20', rir: '0-1', rec: '75 sec',
               tecnica_speciale: 'alte ripetizioni' },
-            { ex: 'hammer-curl', blocco: 'Braccia', serie: 3, rip: '12-15', rir: '0-1', rec: '90 sec' },
             { ex: 'pushdown', blocco: 'Braccia', serie: 3, rip: '12-20', rir: '0-1', rec: '75 sec',
-              superset: 'in superserie con l\'hammer curl, se vuoi finire prima' },
+              superset: 'in superserie con il curl ai cavi, se vuoi finire prima' },
             { ex: 'face-pull', blocco: 'Spalle', serie: 2, rip: '15-20', rir: '1', rec: '1 min' }
           ]
         }
@@ -5742,9 +5756,12 @@ var SCHEDA_SU_MISURA = {
      stimati. Il grosso non erano le serie, erano i minuti fra una serie e
      l'altra. Queste sono le voci su cui si puo' davvero intervenire. */
   tempo: {
-    titolo: 'Come toglierle dieci minuti',
-    intro: 'Non togliendo serie: il volume è la cosa che fa crescere e resta intatto. Sono tutte ' +
-      'cose che riguardano i minuti in cui non stai allenandoti.',
+    titolo: 'Come stare nell\'ora',
+    intro: 'Da ottobre 2026 la scheda ha già 6-7 serie in meno a settimana, recuperi di 2 minuti sui ' +
+      'multiarticolari e di 75 secondi sugli isolamenti, una serie di avvicinamento in meno: sulla carta ' +
+      'ogni seduta sta fra 52 e 59 minuti. Togliere altre serie porterebbe qualche muscolo sotto la soglia ' +
+      'che lo fa crescere. Quello che resta da recuperare sono i minuti in cui non ti alleni: se una ' +
+      'seduta dura un\'ora e mezza, il tempo è finito lì, non nelle serie.',
     voci: [
       ['Carica la pressa una volta sola', 'Metti subito il peso delle tre serie e non toccarlo più. ' +
         'Se devi salire, aggiungi un disco per lato fra una serie e l\'altra invece di rifare tutto.'],
@@ -5757,12 +5774,16 @@ var SCHEDA_SU_MISURA = {
       ['Prepara i dischi prima di sdraiarti', 'Sulla panca, portati vicino anche i dischi della serie ' +
         'successiva se prevedi di salire.'],
       ['Il telefono solo per registrare', 'Il timer parte da solo quando spunti una serie e suona: ' +
-        'non serve guardarlo. È lì per quello.']
+        'non serve guardarlo. È lì per quello. Quando suona, riparti: un recupero che diventa di 4 minuti ' +
+        'perché si guarda il telefono è il modo più comune in cui un\'ora diventa un\'ora e mezza.'],
+      ['Gli addominali sono fuori dall\'ora', 'Sono facoltativi e valgono circa 10 minuti: se oggi hai ' +
+        'tempo li fai, altrimenti li salti senza rimorsi. Se l\'orologio conta anche loro, la seduta vera ' +
+        'è l\'ora più quei 10 minuti.']
     ],
-    onesta: 'La leva più grande però non è nessuna di queste: è la <b>pratica</b>. Fra il primo e il ' +
-      'quinto allenamento sullo stesso programma si perdono dieci o quindici minuti soltanto perché ' +
-      'sai già dove sta ogni macchina e quanto caricare. Un\'ora e venti al primo giro è normale, ' +
-      'non è un errore tuo né della scheda.'
+    onesta: 'La leva più grande però non è nessuna di queste: è la <b>pratica</b>, e la misura. Nei ' +
+      'Progressi l\'app mostra quanto sono durate davvero le tue sedute accanto alla stima: se dopo ' +
+      'tre o quattro sedute restano sopra l\'ora anche senza addominali e senza attese, la prossima ' +
+      'leva sono le superserie del blocco braccia, che tolgono 3-5 minuti senza togliere volume.'
   },
 
   /* ---------- ADDOMINALI ----------
@@ -5825,8 +5846,15 @@ var SCHEDA_SU_MISURA = {
          del busto in piedi): scaldano le stesse cose, ma di questi esiste
          l'animazione, e un movimento che si vede vale piu' di uno descritto. */
       voci: [
-        ['3 minuti di cardio leggero', 'Cyclette, tapis roulant in salita, ellittica o vogatore: quello che trovi libero. Il ritmo giusto è quello in cui riusciresti ancora a parlare — devi scaldarti, non stancarti. Se arrivi in palestra a piedi o in bici, questa parte l\'hai già fatta.', 'risc-cardio'],
-        ['Cerchi con le braccia', '10 cerchi avanti e 10 indietro, ampi e lenti, braccia all\'altezza delle spalle e niente peso in mano. Servono alla spalla prima di panca e shoulder press.', 'risc-mobilita'],
+        ['2 minuti di cardio leggero', 'Cyclette, tapis roulant in salita, ellittica o vogatore: quello che trovi libero. Il ritmo giusto è quello in cui riusciresti ancora a parlare — devi scaldarti, non stancarti. Se arrivi in palestra a piedi o in bici, questa parte l\'hai già fatta.', 'risc-cardio'],
+        /* v22: blocco posturale per la cifosi lieve, al posto dei cerchi con le
+           braccia (che scaldavano la spalla: lo fanno anche questi). Dose degli
+           studi molto più alta [J01, J02]: qui è un'aggiunta piccola e costante,
+           e il resto lo fanno face pull e rematori. Niente esercizi a pancia in
+           giù sul piano: comprimono l'addome (reflusso). */
+        ['Chin tuck al muro', 'Schiena, nuca e talloni al muro: porta il mento indietro come per fare un doppio mento, senza abbassare la testa. Tieni 5 secondi, 8 volte. Allinea il collo, che con la gobba tende ad andare avanti.'],
+        ['Y e T sulla panca inclinata', 'Petto appoggiato su una panca a 30-45 gradi, manubri da 1-2 kg o a mani vuote: 8 alzate a Y (braccia in alto in diagonale) e 8 a T (braccia aperte di lato), pollici in su, 2 secondi in alto. Lavorano trapezio basso e romboidi, i muscoli che tengono indietro le spalle, e scaldano la spalla prima delle spinte.'],
+        ['Band pull-apart', 'Un elastico teso davanti al petto, braccia dritte: aprilo fino a toccarlo con il petto, stringendo le scapole. 15 ripetizioni. Se l\'elastico non c\'è, fai 15 face pull leggeri al cavo.', 'face-pull'],
         ['Affondo con rotazione', '5 per lato: scendi in affondo e ruota il busto verso la gamba avanti. Scalda insieme la rotazione del tronco e l\'anca, che lo squat da fermo non tocca.', 'risc-rotazioni'],
         ['Squat a corpo libero', '10 ripetizioni lente con le mani dietro la testa, scendendo bene in basso: svegliano fianchi e caviglie, e sono il motivo per cui sulla pressa bastano due serie di avvicinamento invece di tre. Niente peso: qui non stai allenando le gambe, le stai accendendo.', 'risc-squat']
       ]
@@ -6286,8 +6314,8 @@ var CONDIZIONI = {
                   nota: 'Esercizi soprattutto bilaterali e lavoro di stabilità del tronco; niente carichi molto pesanti su un lato solo. Con una curva importante la valutazione dell\'ortopedico viene prima della scheda.' },
   lordosi:      { evita: [], fonti: ['D19'],
                   nota: 'Addominali in tenuta e glutei forti, niente iperestensioni della schiena. L\'evidenza sulla lordosi è più debole che sulla cifosi.' },
-  cifosi:       { evita: [], fonti: ['D19'], aggiungi: ['face-pull'], dorsoPiu: 2,
-                  nota: 'Il rinforzo migliora la cifosi in modo netto: la scheda dà qualche serie in più al dorso che al petto e aggiunge il face pull.' },
+  cifosi:       { evita: [], fonti: ['D19', 'J01', 'J02', 'J13'], aggiungi: ['face-pull'], dorsoPiu: 2,
+                  nota: 'Il rinforzo del dorso alto migliora la cifosi, lo stretching no: la scheda dà qualche serie in più al dorso che al petto, aggiunge il face pull e mette nel riscaldamento 2-3 minuti di esercizi per la postura (chin tuck, Y e T sulla panca inclinata, band pull-apart). Gli studi usano dosi più alte: per vedere se funziona, una foto di profilo ogni 4 settimane. Se la curva non si appiana da sdraiati, fa male o peggiora, serve il medico.' },
   ginocchio:    { evita: ['ginocchio', 'impatto'], fonti: ['D14'],
                   nota: 'Il ginocchio sano non ha niente da temere dalla profondità; con il dolore conta evitare l\'angolo che fa male sotto carico. Per questo la scheda preferisce pressa, step-up basso e leg extension: scendi fin dove non senti dolore e metti i piedi più alti sulla pedana della pressa.' },
   spalla:       { evita: ['spalla'], fonti: ['D15'], aggiungi: ['extrarotazione-cavo'],
@@ -6882,6 +6910,42 @@ function volumeSettimana(giorni) {
   return v;
 }
 
+/* ---------- riscaldamento e tempo per persona (v22) ----------
+   La scheda su misura ha nel riscaldamento il blocco per la postura (cifosi di
+   Luigi) e una sezione sul tempo scritta per lui. Qui il blocco posturale resta
+   solo a chi ha dichiarato la cifosi; agli altri tornano i cerchi con le braccia. */
+var VOCI_POSTURA = ['Chin tuck al muro', 'Y e T sulla panca inclinata', 'Band pull-apart'];
+var CERCHI_BRACCIA = ['Cerchi con le braccia', '10 cerchi avanti e 10 indietro, ampi e lenti, braccia all\'altezza ' +
+  'delle spalle e niente peso in mano. Servono alla spalla prima delle spinte.', 'risc-mobilita'];
+
+function riscaldamentoPer(q) {
+  var R = JSON.parse(JSON.stringify(SCHEDA_BASE.riscaldamento));
+  var cifosi = !!(q && q.condizioni && q.condizioni.cifosi);
+  var voci = [];
+  R.generale.voci.forEach(function (v) {
+    var postura = VOCI_POSTURA.indexOf(v[0]) >= 0;
+    if (postura && !cifosi) {
+      if (voci.indexOf(CERCHI_BRACCIA) < 0) voci.push(CERCHI_BRACCIA);
+      return;
+    }
+    if (postura) v = [v[0], v[1].replace(', che con la gobba tende ad andare avanti', '')];
+    if (!cifosi && /^2 minuti di cardio/.test(v[0])) v = ['3 minuti di cardio leggero'].concat(v.slice(1));
+    voci.push(v);
+  });
+  R.generale.voci = voci;
+  return R;
+}
+
+function tempoGenerico() {
+  var T = JSON.parse(JSON.stringify(SCHEDA_BASE.tempo));
+  T.titolo = 'Come stare nei tuoi minuti';
+  T.intro = 'La scheda è già calcolata per i minuti che hai indicato, con un margine per le pause. Se le ' +
+    'sedute vere durano di più, il tempo non è nelle serie: è nei minuti in cui non ti alleni.';
+  T.onesta = 'La leva più grande è la pratica: dopo le prime sedute sai dove sta ogni macchina e quanto ' +
+    'caricare. Nei Progressi l\'app mostra la durata vera accanto alla stima.';
+  return T;
+}
+
 /* ---------- durata, con le stesse voci di TEMPI in app.js ---------- */
 
 var TEMPI_M = { serie: 45, setupDischi: 90, setupMacchina: 30, setupCorpoLibero: 10, dentroBlocco: 60, fraBlocchi: 120,
@@ -7286,8 +7350,8 @@ function generaScheda(q) {
     blocchi: blocchi,
     perche: perche,
     core: coreGenerato(q, esclusi),
-    tempo: SCHEDA_BASE.tempo,
-    riscaldamento: SCHEDA_BASE.riscaldamento,
+    tempo: tempoGenerico(),
+    riscaldamento: riscaldamentoPer(q),
     extra: SCHEDA_BASE.extra.filter(function (e) { return e.id === 'stretching'; }),
     glossario: SCHEDA_BASE.glossario,
     primaVolta: SCHEDA_BASE.primaVolta.filter(function (p) { return !/reflusso|braccia|lean bulk/i.test(p.t + ' ' + (p.d || '')); }),
@@ -20801,7 +20865,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmuvt6fld';
+var BUILD = 'vmuvtm4sa';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -21215,7 +21279,8 @@ function dettaglioDurata(g, superserie) {
     /* in superserie il recupero del secondo esercizio e' gia' speso a lavorare
        sull'altro muscolo: resta solo il tempo delle serie */
     var accoppiato = superserie && e.superset && prec !== null;
-    d.serie += n * TEMPI.serie;
+    /* v22: a un braccio o una gamba la serie si fa due volte, una per lato */
+    d.serie += n * TEMPI.serie * (e.unilaterale ? 2 : 1);
     if (!accoppiato) d.recuperi += (n - 1) * recSec(e.rec);
     d.setup += caricaDischi(e.ex) ? TEMPI.setupDischi : TEMPI.setupMacchina;
     if (e.avvicinamento) d.avvicinamento += e.avvicinamento * TEMPI.avvicSerie;
