@@ -1027,12 +1027,19 @@ nav.cinque button svg { width: 20px; height: 20px; }
 .disp-cat { font-size: 13px; font-weight: 650; letter-spacing: .02em; text-transform: uppercase; margin: 16px 2px 6px; color: var(--text-dim); }
 .disp-cat .dim { font-weight: 500; margin-left: 4px; }
 .disp-cat + .card { margin-top: 0; }
+.disp-giudizio { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; padding: 12px 14px; }
+.disp-giudizio > b { margin-right: 4px; }
+.disp-giudizio p { flex-basis: 100%; margin: 4px 0 0; font-size: 12px; }
+.disp-t .disp-sem { grid-area: sem; justify-self: start; margin-top: 4px; font-size: 11px; }
+.disp-perche { margin: 4px 0 12px; font-size: 13px; line-height: 1.45; }
+.disp-perche p { margin: 0 0 6px; }
+.disp-perche .sem { margin-right: 6px; padding: 0; background: none; }
 .disp-riga { border-bottom: 1px solid var(--line); }
 .disp-riga:last-child { border-bottom: none; }
 .disp-t {
   width: 100%; background: none; border: 0; color: var(--text); cursor: pointer;
   text-align: left; padding: 12px 0; display: grid; gap: 2px;
-  grid-template-columns: 1fr auto; grid-template-areas: "nome scad" "sotto scad";
+  grid-template-columns: 1fr auto; grid-template-areas: "nome scad" "sotto scad" "sem sem";
 }
 .disp-t b { grid-area: nome; font-size: 14px; font-weight: 620; }
 .disp-t span { grid-area: sotto; font-size: 11.5px; }
@@ -6878,7 +6885,13 @@ function volumeSettimana(giorni) {
 /* ---------- durata, con le stesse voci di TEMPI in app.js ---------- */
 
 var TEMPI_M = { serie: 45, setupDischi: 90, setupMacchina: 30, setupCorpoLibero: 10, dentroBlocco: 60, fraBlocchi: 120,
-                generale: 300, avvicSerie: 75 };
+                generale: 300, avvicSerie: 75,
+                /* v22: lo stesso margine di TEMPI.margine in app.js. La seduta vera dura
+                   di più della somma delle voci (macchine occupate, una serie in più,
+                   il telefono): l'unica misura che abbiamo, 85 minuti contro 68 stimati,
+                   dà ×1,25. È una taratura su una persona sola, non uno studio: serve a
+                   non promettere un'ora che poi ne diventa una e mezza. */
+                margine: 1.25 };
 
 function secRec(rec) {
   var r = String(rec || ''), n = parseFloat(r);
@@ -6889,7 +6902,9 @@ function secRec(rec) {
   return r.indexOf('min') >= 0 ? Math.round(n * 60) : Math.round(n);
 }
 
-function durataGiorno(g) {
+/* `realistica`: con il margine sui pesi (il cardio resta com'è, è a tempo).
+   È questa che deve stare nei minuti dichiarati dalla persona (v22). */
+function durataGiorno(g, realistica) {
   var s = TEMPI_M.generale, prec = null;
   g.esercizi.forEach(function (e) {
     if (e.opzionale) return;
@@ -6901,6 +6916,7 @@ function durataGiorno(g) {
     if (prec !== null) s += prec === e.blocco ? TEMPI_M.dentroBlocco : TEMPI_M.fraBlocchi;
     prec = e.blocco;
   });
+  if (realistica) s *= TEMPI_M.margine;
   if (g.cardio) s += g.cardio.minuti * 60;
   return Math.round(s / 60);
 }
@@ -7138,7 +7154,7 @@ function aggiusta(giorni, target) {
 function staNelTempo(giorni, target, minuti, prio) {
   var sforo = false;
   giorni.forEach(function (gg) {
-    for (var giro = 0; giro < 40 && durataGiorno(gg) > minuti; giro++) {
+    for (var giro = 0; giro < 40 && durataGiorno(gg, true) > minuti; giro++) {
       var v = volumeSettimana(giorni), tolta = false;
       /* si taglia prima dal gruppo che sta più sopra il suo minimo, in
          proporzione: così nessun gruppo resta a metà mentre un altro è pieno.
@@ -7248,7 +7264,7 @@ function generaScheda(q) {
     blocchi.forEach(function (b) {
       inSeduta = 0;
       b.giorni.forEach(function (g) {
-        var avanza = minuti - durataGiorno(g);
+        var avanza = minuti - durataGiorno(g, true);
         if (avanza >= 10) {
           var m = Math.min(cardio.seduta, Math.floor(avanza / 5) * 5);
           g.cardio = { ex: cardio.ex, minuti: m, testo: cardio.testo.replace('{min}', m) };
@@ -19852,6 +19868,142 @@ function dispensaPerCategoria(lista) {
     .map(function (c) { return { cat: c, voci: gruppi[c] }; });
 }
 
+/* ============================================================
+   «Ti fa bene?» — il giudizio di un prodotto per QUESTA persona (v22)
+
+   Tre livelli, gli stessi colori del semaforo delle ricette:
+     verde  'Ti fa bene'      niente che tocchi le sue condizioni
+     giallo 'Con moderazione' un ingrediente o un valore da tenere d'occhio
+     rosso  'Meglio evitare'  un'intolleranza o allergia dichiarata, oppure
+                               uno scatenante forte del reflusso
+   Il giudizio usa le regole che l'app ha già e che hanno una fonte:
+   ESCLUDI_INGREDIENTI (questionario.js) per intolleranze, allergie e diete,
+   REFLUSSO_REGOLE e FODMAP_REGOLE (fodmap.js), le etichette CREA di ALIMENTI.
+   Le soglie sui valori per 100 g (grassi, zuccheri, sale) sono quelle «alte»
+   del semaforo delle etichette britannico (FSA): una convenzione per leggere
+   le etichette, non una soglia clinica. Lo dice anche la nota in Dispensa.
+   Con il reflusso i cibi sospetti vanno provati sulla persona, non tolti a
+   tappeto [C18]: per questo «meglio evitare» resta un consiglio, e il Diario
+   dei cibi, con quello che la persona prova davvero, vince sulla tabella.
+   ============================================================ */
+
+var SOGLIE_ETICHETTA = { grassi: 17.5, zuccheri: 22.5, sale: 1.5 };   /* g per 100 g, FSA «alto» */
+
+/* Il nome dell'intolleranza o allergia come lo legge una persona */
+var NOME_VINCOLO = {
+  lattosio: 'lattosio', latticini: 'latticini', glutine: 'glutine', nichel: 'nichel', fruttosio: 'fruttosio',
+  'frutta-secca': 'frutta a guscio', arachidi: 'arachidi', crostacei: 'crostacei', pesce: 'pesce', uova: 'uova',
+  soia: 'soia', sesamo: 'sesamo', carne: 'carne', molluschi: 'molluschi', miele: 'miele', maiale: 'maiale', alcol: 'alcol'
+};
+
+/* L'alimento CREA che corrisponde al nome, solo se la corrispondenza è
+   piena (tutte le parole del nome CREA sono nel nome del prodotto): per un
+   giudizio serve più certezza che per una categoria. */
+function alimentoCREAdi(nome) {
+  if (typeof ALIMENTI === 'undefined') return null;
+  var p = paroleDi(nome), meglio = null, punti = 0;
+  ALIMENTI.forEach(function (a) {
+    if (!a._pw) a._pw = paroleDi(a.n);
+    var k = Object.keys(a._pw);
+    if (!k.length || !k.every(function (x) { return p[x]; })) return;
+    if (k.length > punti) { punti = k.length; meglio = a; }
+  });
+  return meglio;
+}
+
+/* I primi ingredienti dell'etichetta, che sono i più abbondanti: un «aroma di
+   limone» in fondo alla lista non fa un prodotto agli agrumi. */
+function primiIngredienti(testo, quanti) {
+  return String(testo || '').split(/[,;.]\s*(?![^()]*\))/).map(function (x) {
+    return x.replace(/\([^)]*\)/g, '').replace(/\d+([.,]\d+)?\s*%/g, '').trim();
+  }).filter(function (x) { return x.length > 1; }).slice(0, quanti || 5);
+}
+
+function giudizioDispensa(v) {
+  if (!v) return null;
+  var pr = prodottoDiDispensa(v);
+  var crea = alimentoCREAdi(v.n);
+  var nome = v.n + (pr && pr.n && pr.n !== v.n ? ' ' + pr.n : '');
+  var ingr = pr ? primiIngredienti(pr.ingr, 5) : [];
+  var tags = (v.tags && v.tags.length ? v.tags : (pr && pr.cat)) || [];
+  var motivi = [], peggio = 0;   /* 0 verde, 1 giallo, 2 rosso */
+  function segna(liv, testo, fonte) {
+    if (motivi.some(function (m) { return m.t === testo; })) return;
+    motivi.push({ liv: liv, t: testo, fonte: fonte || '' });
+    if (liv > peggio) peggio = liv;
+  }
+
+  /* 1. intolleranze, allergie, dieta: le dichiarazioni della persona */
+  var pezzi = [nome.toLowerCase()].concat(ingr.map(function (x) { return x.toLowerCase(); }));
+  if (typeof vincoliAlimentari === 'function') {
+    vincoliAlimentari().forEach(function (k) {
+      var re = ESCLUDI_INGREDIENTI[k], es = ESENTI[k];
+      if (re && pezzi.some(function (x) { return re.test(x) && !(es && es.test(x)); })) {
+        segna(2, 'Contiene ' + (NOME_VINCOLO[k] || k) + ', che hai indicato nel questionario.');
+      }
+    });
+  }
+
+  /* 2. reflusso: le regole delle ricette sul nome e sui primi ingredienti */
+  if (ha('reflusso')) {
+    [nome].concat(ingr).forEach(function (t) {
+      var r = regolaReflusso(t);
+      if (r && r.peso) segna(r.peso >= 2 ? 2 : 1, r.motivo + (r.rimedio ? ' ' + r.rimedio : ''), r.fonte);
+    });
+    if (pr && pr.f >= SOGLIE_ETICHETTA.grassi) {
+      segna(1, 'Grasso (' + String(pr.f).replace('.', ',') + ' g su 100 g): resta più a lungo nello stomaco. ' +
+        'Meglio poco per volta e lontano dalla sera.', 'C26, C27');
+    }
+    if (tags.some(function (t) { return /^en:(carbonated|sodas|sparkling)/.test(t); }) ||
+        /\b(frizzant|gassat|effervescent)/.test(fodNorm(nome))) {
+      segna(1, 'Gassata: l\'anidride carbonica distende lo stomaco. Meglio naturale, soprattutto ai pasti.', 'C19');
+    }
+    if (tags.some(function (t) { return /^en:alcoholic-beverages/.test(t); })) {
+      segna(2, 'Alcol: rilassa lo sfintere e irrita la mucosa.', 'C19, C28');
+    }
+    if (!motivi.length && crea && crea.reflusso === 'attenzione') {
+      segna(1, MOTIVI_REFLUSSO_GRUPPO[crea.g] || 'Da tenere d\'occhio col reflusso.', 'C19');
+    }
+  }
+
+  /* 3. colon irritabile (anche solo sospetto): FODMAP */
+  /* per la scheda su misura il colon irritabile è solo un sospetto (v19):
+     un FODMAP alto resta «con moderazione», e lo si dice */
+  if (ha('ibs')) {
+    var sosp = typeof suMisura === 'function' && suMisura();
+    var segnaF = function (l, t, f) {
+      segna(sosp ? Math.min(l, 1) : l, t + (sosp ? ' (colon irritabile da verificare col medico)' : ''), f);
+    };
+    var rf = regolaFodmap(nome);
+    if (rf && rf.livello && rf.livello !== 'ok') {
+      segnaF(rf.livello === 'alto' ? 2 : 1, 'FODMAP: ' + rf.motivo + (rf.rimedio ? ' ' + rf.rimedio : ''), rf.fonte);
+    } else if (crea && crea.fodmap && crea.fodmap !== 'ok') {
+      segnaF(crea.fodmap === 'alto' ? 2 : 1, 'FODMAP: ' + (MOTIVI_GRUPPO[crea.g] || 'da provare in piccole dosi.'));
+    }
+  }
+
+  /* 4. diabete e pressione: i valori dell'etichetta */
+  if (ha('diabete') && pr && pr.zu >= SOGLIE_ETICHETTA.zuccheri) {
+    segna(1, 'Molti zuccheri (' + String(pr.zu).replace('.', ',') + ' g su 100 g): in piccole porzioni e insieme a un pasto.');
+  }
+  if (ha('ipertensione') && pr && pr.sa >= SOGLIE_ETICHETTA.sale) {
+    segna(1, 'Molto sale (' + String(pr.sa).replace('.', ',') + ' g su 100 g): conta nei 5 g al giorno.');
+  }
+
+  /* niente dati su cui giudicare: meglio tacere che dire «ti fa bene» */
+  var conosciuto = !!(pr || crea || categoriaDi(v).da !== 'nessuna');
+  if (!motivi.length && !conosciuto) return null;
+  return { livello: ['verde', 'giallo', 'rosso'][peggio], motivi: motivi };
+}
+
+var ETICHETTA_DISPENSA = { verde: 'Ti fa bene', giallo: 'Con moderazione', rosso: 'Meglio evitare' };
+
+/* Ci sono condizioni per cui dare un giudizio? */
+function giudizioDispensaAttivo() {
+  return ha('reflusso') || ha('ibs') || ha('diabete') || ha('ipertensione') ||
+    (typeof vincoliAlimentari === 'function' && vincoliAlimentari().length > 0);
+}
+
 
 /* ===== nutrizione-generale.js ===== */
 /* ============================================================
@@ -20991,7 +21143,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmuvqxdc6';
+var BUILD = 'vmuvr72wr';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -23524,6 +23676,18 @@ function vDispensa() {
       inScadenza.map(function (v) { return esc(v.n); }).join('</b>, <b>') + '</b>.</div>';
   }
 
+  /* v22: «ti fa bene?», solo se la persona ha qualcosa su cui giudicare */
+  var giudica = giudizioDispensaAttivo();
+  if (giudica) {
+    var conta = { verde: 0, giallo: 0, rosso: 0 };
+    lista.forEach(function (v) { var gd = giudizioDispensa(v); if (gd) conta[gd.livello]++; });
+    h += '<div class="card disp-giudizio"><b>Per te</b>' +
+      ['verde', 'giallo', 'rosso'].map(function (l) {
+        return '<span class="sem ' + l + '"><i></i>' + conta[l] + ' ' + ETICHETTA_DISPENSA[l].toLowerCase() + '</span>';
+      }).join('') + '<p class="dim">Tocca un prodotto per sapere perché. Quello che segni nel Diario dei cibi ' +
+      '(come ti fa stare davvero) conta più di questa tabella.</p></div>';
+  }
+
   h += '<h2>Che cosa hai</h2>';
   /* v22: raggruppata per categoria, trovata da sola (dispensa.js) */
   dispensaPerCategoria(lista).forEach(function (gr) {
@@ -23536,6 +23700,8 @@ function vDispensa() {
       '<b>' + esc(v.n) + '</b>' +
       '<span class="dim">' + esc(String(v.q)) + ' ' + esc(v.unita) +
         (v.marca ? ' · ' + esc(v.marca) : '') + '</span>';
+    var gdz = giudica ? giudizioDispensa(v) : null;
+    if (gdz) h += '<span class="sem ' + gdz.livello + ' disp-sem"><i></i>' + ETICHETTA_DISPENSA[gdz.livello] + '</span>';
     var st = scadenzaTesto(v);
     if (st) h += '<i class="disp-scad">' + esc(st) + '</i>';
     else h += '<i class="disp-scad senza">senza data</i>';
@@ -23543,6 +23709,14 @@ function vDispensa() {
 
     if (aperta) {
       h += '<div class="disp-mod">';
+      if (gdz && gdz.motivi.length) {
+        h += '<div class="disp-perche">' + gdz.motivi.map(function (m) {
+          return '<p><span class="sem ' + ['verde', 'giallo', 'rosso'][m.liv] + '"><i></i></span>' + esc(m.t) +
+            (m.fonte ? ' <span class="fonte">[' + esc(m.fonte) + ']</span>' : '') + '</p>';
+        }).join('') + '</div>';
+      } else if (gdz) {
+        h += '<p class="dim disp-perche">Niente che tocchi le tue condizioni.</p>';
+      }
       h += '<label class="field"><span>Nome</span>' +
         '<input type="text" id="d-nome" value="' + esc(v.n) + '"></label>';
       h += '<div class="disp-q"><button class="passo" data-dq="-1">−</button>' +
