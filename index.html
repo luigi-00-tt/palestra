@@ -8494,7 +8494,7 @@ function calcolaAlimento(a, gr) {
  *   gruppo   quale famiglia di FODMAP
  *   motivo   cosa succede, in parole sue
  *   rimedio  come mangiarlo lo stesso (facoltativo)
- *   fonte    id in letteratura/bibliografia-C.csv
+ *   fonte    id in letteratura/bibliografie-parziali/bibliografia-C.csv
  */
 
 var FODMAP_GRUPPI = {
@@ -20844,7 +20844,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmuohdo9z';
+var BUILD = 'vmuvqiboe';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -21400,19 +21400,38 @@ function disegnaTimer() {
     if (T.fine && Date.now() - T.fine > 12000) fermaTimer();
   } else { n.classList.remove('ring'); T.suonato = false; }
 }
+/* Un solo AudioContext per tutta la vita della pagina, sospeso fra un bip e
+   l'altro (v22). Prima se ne creava uno nuovo a ogni fine recupero e non si
+   chiudeva mai: dopo una seduta restavano aperti decine di flussi audio, e su
+   Android ognuno tiene occupata l'uscita. Con le cuffie Bluetooth e la musica
+   in sottofondo e' il candidato piu' probabile per lo scollegamento che
+   l'utente notava in palestra. Con S.profilo.avviso = 'vibra' l'audio non
+   viene nemmeno aperto. */
+var AUDIO = null;
 function bip() {
+  if (navigator.vibrate) { try { navigator.vibrate([160, 90, 160]); } catch (e) { /* niente */ } }
+  if (S.profilo && S.profilo.avviso === 'vibra') return;
   try {
-    var ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 220, 440].forEach(function (d) {
-      var o = ctx.createOscillator(), g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = 880; g.gain.value = 0.0001;
-      var t = ctx.currentTime + d / 1000;
-      g.gain.exponentialRampToValueAtTime(0.25, t + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-      o.start(t); o.stop(t + 0.18);
-    });
-    if (navigator.vibrate) navigator.vibrate([160, 90, 160]);
+    var C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return;
+    if (!AUDIO) { AUDIO = new C(); bip.creati = (bip.creati || 0) + 1; }
+    var ctx = AUDIO;
+    var suona = function () {
+      [0, 220, 440].forEach(function (d) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = 880; g.gain.value = 0.0001;
+        var t = ctx.currentTime + d / 1000;
+        g.gain.exponentialRampToValueAtTime(0.25, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+        o.start(t); o.stop(t + 0.18);
+      });
+      /* finiti i tre bip si richiude l'uscita audio fino al prossimo recupero */
+      clearTimeout(bip._sosp);
+      bip._sosp = setTimeout(function () { if (ctx.state === 'running') ctx.suspend(); }, 900);
+    };
+    if (ctx.state === 'suspended') ctx.resume().then(suona, function () { /* niente audio */ });
+    else suona();
   } catch (e) { /* audio non disponibile */ }
 }
 
@@ -24606,6 +24625,17 @@ function vImpostazioni() {
        'passando da un indirizzo all\'altro fallo <b>prima</b> di registrare allenamenti nuovi, ' +
        'altrimenti li perdi.</div>';
 
+  /* ---------- fine del recupero (v22) ---------- */
+  var av = (S.profilo && S.profilo.avviso) || 'suono';
+  h += '<h2>Fine del recupero</h2>';
+  h += '<div class="seg" id="p-avviso">' +
+       [['suono', 'suono e vibrazione'], ['vibra', 'solo vibrazione']].map(function (a) {
+         return '<button data-v="' + a[0] + '" class="' + (av === a[0] ? 'on' : '') + '">' + a[1] + '</button>';
+       }).join('') + '</div>';
+  h += '<div class="note">Se ascolti musica con le cuffie Bluetooth e il collegamento cade durante ' +
+       'la seduta, scegli <b>solo vibrazione</b>: l\'app non apre pi&ugrave; l\'audio del telefono. ' +
+       'Dalla versione v22 il suono usa comunque un solo canale, che si chiude subito dopo il bip.</div>';
+
   /* ---------- aggiornamenti ----------
      Serve perche' l'app installata vive di cache: senza un posto dove leggere
      la sigla della build non c'e' modo di sapere se il telefono ha la versione
@@ -25326,6 +25356,14 @@ function collegaProgressi() {
 }
 
 function collegaImpostazioni() {
+  var avv = document.getElementById('p-avviso');
+  if (avv) avv.querySelectorAll('button').forEach(function (b) {
+    b.onclick = function () {
+      S.profilo.avviso = b.dataset.v;
+      save(); render();
+      if (b.dataset.v === 'suono') bip();   /* cosi' si sente subito com'e' */
+    };
+  });
   /* profilo: si salva tutto insieme, con i controlli di plausibilita' */
   var att = document.getElementById('p-attivita');
   if (att) att.querySelectorAll('button').forEach(function (b) {
