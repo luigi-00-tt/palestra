@@ -1024,6 +1024,9 @@ nav.cinque button { font-size: 9.5px; padding: 7px 1px 8px; }
 nav.cinque button svg { width: 20px; height: 20px; }
 
 .disp-lista { padding: 0 12px; }
+.disp-cat { font-size: 13px; font-weight: 650; letter-spacing: .02em; text-transform: uppercase; margin: 16px 2px 6px; color: var(--text-dim); }
+.disp-cat .dim { font-weight: 500; margin-left: 4px; }
+.disp-cat + .card { margin-top: 0; }
 .disp-riga { border-bottom: 1px solid var(--line); }
 .disp-riga:last-child { border-bottom: none; }
 .disp-t {
@@ -18855,7 +18858,7 @@ if (false) module.exports = { FOTO_RICETTE: FOTO_RICETTE };
    ============================================================ */
 
 var OFF_URL = 'https://world.openfoodfacts.org/api/v2/product/';
-var OFF_CAMPI = 'product_name,product_name_it,generic_name_it,brands,quantity,nutriments';
+var OFF_CAMPI = 'product_name,product_name_it,generic_name_it,brands,quantity,nutriments,categories_tags,ingredients_text_it,ingredients_text';
 var OFF_TIMEOUT = 7000;
 
 /* Formati che stanno sulle confezioni del supermercato. Niente QR: non
@@ -18992,6 +18995,13 @@ function mappaOFF(json) {
     f: arr1(num(n.fat_100g) || 0),
     fi: arr1(num(n.fiber_100g) || 0),
     porzione: p.quantity || '',
+    /* v22: categorie (per la dispensa), zuccheri, sale e ingredienti (per i
+       consigli su reflusso, diabete e pressione). Gli ingredienti sono tagliati:
+       servono solo a cercare parole come «cioccolato» o «menta». */
+    cat: (p.categories_tags || []).slice(0, 40),
+    zu: num(n.sugars_100g),
+    sa: num(n.salt_100g),
+    ingr: String(p.ingredients_text_it || p.ingredients_text || '').slice(0, 600),
     u: 100,
     g: 'I miei prodotti',
     fodmap: 'attenzione',   /* di un confezionato non sappiamo niente: */
@@ -19704,6 +19714,143 @@ if (false) module.exports = {
   mappaOFF: mappaOFF, cercaProdotto: cercaProdotto, salvaProdotto: salvaProdotto,
   decodificaRiga: decodificaRiga, leggiEAN13: leggiEAN13, eanValido: eanValido
 };
+
+
+/* ===== dispensa.js ===== */
+/* ============================================================
+   DISPENSA — categorie automatiche (v22)
+
+   Quando un prodotto entra in dispensa, la categoria si trova da sola:
+     1. dalle categorie di Open Food Facts (`categories_tags`, salvate da
+        mappaOFF() nel campo `cat` del prodotto in S.prodotti);
+     2. dalle parole del nome («Spaghetti n.5 Barilla» -> Pasta e riso);
+     3. dall'alimento CREA più vicino in ALIMENTI e dal suo gruppo `g`;
+     4. altrimenti «Altro».
+   Se la persona la cambia a mano (campo `catMan`), quella vince sempre.
+   La categoria non si salva: si ricalcola a ogni render, così migliora da
+   sola quando migliorano le regole o quando si corregge il nome.
+   ============================================================ */
+
+var CATEGORIE_DISPENSA = [
+  'Verdure', 'Frutta', 'Frutta secca e semi', 'Pasta e riso', 'Pane e cereali', 'Carne e salumi',
+  'Pesce', 'Latticini e uova', 'Legumi', 'Condimenti e salse', 'Dolci e snack', 'Bevande',
+  'Surgelati', 'Altro'
+];
+
+/* 1. Open Food Facts: l'ordine conta. I surgelati vengono prima di tutto (un
+   minestrone surgelato sta nel freezer, non con le verdure fresche), i latticini
+   prima delle bevande (il latte è anche una «beverage»), le bevande prima della
+   frutta (un succo è anche «fruits-based»). */
+var CAT_OFF = [
+  ['Surgelati', /^en:(frozen-|ice-creams)/],
+  ['Latticini e uova', /^en:(dairies|milks|cheeses|yogurts|fermented-milk|eggs|creams|butters|dairy-desserts)/],
+  ['Pasta e riso', /^en:(pastas|dry-pastas|fresh-pastas|rices|noodles|gnocchi|couscous)/],
+  ['Pesce', /^en:(seafood|fishes|fish-and-seafood|canned-fishes|tunas|salmons|anchovies|mackerels|sardines)/],
+  ['Carne e salumi', /^en:(meats|prepared-meats|hams|sausages|salamis|poultries|cured-meats|chickens)/],
+  ['Legumi', /^en:(legumes|pulses|beans|chickpeas|lentils|peas|soybeans)/],
+  ['Condimenti e salse', /^en:(sauces|condiments|vinegars|olive-oils|vegetable-oils|fats|spices|salts|seasonings|pestos|tomato-sauces|mayonnaises|ketchup|mustards|stock-cubes|broths)/],
+  ['Dolci e snack', /^en:(biscuits|chocolates|sweet-snacks|salty-snacks|snacks|confectioneries|candies|cakes|sweet-spreads|desserts|jams|honeys|chips|crisps|pastries|cocoa)/],
+  ['Frutta secca e semi', /^en:(nuts|dried-fruits|seeds|almonds|walnuts|hazelnuts|peanuts)/],
+  ['Pane e cereali', /^en:(breads|breakfast-cereals|cereals-and-their-products|flours|crackers|rusks|biscottes|mueslis|flakes|oats|crispbreads|piadina|cereal-grains)/],
+  ['Bevande', /^en:(beverages|waters|sodas|juices|teas|coffees|alcoholic-beverages|beers|wines|plant-based-milks|drinks)/],
+  ['Frutta', /^en:(fruits|fresh-fruits|fruits-based-foods|bananas|apples|citrus)/],
+  ['Verdure', /^en:(vegetables|fresh-vegetables|vegetables-based-foods|canned-vegetables|tomatoes|salads|leafy-vegetables|potatoes|mushrooms)/]
+];
+
+/* 2. Parole del nome, normalizzate con fodNorm() (minuscole, senza accenti).
+   Stesso principio dell'ordine: le parole più specifiche prima. */
+var CAT_PAROLE = [
+  ['Surgelati', /\b(surgelat|congelat|gelat[oi]\b|bastoncini|sofficini|4 salti)/],
+  /* le bevande vegetali e i succhi prima di latte, soia e frutta */
+  ['Bevande', /\b(bevanda|drink|succo|succhi|spremuta|bibita|birra)/],
+  ['Latticini e uova', /\b(latte|yogurt|yoghurt|kefir|skyr|formaggi|mozzarell|ricotta|parmigian|grana|pecorino|stracchino|scamorza|provola|emmental|fontina|gorgonzola|mascarpone|burrata|fiocchi di latte|panna|burro|uov[ao]|albume)/],
+  ['Pasta e riso', /\b(pasta|spaghett|penne|fusilli|rigatoni|tagliatell|lasagn|maccheron|farfalle|linguine|orecchiette|tortellin|ravioli|gnocchi|riso|risotto|basmati|carnaroli|arborio|couscous|noodle|vermicelli|ditalini|bucatini|mezze maniche|paccheri|trofie)/],
+  ['Pesce', /\b(tonno|salmone|sgombro|alici|acciugh|sardin|merluzz|baccala|orata|branzino|spigola|gamber|cozze|vongol|calamar|seppi|polpo|pesce|surimi|halibut|platessa|trota)/],
+  ['Carne e salumi', /\b(pollo|tacchino|manzo|vitell|maiale|suino|agnello|coniglio|carne|hamburger|salsicc|wurstel|prosciutt|bresaola|speck|salame|mortadell|pancetta|guanciale|cotto|crudo|coppa|lonza|bistecc|petto|fesa|macinato|polpett|arrosto|cotolett)/],
+  ['Legumi', /\b(ceci|fagiol|lenticch|piselli|fave|lupini|edamame|soia|cicerchi|legumi|hummus|tofu|tempeh)/],
+  ['Condimenti e salse', /\b(olio|aceto|sale\b|pepe\b|spezie|sugo|salsa|passata|pelati|polpa di pomodoro|concentrato|pesto|maionese|ketchup|senape|dado|brodo|curcuma|paprika|origano|curry|zucchero|lievito|farina|amido|besciamella|capperi|olive)/],
+  ['Dolci e snack', /\b(biscott|cioccolat|nutella|crema spalmabile|merendin|wafer|caramell|caramel|torta|crostat|brioche|cornett|plumcake|marmellat|confettur|miele|patatine|chips|snack|barrett|gelatin|cracker dolci|pop ?corn|ciambell|pandoro|panettone|cereali al cioccolato)/],
+  ['Frutta secca e semi', /\b(noci|mandorl|nocciol|arachid|pistacch|anacard|semi|uvetta|datteri|fichi secchi|prugne secche|albicocche secche|frutta secca)/],
+  ['Pane e cereali', /\b(pane|panin|piadin|fette biscottate|grissin|cracker|taralli|friselle|focaccia|pancarre|toast|cereali|corn ?flakes|muesli|granola|avena|fiocchi|crusca|gallette|farro|orzo|quinoa|miglio|grano saraceno|pops|special k)/],
+  ['Bevande', /\b(acqua|succo|spremut|bibita|aranciata|cola|te freddo|the\b|tè|tisana|infuso|caffe|vino\b|spumante|energy drink|bevanda|drink|sciroppo|gassata|frizzante|sprite|fanta)/],
+  ['Frutta', /\b(mel[ae]\b|pera\b|pere\b|banan|arancia|arance|mandarin|clementin|limon|kiwi|fragol|uva|pesca|pesche|albicocc|ciliegi|anguria|melone|ananas|mango|frutti di bosco|mirtill|lampon|prugn|susin|fichi|cachi|melograno|avocado|frutta)/],
+  ['Verdure', /\b(insalat|lattuga|rucola|spinaci|zucchin|melanzan|peperon|pomodor|carot|cipoll|aglio|patat|broccol|cavol|verza|finocchi|sedano|cetriol|fagiolini|asparag|carciof|funghi|zucca|bietol|cicori|radicchi|porri|scalogn|verdur|minestrone|ortaggi|rape|valeriana|songino)/]
+];
+
+/* 3. Gruppi di ALIMENTI (alimenti.js) -> categorie della dispensa */
+var CAT_GRUPPO_ALIMENTI = {
+  'Bevande': 'Bevande', 'Carne e salumi': 'Carne e salumi', 'Cereali e pane': 'Pane e cereali',
+  'Colazione': 'Pane e cereali', 'Dolci e snack': 'Dolci e snack', 'Frutta': 'Frutta',
+  'Frutta secca': 'Frutta secca e semi', 'Grassi e condimenti': 'Condimenti e salse',
+  'Legumi': 'Legumi', 'Pesce': 'Pesce', 'Uova e latticini': 'Latticini e uova', 'Verdura': 'Verdure'
+};
+
+/* Il prodotto completo dell'archivio, se la voce di dispensa ha un EAN noto */
+function prodottoDiDispensa(v) {
+  return (v && v.ean && S.prodotti && S.prodotti[v.ean]) || null;
+}
+
+function categoriaDaOFF(tags) {
+  if (!tags || !tags.length) return null;
+  for (var i = 0; i < CAT_OFF.length; i++) {
+    for (var j = 0; j < tags.length; j++) {
+      if (CAT_OFF[i][1].test(tags[j])) return CAT_OFF[i][0];
+    }
+  }
+  return null;
+}
+
+function categoriaDaNome(nome) {
+  var n = ' ' + fodNorm(nome) + ' ';
+  if (!n.trim()) return null;
+  for (var i = 0; i < CAT_PAROLE.length; i++) {
+    if (CAT_PAROLE[i][1].test(n)) return CAT_PAROLE[i][0];
+  }
+  return null;
+}
+
+/* L'alimento CREA con più parole in comune col nome (almeno una). */
+function categoriaDaAlimenti(nome) {
+  if (typeof ALIMENTI === 'undefined') return null;
+  var p = paroleDi(nome), chiavi = Object.keys(p);
+  if (!chiavi.length) return null;
+  var meglio = null, punti = 0;
+  ALIMENTI.forEach(function (a) {
+    if (!a._pw) a._pw = paroleDi(a.n);
+    var s = 0;
+    chiavi.forEach(function (k) { if (a._pw[k]) s++; });
+    if (s > punti) { punti = s; meglio = a; }
+  });
+  return meglio ? (CAT_GRUPPO_ALIMENTI[meglio.g] || null) : null;
+}
+
+/* La categoria di una voce di dispensa, con il motivo (serve a dire
+   «automatica» o «scelta da te» nel pannello). */
+function categoriaDi(v) {
+  if (v.catMan && CATEGORIE_DISPENSA.indexOf(v.catMan) >= 0) return { cat: v.catMan, da: 'te' };
+  var pr = prodottoDiDispensa(v);
+  var tags = (v.tags && v.tags.length ? v.tags : (pr && pr.cat)) || [];
+  var c = categoriaDaOFF(tags);
+  if (c) return { cat: c, da: 'off' };
+  c = categoriaDaNome(v.n) || (pr && categoriaDaNome(pr.n));
+  if (c) return { cat: c, da: 'nome' };
+  c = categoriaDaAlimenti(v.n);
+  if (c) return { cat: c, da: 'crea' };
+  return { cat: 'Altro', da: 'nessuna' };
+}
+
+/* Lista della dispensa raggruppata: [{cat, voci}] nell'ordine di
+   CATEGORIE_DISPENSA, solo le categorie non vuote. Dentro ogni gruppo resta
+   l'ordine di dispensaLista() (prima quello che scade). */
+function dispensaPerCategoria(lista) {
+  var gruppi = {};
+  lista.forEach(function (v) {
+    var c = categoriaDi(v).cat;
+    (gruppi[c] = gruppi[c] || []).push(v);
+  });
+  return CATEGORIE_DISPENSA.filter(function (c) { return gruppi[c]; })
+    .map(function (c) { return { cat: c, voci: gruppi[c] }; });
+}
 
 
 /* ===== nutrizione-generale.js ===== */
@@ -20844,7 +20991,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmuvqiboe';
+var BUILD = 'vmuvqxdc6';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -23206,6 +23353,7 @@ function aggiungiInDispensa(p, ean) {
       n: (p && p.n) || 'Prodotto senza nome',
       marca: (p && p.marca) || '',
       ean: ean || '',
+      tags: (p && p.cat) || [],   /* categorie di Open Food Facts, per categoriaDi() */
       q: 1,
       unita: 'pezzi',
       scad: '',
@@ -23377,8 +23525,11 @@ function vDispensa() {
   }
 
   h += '<h2>Che cosa hai</h2>';
+  /* v22: raggruppata per categoria, trovata da sola (dispensa.js) */
+  dispensaPerCategoria(lista).forEach(function (gr) {
+  h += '<h3 class="disp-cat">' + esc(gr.cat) + ' <span class="dim">' + gr.voci.length + '</span></h3>';
   h += '<div class="card disp-lista">';
-  lista.forEach(function (v) {
+  gr.voci.forEach(function (v) {
     var aperta = S.ctx.disp === v.id;
     h += '<div class="disp-riga' + scadenzaClasse(v) + (aperta ? ' aperta' : '') + '">';
     h += '<button class="disp-t" data-disp="' + esc(v.id) + '">' +
@@ -23402,6 +23553,12 @@ function vDispensa() {
         }).join('') + '</select></div>';
       h += '<label class="field"><span>Scadenza</span>' +
         '<input type="date" id="d-scad" value="' + esc(v.scad || '') + '"></label>';
+      var cd = categoriaDi(v), auto = categoriaDi({ n: v.n, ean: v.ean, tags: v.tags });
+      h += '<label class="field"><span>Categoria</span><select id="d-cat">' +
+        '<option value=""' + (cd.da !== 'te' ? ' selected' : '') + '>automatica: ' + esc(auto.cat) + '</option>' +
+        CATEGORIE_DISPENSA.map(function (c) {
+          return '<option' + (cd.da === 'te' && cd.cat === c ? ' selected' : '') + '>' + esc(c) + '</option>';
+        }).join('') + '</select></label>';
       h += '<button class="primary" id="d-salva">Salva</button>';
       h += '<button class="ghost danger" id="d-finito">L\'ho finito, toglilo</button>';
       h += '</div>';
@@ -23409,6 +23566,7 @@ function vDispensa() {
     h += '</div>';
   });
   h += '</div>';
+  });
 
   /* --- il collegamento con la nutrizione --- */
   var idee = ricetteDallaDispensa(12);
@@ -23501,6 +23659,9 @@ function collegaDispensa() {
     v.q = Math.max(0, parseFloat(document.getElementById('d-q').value) || 0);
     v.unita = document.getElementById('d-unita').value;
     v.scad = document.getElementById('d-scad').value || '';
+    /* vuoto = automatica: la categoria si ricalcola dal nome appena corretto */
+    var dc = document.getElementById('d-cat');
+    if (dc) { if (dc.value) v.catMan = dc.value; else delete v.catMan; }
     S.ctx.disp = null;
     save();
     toast('Salvato');
