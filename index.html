@@ -1075,7 +1075,15 @@ nav.cinque button svg { width: 20px; height: 20px; }
 .pill.azzera { border-style: dashed; }
 .pill.azzera.on { border-style: solid; }
 .pill .via { margin-left: 5px; font-weight: 700; opacity: .75; font-size: 13px; line-height: 1; }
-.filtro-stato { margin: -4px 0 10px; font-size: 12px; }
+.filtro-stato { margin: -2px 0 12px; font-size: 13px; color: var(--text-dim); }
+.filtro-stato b { color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
+/* v24: un filtro che qui non trova niente si vede spento, ma resta toccabile */
+.pill.vuota { opacity: .45; }
+#filtri-ricette { scroll-margin-top: 70px; }
+.vuoto-filtri { margin-bottom: 14px; }
+/* v24: le schede fuori dallo schermo non si disegnano finché non ci arrivi */
+.griglia-pasti .pasto { content-visibility: auto; contain-intrinsic-size: auto 230px; }
+.ghost.altre { margin-top: 10px; }
 .filtro-stato a { color: var(--accent); }
 
 /* ---------- questionario (v18) ---------- */
@@ -20241,6 +20249,69 @@ function sezioniReflusso() {
   return sez;
 }
 
+/* v24: le sei colazioni anche nell'elenco delle ricette, non solo dentro «numeri
+   e regole». Prima chi apriva la scheda Colazione non le trovava, e l'utente
+   ha contato «solo 6 colazioni» guardando proprio queste. Valgono per tutti:
+   sono povere di grassi e ricche di proteine, il reflusso è solo un motivo in
+   più. Procedimento completo, passo per passo. */
+var COLAZIONI_REFLUSSO_PASSI = {
+  'Porridge d\'avena con yogurt e banana': [
+    'Versa i 200 g di latte in un pentolino piccolo e scaldalo a fuoco medio finché fa le prime bollicine sul bordo (2 minuti circa): non deve bollire forte, altrimenti sale e trabocca.',
+    'Aggiungi i 50 g di fiocchi d\'avena, abbassa la fiamma al minimo e mescola con un cucchiaio di legno per 3-4 minuti, fino a quando i fiocchi si gonfiano e il composto diventa cremoso e si stacca dal fondo.',
+    'Se si addensa troppo aggiungi un cucchiaio d\'acqua o di latte; se resta liquido, un altro minuto sul fuoco. Spegni e lascia riposare 1 minuto: si rassoda ancora.',
+    'Intanto sbuccia la banana e tagliala a rondelle di mezzo centimetro.',
+    'Versa il porridge in una ciotola, disponi sopra le rondelle di banana, poi i 150 g di yogurt greco a cucchiaiate e infine i 10 g di miele (un cucchiaino colmo) a filo.',
+    'Mangialo tiepido: il calore fa sciogliere il miele nello yogurt. Si può preparare la sera e scaldare 1 minuto al microonde con un goccio di latte.'
+  ],
+  'Pane, uovo e prosciutto cotto': [
+    'Taglia i 90 g di pane in 3 fette e tostale nel tostapane o in una padella asciutta a fuoco medio, 1-2 minuti per lato, finché sono dorate e croccanti.',
+    'In una ciotola sbatti con una forchetta l\'uovo intero con i 66 g di albume (due albumi), con un pizzico di sale, per 20-30 secondi, fino a quando il colore è uniforme.',
+    'Scalda una padella antiaderente piccola a fuoco medio-basso, senza olio. Versa le uova e lasciale ferme 20 secondi.',
+    'Con una spatola di silicone porta il bordo rappreso verso il centro, senza fretta, per 1-2 minuti: togli dal fuoco quando sono ancora lucide, finiscono di cuocere nel piatto e restano morbide.',
+    'Sistema le uova sul pane, accanto i 50 g di prosciutto cotto; sull\'ultima fetta spalma i 20 g di marmellata (un cucchiaio raso).'
+  ],
+  'Yogurt greco e corn flakes': [
+    'Metti i 250 g di yogurt greco in una ciotola larga e lavoralo 10 secondi con il cucchiaio: diventa più cremoso e si mescola meglio.',
+    'Sbuccia la banana e tagliala a rondelle sottili sopra lo yogurt.',
+    'Distribuisci il miele (10 g, un cucchiaino) a filo.',
+    'Aggiungi i 50 g di corn flakes solo al momento di mangiare, sopra a tutto: a contatto con lo yogurt si ammorbidiscono in 3-4 minuti e perdono la croccantezza.'
+  ],
+  'Fette biscottate, bresaola e fiocchi di latte': [
+    'Prepara 4-5 fette biscottate (40 g) su un piatto: si rompono facilmente, quindi spalma con il dorso di un cucchiaio e con poca pressione.',
+    'Sgocciola i 100 g di fiocchi di latte in un colino per 1 minuto, se nella confezione c\'è liquido: altrimenti bagnano la fetta e la rompono.',
+    'Su metà delle fette distribuisci i fiocchi di latte e sopra i 30 g di marmellata (due cucchiaini).',
+    'Sulle altre adagia i 60 g di bresaola, piegando le fette su sé stesse perché stiano nella fetta biscottata.',
+    'La banana a parte, intera o a rondelle. Si mangia subito: dopo qualche minuto le fette si ammorbidiscono.'
+  ],
+  'Pancake d\'avena e banana': [
+    'Nel bicchiere del frullatore a immersione metti i 60 g di fiocchi d\'avena, la banana a pezzi, l\'uovo intero e i 66 g di albume (due albumi).',
+    'Frulla per 30-40 secondi fino a ottenere una pastella liscia, senza pezzi di fiocchi. Lasciala riposare 5 minuti: l\'avena assorbe il liquido e la pastella si addensa.',
+    'Scalda una padella antiaderente a fuoco medio-basso senza olio (se non è più perfettamente antiaderente, passa un velo d\'olio con carta da cucina).',
+    'Versa la pastella a cucchiaiate, 2 cucchiai per pancake, allargandola appena: ne vengono 6-7 di circa 8 cm.',
+    'Cuoci 2 minuti, finché in superficie compaiono bollicine e il bordo diventa opaco; gira con una spatola sottile e cuoci 1 minuto dall\'altro lato.',
+    'Impila i pancake su un piatto, metti sopra i 100 g di yogurt greco e il miele (10 g). Se la padella è troppo calda fuori si bruciano e dentro restano crudi: meglio una fiamma più bassa e un minuto in più.'
+  ],
+  'Latte e cereali, rivisti': [
+    'Versa i 60 g di corn flakes semplici (non quelli glassati o al miele) in una ciotola.',
+    'Aggiungi i 200 g di latte parzialmente scremato, freddo o appena tiepido: il latte molto caldo ammolla i cereali in pochi secondi.',
+    'Taglia sopra la banana a rondelle.',
+    'Accanto, in una coppetta, i 150 g di yogurt greco: è il cambio che porta le proteine da circa 12 a circa 27 g. Se preferisci, puoi metterlo direttamente nella ciotola al posto di metà del latte.'
+  ]
+};
+
+if (typeof PASTI !== 'undefined' && PASTI.gruppi[0]) {
+  COLAZIONI_REFLUSSO.forEach(function (c) {
+    var m = macroColazione(c);
+    PASTI.gruppi[0].voci.push({
+      nome: c.nome, img: /pane|fette/i.test(c.nome) ? 'toast' : /pancake|porridge/i.test(c.nome) ? 'avena' : 'yogurt',
+      kcal: m.k, prot: m.pr, grassi: m.f, colazioneLeggera: 1,
+      ing: c.ing.map(function (r) { return [r[0], r[1] + ' g']; }),
+      come: COLAZIONI_REFLUSSO_PASSI[c.nome] || [c.come],
+      perche: c.perche + ' Circa ' + m.k + ' kcal, ' + m.pr + ' g di proteine e ' + m.f + ' g di grassi, calcolati dalle tabelle CREA.'
+    });
+  });
+}
+
 
 /* ===== nutrizione-generale.js ===== */
 /* ============================================================
@@ -21420,7 +21491,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmuvw6nl2';
+var BUILD = 'vmuwems2p';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -23257,37 +23328,142 @@ function filtriAttivi() {
   return S.ctx.filtriR;
 }
 
-/* Quante ricette vedresti se toccassi questo filtro, in tutta l'app e non solo
-   nel pasto aperto: serve a non far sembrare rotto un filtro che semplicemente
-   non ha risultati a colazione. Con `id` a null: quante sono in tutto. */
-function quanteConFiltro(id) {
-  var vecchio = S.ctx.filtriR;
-  var prova = {};
-  if (id !== null && id !== undefined) {
-    for (var k in vecchio) prova[k] = 1;
-    if (prova[id]) delete prova[id]; else prova[id] = 1;
-  }
-  S.ctx.filtriR = prova;
-  var n = 0;
-  PASTI.gruppi.forEach(function (g) { n += g.voci.filter(passaFiltri).length; });
-  S.ctx.filtriR = vecchio;
-  return n;
+/* v24: le schede dei pasti stanno qui, fuori da vNutrizione, perché servono
+   anche ai conteggi e al caricamento progressivo. */
+var SCHEDE_PASTO = [
+  { id: 'tutte', nome: 'Tutte', gruppi: [0, 1, 2, 3, 4] },
+  { id: 'colazione', nome: 'Colazione', gruppi: [0] },
+  { id: 'pranzo', nome: 'Pranzo', gruppi: [2] },
+  { id: 'merenda', nome: 'Merenda', gruppi: [1, 3] },
+  { id: 'cena', nome: 'Cena', gruppi: [4] }
+];
+function schedaPasto(id) {
+  return SCHEDE_PASTO.filter(function (t) { return t.id === id; })[0] || SCHEDE_PASTO[1];
+}
+
+/* Quello che serve ai filtri di una ricetta, calcolato una volta sola. */
+function caratteriRicetta(v) {
+  return {
+    sem: semRicetta(v), pref: preferita(v), mie: !v.gr, proteica: (v.prot || 0) >= 30,
+    veloce: (v.ing || []).filter(function (r) { return !r[2]; }).length <= 4
+  };
+}
+
+function passaCon(c, f) {
+  var colori = 0, colorOk = false;
+  for (var k in FILTRI_COLORE) if (f[k]) { colori++; if (c.sem === k) colorOk = true; }
+  if (colori && !colorOk) return false;
+  if (f.preferiti && !c.pref) return false;
+  if (f.mie && !c.mie) return false;
+  if (f.proteica && !c.proteica) return false;
+  if (f.veloce && !c.veloce) return false;
+  return true;
 }
 
 function passaFiltri(v) {
   /* v18: prima di tutto, le ricette che la persona non può o non vuole mangiare */
   if (!ricettaAdatta(v)) return false;
-  var f = filtriAttivi();
+  return passaCon(caratteriRicetta(v), filtriAttivi());
+}
 
-  var colori = [];
-  for (var c in FILTRI_COLORE) if (f[c]) colori.push(c);
-  if (colori.length && colori.indexOf(semRicetta(v)) < 0) return false;
+/* v24: i conteggi sono della SCHEDA APERTA (Colazione, Pranzo...), non di tutta
+   l'app. Prima la pastiglia «da evitare» diceva 200 anche dentro Colazione, dove
+   non ce n'è nessuna: l'utente la toccava e non vedeva niente. E «Tutte le
+   ricette» diceva sempre 865, qualunque cosa si toccasse.
+   Una passata sola: ogni ricetta della scheda si legge una volta, poi per ogni
+   filtro si conta quante ne vedresti accendendolo in più a quelli già accesi. */
+function contaScheda(sch) {
+  var f = filtriAttivi(), r = { tot: 0, vis: 0, sem: { verde: 0, giallo: 0, rosso: 0 }, se: {}, gruppi: {} };
+  var ipotesi = {};
+  FILTRI_RICETTE.forEach(function (fi) {
+    if (f[fi[0]]) return;
+    var p = {}; for (var k in f) p[k] = 1; p[fi[0]] = 1;
+    ipotesi[fi[0]] = p; r.se[fi[0]] = 0;
+  });
+  sch.gruppi.forEach(function (gi) {
+    var g = PASTI.gruppi[gi], passate = [];
+    if (!g) return;
+    g.voci.forEach(function (v, vi) {
+      if (!ricettaAdatta(v)) return;
+      var c = caratteriRicetta(v);
+      r.tot++; r.sem[c.sem]++;
+      if (passaCon(c, f)) { r.vis++; passate.push([v, vi]); }
+      for (var id in ipotesi) if (passaCon(c, ipotesi[id])) r.se[id]++;
+    });
+    r.gruppi[gi] = passate;
+  });
+  return r;
+}
 
-  if (f.preferiti && !preferita(v)) return false;
-  if (f.mie && v.gr) return false;
-  if (f.proteica && (v.prot || 0) < 30) return false;
-  if (f.veloce && (v.ing || []).filter(function (r) { return !r[2]; }).length > 4) return false;
-  return true;
+/* Il caricamento progressivo: le schede arrivano a blocchi mentre scorri, invece
+   di fermarsi a 40 con un pulsante in fondo che sembrava la fine dell'elenco. */
+var BLOCCO_RICETTE = 30;
+var ELENCO_RICETTE = {};
+
+function schedaRicetta(v, gi, vi) {
+  var liv = semRicetta(v);
+  return '<div class="pasto' + (semaforoAttivo() ? ' sem-' + liv : '') + '" data-ricetta="' + gi + '-' + vi + '">' +
+    immaginePiatto(v) +
+    '<button class="stella' + (preferita(v) ? ' on' : '') +
+      '" data-pref="' + gi + '-' + vi + '" title="Mettila fra i preferiti" aria-label="Preferita">&#9733;</button>' +
+    '<div class="pasto-t"><b>' + esc(v.nome) + '</b>' +
+    '<span>' + rigaMacro(v) + '</span>' +
+    pastigliaSem(liv) +
+    (v.tag && suMisura() ? '<i class="mio">' + esc(v.tag) + '</i>' : '') + '</div></div>';
+}
+
+function mostrateDi(gi) { return (S.ctx.mostra && S.ctx.mostra[gi]) || BLOCCO_RICETTE; }
+
+function altreRicette(gi) {
+  var tutte = ELENCO_RICETTE[gi], griglia = document.getElementById('griglia-' + gi);
+  if (!tutte || !griglia) return;
+  var da = mostrateDi(gi), a = Math.min(tutte.length, da + BLOCCO_RICETTE);
+  if (da >= tutte.length) return;
+  var h = '';
+  tutte.slice(da, a).forEach(function (p) { h += schedaRicetta(p[0], gi, p[1]); });
+  griglia.insertAdjacentHTML('beforeend', h);
+  if (!S.ctx.mostra) S.ctx.mostra = {};
+  S.ctx.mostra[gi] = a;
+  collegaRicette(griglia);
+  var resto = tutte.length - a, b = document.querySelector('[data-altre="' + gi + '"]');
+  if (b) {
+    if (resto > 0) b.textContent = 'Mostrane altre ' + Math.min(resto, BLOCCO_RICETTE) + ' (ne restano ' + resto + ')';
+    else b.remove();
+  }
+}
+
+/* Tocchi sulle schede: legati a ogni pezzo nuovo che entra nell'elenco */
+function collegaRicette(radice) {
+  radice.querySelectorAll('[data-ricetta]').forEach(function (n) {
+    n.onclick = function () { vai('ricetta', { ricetta: n.dataset.ricetta }); };
+  });
+  /* La stella sta DENTRO la card della ricetta: senza stopPropagation il tocco
+     metterebbe il preferito e aprirebbe anche la ricetta. Si aggiorna la sola
+     stella: ridisegnare tutto farebbe saltare l'elenco caricato a metà. */
+  radice.querySelectorAll('[data-pref]').forEach(function (n) {
+    n.onclick = function (ev) {
+      ev.stopPropagation();
+      var p = String(n.dataset.pref).split('-');
+      var g = PASTI.gruppi[+p[0]], v = g && g.voci[+p[1]];
+      if (!v) return;
+      var on = cambiaPreferita(v);
+      toast(on ? 'Messa fra i preferiti' : 'Tolta dai preferiti');
+      /* col filtro «preferiti» acceso la scheda deve uscire dall'elenco: li' si ridisegna */
+      if (n.classList.contains('stella') && !filtriAttivi().preferiti) n.classList.toggle('on', on);
+      else render();
+    };
+  });
+}
+
+var OSSERVA_RICETTE = null;
+function osservaRicette() {
+  if (OSSERVA_RICETTE) { OSSERVA_RICETTE.disconnect(); OSSERVA_RICETTE = null; }
+  var sent = document.querySelectorAll('[data-altre]');
+  if (!sent.length || typeof IntersectionObserver === 'undefined') return;
+  OSSERVA_RICETTE = new IntersectionObserver(function (voci) {
+    voci.forEach(function (x) { if (x.isIntersecting) altreRicette(x.target.dataset.altre); });
+  }, { rootMargin: '600px 0px' });
+  sent.forEach(function (n) { OSSERVA_RICETTE.observe(n); });
 }
 
 /* La fotografia dove c'e', il disegno dove manca. Le foto vengono da Wikimedia
@@ -23371,6 +23547,26 @@ function categoriaFoto(v) {
   return (v._cf = c);
 }
 
+/* v24: le fotografie sono data-URI lunghi decine di kB. Ripeterle per intero in
+   ogni scheda gonfiava l'HTML della Nutrizione a 3 MB (la foto di categoria si
+   ripete in decine di schede): ora ciascuna diventa una volta sola un indirizzo
+   blob: corto, e il browser la decodifica una volta sola. */
+var URL_FOTO = typeof Map !== 'undefined' ? new Map() : null;
+function urlFoto(d) {
+  if (!URL_FOTO || !d || d.slice(0, 5) !== 'data:' || typeof Blob === 'undefined' ||
+      typeof URL === 'undefined' || !URL.createObjectURL) return d;
+  var u = URL_FOTO.get(d);
+  if (u) return u;
+  try {
+    var virgola = d.indexOf(','), tipo = d.slice(5, d.indexOf(';')), bin = atob(d.slice(virgola + 1));
+    var byte = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) byte[i] = bin.charCodeAt(i);
+    u = URL.createObjectURL(new Blob([byte], { type: tipo }));
+  } catch (e) { u = d; }
+  URL_FOTO.set(d, u);
+  return u;
+}
+
 function immaginePiatto(v, grande) {
   /* Tre gradini, in quest'ordine: la fotografia libera di QUESTO piatto; se non
      c'e', una foto di categoria (pasta, pesce, carne...), dichiarata come di
@@ -23380,14 +23576,14 @@ function immaginePiatto(v, grande) {
      piu' niente dentro l'app. */
   var f = typeof fotoRicetta === 'function' ? fotoRicetta(v.nome) : null;
   if (f) {
-    return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="' + f +
-           '" alt="' + esc(v.nome) + '" loading="lazy">';
+    return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="' + urlFoto(f) +
+           '" alt="' + esc(v.nome) + '" loading="lazy" decoding="async">';
   }
   var cf = categoriaFoto(v);
   var cat = cf ? FOTO_CATEGORIA[cf] : null;
   if (cat) {
-    return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="' + cat +
-           '" alt="' + esc(v.nome) + '" loading="lazy">';
+    return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="' + urlFoto(cat) +
+           '" alt="' + esc(v.nome) + '" loading="lazy" decoding="async">';
   }
   return '<svg viewBox="' + (grande ? '14 14 72 60' : '16 16 68 56') + '" class="cibo' +
          (grande ? ' grande' : '') + '">' + CIBO[v.img] + '</svg>';
@@ -23440,51 +23636,58 @@ function vNutrizione() {
   /* schede: i cinque gruppi dei pasti raccolti in quattro momenti */
   /* «Tutte» c'e' apposta per tornare a vedere l'elenco intero senza dover
      indovinare quale scheda fosse quella di partenza. */
-  var SCHEDE = [
-    { id: 'tutte', nome: 'Tutte', gruppi: [0, 1, 2, 3, 4] },
-    { id: 'colazione', nome: 'Colazione', gruppi: [0] },
-    { id: 'pranzo', nome: 'Pranzo', gruppi: [2] },
-    { id: 'merenda', nome: 'Merenda', gruppi: [1, 3] },
-    { id: 'cena', nome: 'Cena', gruppi: [4] }
-  ];
   var attiva = S.ctx.pasto || 'colazione';
 
-  h += '<div class="seg tabs cinque">' + SCHEDE.map(function (t) {
-    return '<button data-pasto="' + t.id + '" class="' + (attiva === t.id ? 'on' : '') + '">' +
-           t.nome + '</button>';
-  }).join('') + '</div>';
-
   if (sez === 'pasti') {
-    /* Con un centinaio di ricette servono i filtri, altrimenti l'elenco e' un
-       muro. Usano i tag che ogni ricetta eredita dai suoi ingredienti. */
+    h += '<div class="seg tabs cinque">' + SCHEDE_PASTO.map(function (t) {
+      return '<button data-pasto="' + t.id + '" class="' + (attiva === t.id ? 'on' : '') + '">' +
+             t.nome + '</button>';
+    }).join('') + '</div>';
+
     var attivi = filtriAttivi();
     var quanti = Object.keys(attivi).length;
+    var sch = schedaPasto(attiva);
+    var conto = contaScheda(sch);
+    var nomeScheda = attiva === 'tutte' ? 'in tutti i pasti' : 'a ' + sch.nome.toLowerCase();
 
-    /* «Tutte le ricette» e' la via di uscita: un filtro si toglie anche
-       ritoccandolo, ma se ne hai accesi tre non e' ovvio, e restare chiusi
-       dentro una selezione senza capire come uscirne e' il difetto che
-       l'utente ha segnalato. */
-    h += '<div class="filtri">';
+    /* v24: i numeri sulle pastiglie sono della scheda aperta. «Tutte» dice
+       quante ricette ci sono qui; ogni filtro spento dice quante ne vedresti
+       accendendolo; quello acceso non ha numero, ha la ×. */
+    h += '<div class="filtri" id="filtri-ricette">';
     h += '<button class="pill azzera' + (quanti ? '' : ' on') + '" data-azzera="1">' +
-         'Tutte le ricette <i>' + quanteConFiltro(null) + '</i></button>';
+         'Tutte <i>' + conto.tot + '</i></button>';
     h += FILTRI_RICETTE.filter(filtroVisibile).map(function (fi) {
       /* i primi tre non sono filtri qualunque: sono le tre categorie, e si
          devono vedere come tali anche prima di toccarle */
       var colore = SEM_ETICHETTA[fi[0]] ? ' pill-sem ' + fi[0] : '';
       var acceso = !!attivi[fi[0]];
-      return '<button class="pill' + colore + (acceso ? ' on' : '') +
+      var n = conto.se[fi[0]];
+      return '<button class="pill' + colore + (acceso ? ' on' : '') + (!acceso && !n ? ' vuota' : '') +
              '" data-filtroR="' + fi[0] + '">' +
              (colore ? '<b class="punto"></b>' : '') + esc(fi[1]) +
-             ' <i>' + quanteConFiltro(fi[0]) + '</i>' +
-             (acceso ? '<b class="via">&times;</b>' : '') + '</button>';
+             (acceso ? '<b class="via">&times;</b>' : ' <i>' + n + '</i>') + '</button>';
     }).join('') + '</div>';
 
-    if (quanti) {
-      var visibili = 0;
-      PASTI.gruppi.forEach(function (g) { visibili += g.voci.filter(passaFiltri).length; });
-      h += '<p class="dim filtro-stato">' + (quanti === 1 ? 'Un filtro acceso' :
-        quanti + ' filtri accesi') + ': vedi <b>' + visibili + '</b> ricette su ' +
-        quanteConFiltro(null) + '. <a href="#" data-azzera="1">Toglili tutti</a></p>';
+    /* la riga di stato c'e' sempre, e cambia a ogni tocco */
+    h += '<p class="filtro-stato"><b>' + conto.vis + '</b> ' + (conto.vis === 1 ? 'ricetta' : 'ricette') + ' ' +
+      nomeScheda + (quanti ? ' con ' + (quanti === 1 ? 'il filtro acceso' : 'i ' + quanti + ' filtri accesi') +
+      ', su ' + conto.tot + ' · <a href="#" data-azzera="1">Toglili tutti</a>' : '') + '</p>';
+
+    if (!conto.vis && conto.tot) {
+      var colAcc = Object.keys(FILTRI_COLORE).filter(function (c) { return attivi[c]; });
+      var spiega = '';
+      if (colAcc.length && quanti === colAcc.length && semaforoAttivo()) {
+        spiega = 'Fra le ' + conto.tot + ' ricette ' + nomeScheda + ' nessuna è «' +
+          colAcc.map(function (c) { return SEM_ETICHETTA[c].toLowerCase(); }).join('» o «') + '»: ' +
+          ['verde', 'giallo', 'rosso'].filter(function (c) { return conto.sem[c]; }).map(function (c) {
+            return conto.sem[c] + ' ' + SEM_ETICHETTA[c].toLowerCase();
+          }).join(', ') + '.';
+      } else {
+        spiega = 'Nessuna ricetta ' + nomeScheda + ' passa tutti i filtri accesi insieme.';
+      }
+      if (attivi.verde && attiva === 'colazione') spiega += ' A colazione latte, miele e frutta fanno uscire quasi tutto: ' +
+        'con il latte delattosato la maggior parte torna utilizzabile.';
+      h += '<div class="hint vuoto-filtri">' + spiega + ' <a href="#" data-azzera="1">Toglili tutti</a> per rivederle.</div>';
     }
 
     /* il ponte con la Dispensa: da qui si parte da quello che c'e' in casa
@@ -23493,41 +23696,25 @@ function vNutrizione() {
       h += '<button class="ghost" data-go="dispensa">Cosa posso cucinare con quello che ho in casa</button>';
     }
 
-    var sch = SCHEDE.filter(function (t) { return t.id === attiva; })[0];
+    ELENCO_RICETTE = {};
     sch.gruppi.forEach(function (gi) {
       var g = PASTI.gruppi[gi];
-      if (!g) return;
-      h += '<div class="gruppo-pasto"><b>' + esc(g.titolo) + '</b><span>' + esc(g.kcal) + '</span></div>';
+      var passate = conto.gruppi[gi];
+      if (!g || !passate) return;
+      /* con la scheda «Tutte» e un filtro acceso, i gruppi vuoti non si mostrano */
+      if (!passate.length && (sch.gruppi.length > 1 || !conto.tot)) return;
+      ELENCO_RICETTE[gi] = passate;
+      h += '<div class="gruppo-pasto"><b>' + esc(g.titolo) + '</b><span>' + passate.length + ' · ' + esc(g.kcal) + '</span></div>';
       if (g.quando) h += '<div class="hint">' + g.quando + '</div>';
       if (g.intro && suMisura()) h += '<p class="dim intro-pasto">' + g.intro + '</p>';
-      h += '<div class="griglia-pasti">';
-      /* Con oltre 800 ricette l'indexOf dentro il ciclo costava un giro
-         sull'intero elenco per ogni riga: l'indice si porta dietro dal filtro. */
-      var passate = [];
-      g.voci.forEach(function (v, vi) { if (passaFiltri(v)) passate.push([v, vi]); });
-      var tetto = (S.ctx.tutte && S.ctx.tutte[gi]) ? passate.length : 40;
-      passate.slice(0, tetto).forEach(function (p) {
-        var v = p[0], vi = p[1], liv = semRicetta(v);
-        h += '<div class="pasto' + (semaforoAttivo() ? ' sem-' + liv : '') + '" data-ricetta="' + gi + '-' + vi + '">' +
-          immaginePiatto(v) +
-          '<button class="stella' + (preferita(v) ? ' on' : '') +
-            '" data-pref="' + gi + '-' + vi + '" title="Mettila fra i preferiti">&#9733;</button>' +
-          '<div class="pasto-t"><b>' + esc(v.nome) + '</b>' +
-          '<span>' + rigaMacro(v) + '</span>' +
-          pastigliaSem(liv) +
-          (v.tag && suMisura() ? '<i class="mio">' + esc(v.tag) + '</i>' : '') + '</div></div>';
-      });
-      if (!passate.length) {
-        var f0 = filtriAttivi();
-        h += '<p class="dim">Nessuna ricetta di <b>questo pasto</b> passa i filtri accesi' +
-          (f0.verde && gi === 0 ? ': a colazione latte, miele e frutta fanno uscire quasi ' +
-            'tutto. Con il latte delattosato la maggior parte torna utilizzabile.' : '.') +
-          ' <a href="#" data-azzera="1">Toglili tutti</a> per rivederle.</p>';
-      }
+      h += '<div class="griglia-pasti" id="griglia-' + gi + '">';
+      var tetto = Math.min(passate.length, mostrateDi(gi));
+      passate.slice(0, tetto).forEach(function (p) { h += schedaRicetta(p[0], gi, p[1]); });
       h += '</div>';
       if (passate.length > tetto) {
-        h += '<button class="ghost" data-tutte="' + gi + '">Mostrane altre ' +
-          (passate.length - tetto) + ' (sono ' + passate.length + ' in tutto)</button>';
+        var resto = passate.length - tetto;
+        h += '<button class="ghost altre" data-altre="' + gi + '">Mostrane altre ' +
+          Math.min(resto, BLOCCO_RICETTE) + ' (ne restano ' + resto + ')</button>';
       }
     });
 
@@ -25487,28 +25674,11 @@ function collega() {
   document.querySelectorAll('[data-extra]').forEach(function (n) {
     n.onclick = function () { vai('extra', { extra: n.dataset.extra }); };
   });
-  document.querySelectorAll('[data-ricetta]').forEach(function (n) {
-    n.onclick = function () { vai('ricetta', { ricetta: n.dataset.ricetta }); };
+  collegaRicette(document);
+  document.querySelectorAll('[data-altre]').forEach(function (n) {
+    n.onclick = function () { altreRicette(n.dataset.altre); };
   });
-  /* La stella sta DENTRO la card della ricetta: senza stopPropagation il tocco
-     metterebbe il preferito e aprirebbe anche la ricetta. */
-  document.querySelectorAll('[data-pref]').forEach(function (n) {
-    n.onclick = function (ev) {
-      ev.stopPropagation();
-      var p = String(n.dataset.pref).split('-');
-      var g = PASTI.gruppi[+p[0]], v = g && g.voci[+p[1]];
-      if (!v) return;
-      toast(cambiaPreferita(v) ? 'Messa fra i preferiti' : 'Tolta dai preferiti');
-      render();
-    };
-  });
-  document.querySelectorAll('[data-tutte]').forEach(function (n) {
-    n.onclick = function () {
-      if (!S.ctx.tutte) S.ctx.tutte = {};
-      S.ctx.tutte[n.dataset.tutte] = 1;
-      render();
-    };
-  });
+  osservaRicette();
   document.querySelectorAll('[data-go]').forEach(function (n) {
     n.onclick = function () { vai(n.dataset.go, {}); };
   });
@@ -25697,10 +25867,20 @@ function collegaEsercizio() {
   });
 }
 
+/* v24: cambiando scheda o filtro l'elenco riparte dal primo blocco, e se eri
+   sceso sotto i filtri torni a vederli: prima restavi a meta' di una pagina
+   diversa, senza capire cosa fosse cambiato. */
+function rifaiElenco() {
+  S.ctx.mostra = null;
+  render();
+  var fl = document.getElementById('filtri-ricette');
+  if (fl && fl.getBoundingClientRect().top < 0) fl.scrollIntoView({ block: 'start' });
+}
+
 function collegaNutrizione() {
   /* schede colazione / pranzo / merenda / cena */
   document.querySelectorAll('[data-pasto]').forEach(function (b) {
-    b.onclick = function () { S.ctx.pasto = b.dataset.pasto; S.ctx.nsez = 'pasti'; render(); };
+    b.onclick = function () { S.ctx.pasto = b.dataset.pasto; S.ctx.nsez = 'pasti'; rifaiElenco(); };
   });
   /* passaggio fra i pasti e la parte con numeri e regole */
   /* Arrivando dal diario («i fermenti servono?») si apre la sezione giusta e
@@ -25715,10 +25895,9 @@ function collegaNutrizione() {
     b.onclick = function () {
       var f = filtriAttivi(), id = b.dataset.filtror;
       if (f[id]) delete f[id]; else f[id] = 1;
-      /* cambiando filtro l'elenco si accorcia: i «mostrane altre» aperti prima
+      /* cambiando filtro l'elenco si accorcia: i blocchi caricati prima
          non hanno piu' senso e vanno azzerati, altrimenti resta aperto a meta' */
-      S.ctx.tutte = null;
-      render();
+      rifaiElenco();
     };
   });
 
@@ -25727,13 +25906,12 @@ function collegaNutrizione() {
     b.onclick = function (ev) {
       ev.preventDefault();
       S.ctx.filtriR = {};
-      S.ctx.tutte = null;
-      render();
+      rifaiElenco();
     };
   });
 
   document.querySelectorAll('[data-nsez]').forEach(function (b) {
-    b.onclick = function () { S.ctx.nsez = b.dataset.nsez; render(); };
+    b.onclick = function () { S.ctx.nsez = b.dataset.nsez; render(); window.scrollTo(0, 0); };
   });
 
   /* ricerca: si ridisegna dopo una breve pausa, poi si rimette il cursore
