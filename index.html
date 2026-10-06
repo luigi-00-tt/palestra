@@ -1128,6 +1128,73 @@ nav.cinque button svg { width: 20px; height: 20px; }
 .fd-apri { width: 100%; margin: 14px 0 4px; }
 .fd { margin-top: 14px; border-left: 3px solid var(--warm, #e0a040); }
 .fd .ex.fd-alt { margin: 8px 0; cursor: default; }
+
+/* ---------- i tuoi numeri e le tue regole (v24) ---------- */
+.torna {
+  background: none; border: 0; color: var(--accent); font: inherit; font-size: 14px;
+  padding: 4px 0 12px; cursor: pointer;
+}
+.obiettivo .etichetta { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--text-dim); font-weight: 650; }
+.kcal-grande { font-size: 15px; color: var(--text-dim); margin: 2px 0 12px; }
+.kcal-grande b { font-size: 42px; font-weight: 700; color: var(--text); letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-right: 4px; }
+.riparto { display: flex; height: 10px; border-radius: 6px; overflow: hidden; gap: 2px; margin-bottom: 14px; }
+.riparto i { display: block; height: 100%; }
+.r-p { background: var(--accent); }
+.r-c { background: var(--warn); }
+.r-g { background: var(--warm); }
+.macro3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.macro3 > div { background: var(--surface-2); border-radius: var(--radius-s); padding: 10px; position: relative; }
+.macro3 > div > i { position: absolute; top: 12px; right: 10px; width: 8px; height: 8px; border-radius: 50%; }
+.macro3 b { display: block; font-size: 19px; font-weight: 680; font-variant-numeric: tabular-nums; }
+.macro3 span { display: block; font-size: 12px; color: var(--text-dim); }
+.macro3 em { display: block; font-style: normal; font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+.numeri details { border-top: 1px solid var(--line-soft); }
+.numeri details > summary { padding: 12px 0; }
+.conti td { padding: 7px 0; }
+.giornata { padding: 6px 15px; }
+.g-riga { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 11px 0; border-bottom: 1px solid var(--line-soft); }
+.g-riga:last-child { border-bottom: 0; }
+.g-nome b { display: block; font-size: 14.5px; font-weight: 620; }
+.g-nome span { display: block; font-size: 12px; color: var(--text-faint); }
+.g-num { text-align: right; font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.g-num b { font-size: 16px; color: var(--text); font-weight: 650; }
+.g-num span { display: block; }
+.g-barra { grid-column: 1 / -1; height: 4px; background: var(--surface-2); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.g-barra i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.g-riga.tot { padding-top: 13px; }
+.indice {
+  display: flex; gap: 7px; overflow-x: auto; padding: 2px 0 12px; margin: 0 -14px 4px; padding-left: 14px; padding-right: 14px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.indice::-webkit-scrollbar { display: none; }
+.indice button {
+  flex: none; border: 1px solid var(--line); background: var(--surface-2); color: var(--text);
+  border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+.indice button:active { background: var(--accent-soft); border-color: var(--accent-line); }
+.regola { scroll-margin-top: 72px; }
+.regola h3 { font-size: 16.5px; margin: 0 0 8px; font-weight: 660; letter-spacing: -.01em; line-height: 1.3; }
+.regola .sintesi { font-size: 14px; color: var(--text-dim); line-height: 1.55; }
+.sino { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 10px; }
+.sino > div { border-radius: var(--radius-s); padding: 10px 11px; }
+.sino .si { background: var(--good-soft); }
+.sino .no { background: var(--warm-soft); }
+.sino b { display: block; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 6px; }
+.sino .si b { color: var(--good); }
+.sino .no b { color: var(--warm); }
+.sino ul { margin: 0; padding-left: 16px; font-size: 13px; line-height: 1.45; }
+.sino li { margin-bottom: 3px; }
+@media (max-width: 380px) { .sino { grid-template-columns: 1fr; } }
+.lista-ricette { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+.link-ricetta {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0 10px; text-align: left;
+  background: var(--surface-2); border: 1px solid var(--line-soft); border-radius: var(--radius-s);
+  padding: 10px 12px; color: var(--text); font: inherit; cursor: pointer;
+}
+.link-ricetta b { font-size: 14px; font-weight: 600; }
+.link-ricetta span { grid-column: 1; font-size: 12px; color: var(--text-dim); }
+.link-ricetta i { grid-column: 2; grid-row: 1 / 3; font-style: normal; color: var(--accent); font-size: 20px; }
+.link-ricetta:active { border-color: var(--accent-line); }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -21491,7 +21558,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmuwems2p';
+var BUILD = 'vmuwf0o1z';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -21597,7 +21664,8 @@ function datiDaSalvare() {
     dolori: S.dolori,
     scambi: S.scambi,
     riprese: S.riprese,
-    controlloBlocco: S.controlloBlocco
+    controlloBlocco: S.controlloBlocco,
+    checklist: S.checklist // v24: le spunte di oggi della checklist prima della seduta
   };
 }
 var CHIAVI_DATI = ['profilo', 'log', 'diario', 'ultimo', 'prodotti', 'exExtra',
@@ -23617,6 +23685,9 @@ function vNutrizione() {
   var sez = S.ctx.nsez || 'pasti';
   var q = (S.ctx.cerca || '').trim().toLowerCase();
 
+  /* v24: i numeri e le regole sono una vista a parte */
+  if (f && sez === 'numeri') return vNumeri(f);
+
   var h = testata('Nutrizione', sottotitoloNutrizione()) + '<main>';
 
   /* Senza i dati non si calcola niente: meglio chiederli che mostrare le
@@ -23721,62 +23792,163 @@ function vNutrizione() {
     h += avvisoFiltroAlimentare();
     h += '<button class="ghost" data-nsez="numeri">Vedi i tuoi numeri e le regole</button>';
 
-  } else {
-    /* numeri, liste e approfondimenti */
-    h += '<div class="stats">' +
-      '<div class="stat"><b>' + f.kcal + '</b><span>kcal al giorno</span></div>' +
-      '<div class="stat"><b>' + f.prot + ' g</b><span>proteine (' +
-        (f.prot / S.profilo.peso).toFixed(1).replace('.', ',') + ' g/kg)</span></div>' +
-      '<div class="stat"><b>' + f.carb + ' g</b><span>carboidrati</span></div>' +
-      '<div class="stat"><b>' + f.gras + ' g</b><span>grassi</span></div>' +
-      '</div>';
-    h += '<div class="hint">Calcolato su <b>' + eta() + ' anni</b>, ' + S.profilo.peso + ' kg, ' +
-         S.profilo.altezza + ' cm. Mantenimento stimato ' + f.tdee + ' kcal' + testoObiettivoKcal(f) + ' ' +
-         'Il mantenimento è una <b>stima</b>: la formula usata (Mifflin-St Jeor) sottostima il consumo ' +
-         'di chi si allena, negli atleti universitari in media di 600 kcal ' +
-         '<span class="fonte">[B06]</span>. Il numero vero lo dice la bilancia: media di 7 giorni. ' +
-         testoAggiustaKcal() + '</div>';
-
-    h += '<h2>Una giornata intera</h2><div class="card"><table class="hist">';
-    /* v18: chi non ha la scheda su misura riceve la giornata calcolata sui suoi pasti */
-    var giornata = suMisura() ? PASTI.giornata : giornataGenerica(f, S.questionario && S.questionario.pasti);
-    giornata.forEach(function (r, i2) {
-      var ult = i2 === giornata.length - 1;
-      h += '<tr' + (ult ? ' class="tot"' : '') + '><td>' + esc(r[0]) + '</td><td class="num">' +
-           esc(r[1]) + '</td><td class="num">' + esc(r[2]) + '</td></tr>';
-    });
-    h += '</table></div>';
-    if (suMisura()) h += '<div class="hint warm">' + PASTI.notaGiornata + '</div>';
-
-    /* v18: la scheda su misura ha i suoi testi; per tutti gli altri le sezioni
-       nascono dalle risposte del questionario */
-    var NZ = suMisura() ? NUTRIZIONE : nutrizioneGenerale();
-    /* v22: con il reflusso, abitudini, spesa e colazione (reflusso.js), subito
-       dopo le sezioni cliniche iniziali */
-    var sezNZ = NZ.sezioni.slice(), extra = sezioniReflusso();
-    if (extra.length) Array.prototype.splice.apply(sezNZ, [suMisura() ? 1 : Math.min(2, sezNZ.length), 0].concat(extra));
-    sezNZ.forEach(function (x) {
-      h += '<h2' + (x.id ? ' id="sez-' + x.id + '"' : '') + '>' + esc(x.titolo) + '</h2>';
-      if (x.testo && testoPerTe(x.testo)) h += '<p class="dim">' + testoPerTe(x.testo) + '</p>';
-      if (x.si) h += '<div class="foodlist yes">' + x.si.map(function (y) { return '<span>' + esc(y) + '</span>'; }).join('') + '</div>';
-      if (x.no) h += '<div class="foodlist no" style="margin-top:8px">' + x.no.map(function (y) { return '<span>' + esc(y) + '</span>'; }).join('') + '</div>';
-      (x.voci || []).forEach(function (v) {
-        var d = testoPerTe(v.d);
-        if (d && fraseAmmessa(v.t)) h += '<details><summary>' + esc(v.t) + '</summary><div>' + d + '</div></details>';
-      });
-    });
-
-    h += '<h2>Checklist prima di allenarti</h2><div class="card">';
-    NZ.checklist.forEach(function (c, i3) {
-      h += '<label class="check"><input type="checkbox" data-chk="' + i3 + '"><span>' + c + '</span></label>';
-    });
-    h += '</div>';
-    h += '<div class="note">' + NZ.disclaimer + '</div>';
-    h += '<button class="ghost" data-nsez="pasti">Torna ai pasti</button>';
   }
 
   h += '</main>';
   return h;
+}
+
+/* ---------- i tuoi numeri e le tue regole (v24, riscritta da zero) ----------
+   Prima era un muro: quattro numeri, una tabella fissa che dava 177 g di
+   proteine mentre il riquadro sopra ne diceva 130, e una quarantina di voci a
+   scomparsa una sotto l'altra. Ora tre parti, nell'ordine in cui servono:
+   l'obiettivo (calcolato), la giornata (calcolata dagli stessi numeri, quindi
+   coerente per forza) e le regole, con un indice in testa. I testi delle regole
+   restano quelli di prima, con le loro fonti: cambia come si leggono. */
+
+var BREVE_SEZ = [
+  [/confermat|verificare/i, 'La diagnosi'], [/^reflusso: cosa aiuta/i, 'Reflusso'],
+  [/cosa comprare/i, 'Spesa'], [/colazione/i, 'Colazione'], [/gastroenterologo/i, 'Dal medico'],
+  [/fermenti/i, 'Fermenti'], [/proteine/i, 'Proteine'], [/surplus|deficit|dimagrire|ricomposizione/i, 'Calorie'],
+  [/allenamento/i, 'Allenamento'], [/liquidi|vescica/i, 'Liquidi e notte'], [/integratori/i, 'Integratori'],
+  [/fodmap|intestino/i, 'Intestino'], [/vegan|vegetarian/i, 'Dieta vegetale'], [/carboidrati/i, 'Carboidrati']
+];
+function breveSez(t) {
+  for (var i = 0; i < BREVE_SEZ.length; i++) if (BREVE_SEZ[i][0].test(t)) return BREVE_SEZ[i][1];
+  return t.split(/[:,—]/)[0].slice(0, 26);
+}
+function idSez(x, i) { return x.id || 'r' + i; }
+
+/* la giornata: per il preset su misura si tengono i suoi pasti e le loro
+   proporzioni, ma kcal e proteine si ricalcolano dal fabbisogno di oggi */
+function giornataNumeri(f) {
+  if (!suMisura()) {
+    return giornataGenerica(f, S.questionario && S.questionario.pasti).slice(0, -1).map(function (r) {
+      return { nome: r[0], es: '', k: parseInt(r[1], 10), p: parseInt(r[2], 10) };
+    });
+  }
+  var righe = PASTI.giornata.slice(0, -1);
+  var sk = 0, sp = 0;
+  righe.forEach(function (r) { sk += parseInt(r[1], 10); sp += parseInt(r[2], 10); });
+  var out = righe.map(function (r) {
+    var parti = r[0].split(' — ');
+    return { nome: parti[0], es: parti[1] || '', k: Math.round(f.kcal * parseInt(r[1], 10) / sk / 10) * 10,
+             p: Math.round(f.prot * parseInt(r[2], 10) / sp) };
+  });
+  /* gli arrotondamenti si chiudono sull'ultimo pasto: il totale torna esatto */
+  var dk = f.kcal - out.reduce(function (a, x) { return a + x.k; }, 0);
+  var dp = f.prot - out.reduce(function (a, x) { return a + x.p; }, 0);
+  out[out.length - 1].k += dk; out[out.length - 1].p += dp;
+  return out;
+}
+
+function indiceRicetta(gruppo, nome) {
+  var g = PASTI.gruppi[gruppo];
+  for (var i = 0; g && i < g.voci.length; i++) if (g.voci[i].nome === nome) return gruppo + '-' + i;
+  return null;
+}
+
+function vNumeri(f) {
+  var p = S.profilo;
+  var h = testata('I tuoi numeri e le regole', sottotitoloNutrizione()) + '<main class="numeri">';
+  h += '<button class="torna" data-nsez="pasti">‹ Torna alle ricette</button>';
+
+  /* --- 1. l'obiettivo --- */
+  var kP = f.prot * 4, kC = f.carb * 4, kG = f.gras * 9, kT = kP + kC + kG;
+  var pc = function (x) { return Math.round(x / kT * 100); };
+  h += '<section class="card obiettivo">' +
+    '<span class="etichetta">Ogni giorno</span>' +
+    '<div class="kcal-grande"><b>' + f.kcal + '</b> kcal</div>' +
+    '<div class="riparto" aria-hidden="true"><i class="r-p" style="width:' + pc(kP) + '%"></i>' +
+      '<i class="r-c" style="width:' + pc(kC) + '%"></i><i class="r-g" style="width:' + pc(kG) + '%"></i></div>' +
+    '<div class="macro3">' +
+      '<div><i class="r-p"></i><b>' + f.prot + ' g</b><span>proteine</span><em>' +
+        (f.prot / p.peso).toFixed(1).replace('.', ',') + ' g/kg · ' + pc(kP) + '%</em></div>' +
+      '<div><i class="r-c"></i><b>' + f.carb + ' g</b><span>carboidrati</span><em>' + pc(kC) + '% delle kcal</em></div>' +
+      '<div><i class="r-g"></i><b>' + f.gras + ' g</b><span>grassi</span><em>' + pc(kG) + '% delle kcal</em></div>' +
+    '</div>' +
+    '<p class="dim">Circa <b>' + f.pasto + ' g di proteine a pasto</b> su quattro pasti.</p>' +
+    '<details><summary>Come è calcolato</summary><div>' +
+      '<table class="hist conti">' +
+      '<tr><td>Metabolismo basale (Mifflin-St Jeor)<br><span class="dim">' + eta() + ' anni, ' + p.peso + ' kg, ' +
+        p.altezza + ' cm</span></td><td class="num">' + f.bmr + '</td></tr>' +
+      '<tr><td>× attività ' + String(p.attivita || 1.55).replace('.', ',') + ' = mantenimento</td><td class="num">' + f.tdee + '</td></tr>' +
+      '<tr><td>' + (f.surplus >= 0 ? 'Surplus' : 'Deficit') + ' per il tuo obiettivo</td><td class="num">' +
+        (f.surplus >= 0 ? '+' : '') + f.surplus + '</td></tr>' +
+      '<tr class="tot"><td>Obiettivo</td><td class="num">' + f.kcal + '</td></tr></table>' +
+      '<p>Mantenimento stimato ' + f.tdee + ' kcal' + testoObiettivoKcal(f) + '</p>' +
+      '<p>Il mantenimento è una <b>stima</b>: la formula sottostima il consumo di chi si allena, negli atleti ' +
+      'universitari in media di 600 kcal <span class="fonte">[B06]</span>.</p></div></details>' +
+    '<details><summary>Come correggerlo con la bilancia</summary><div><p>Pesati al mattino e guarda la ' +
+      '<b>media di 7 giorni</b>, non il singolo giorno. ' + testoAggiustaKcal() + '</p></div></details>' +
+    '</section>';
+
+  /* --- 2. la giornata --- */
+  var gio = giornataNumeri(f);
+  var maxK = Math.max.apply(null, gio.map(function (x) { return x.k; }));
+  h += '<h2>La tua giornata</h2><section class="card giornata">';
+  gio.forEach(function (x) {
+    h += '<div class="g-riga"><div class="g-nome"><b>' + esc(x.nome) + '</b>' +
+      (x.es ? '<span>es. ' + esc(x.es) + '</span>' : '') + '</div>' +
+      '<div class="g-num"><b>' + x.k + '</b> kcal<span>' + x.p + ' g prot.</span></div>' +
+      '<div class="g-barra"><i style="width:' + Math.round(x.k / maxK * 100) + '%"></i></div></div>';
+  });
+  h += '<div class="g-riga tot"><div class="g-nome"><b>Totale</b></div><div class="g-num"><b>' + f.kcal +
+    '</b> kcal<span>' + f.prot + ' g prot.</span></div></div>';
+  h += '</section><p class="dim">Le kcal di ogni pasto sono una traccia: conta il totale della giornata. ' +
+    'Nelle ricette trovi i valori di ogni piatto.</p>';
+
+  /* --- 3. le regole --- */
+  var NZ = suMisura() ? NUTRIZIONE : nutrizioneGenerale();
+  var sezNZ = NZ.sezioni.slice(), extra = sezioniReflusso();
+  if (extra.length) Array.prototype.splice.apply(sezNZ, [suMisura() ? 1 : Math.min(2, sezNZ.length), 0].concat(extra));
+  sezNZ = sezNZ.filter(function (x) {
+    return (x.testo && testoPerTe(x.testo)) || x.si ||
+      (x.voci || []).some(function (v) { return testoPerTe(v.d) && fraseAmmessa(v.t); });
+  });
+
+  h += '<h2>Le tue regole</h2><div class="indice">' + sezNZ.map(function (x, i) {
+    return '<button data-vaisez="' + idSez(x, i) + '">' + esc(breveSez(x.titolo)) + '</button>';
+  }).join('') + '</div>';
+
+  sezNZ.forEach(function (x, i) {
+    h += '<section class="card regola" id="sez-' + idSez(x, i) + '"><h3>' + esc(x.titolo) + '</h3>';
+    var t = x.testo && testoPerTe(x.testo);
+    if (t) h += '<p class="sintesi">' + t + '</p>';
+    if (x.si || x.no) {
+      h += '<div class="sino">';
+      if (x.si) h += '<div class="si"><b>Da preferire</b><ul>' + x.si.map(function (y) { return '<li>' + esc(y) + '</li>'; }).join('') + '</ul></div>';
+      if (x.no) h += '<div class="no"><b>Da limitare o provare con cautela</b><ul>' + x.no.map(function (y) { return '<li>' + esc(y) + '</li>'; }).join('') + '</ul></div>';
+      h += '</div>';
+    }
+    /* le colazioni sono ricette vere: qui basta il collegamento */
+    var voci = x.voci || [];
+    if (x.id === 'colazione' && typeof COLAZIONI_REFLUSSO !== 'undefined') {
+      var col = COLAZIONI_REFLUSSO.map(function (c) {
+        var id = indiceRicetta(0, c.nome), m = macroColazione(c);
+        return id ? '<button class="link-ricetta" data-ricetta="' + id + '"><b>' + esc(c.nome) + '</b><span>' +
+          m.k + ' kcal · ' + m.pr + ' g prot.</span><i>›</i></button>' : '';
+      }).join('');
+      if (col) { h += '<div class="lista-ricette">' + col + '</div>'; voci = voci.slice(COLAZIONI_REFLUSSO.length); }
+    }
+    voci.forEach(function (v) {
+      var d = testoPerTe(v.d);
+      if (d && fraseAmmessa(v.t)) h += '<details><summary>' + esc(v.t) + '</summary><div>' + d + '</div></details>';
+    });
+    h += '</section>';
+  });
+
+  /* --- 4. la checklist, che ora si ricorda cosa hai spuntato oggi --- */
+  var spunte = (S.checklist && S.checklist.d === oggi()) ? S.checklist.v : {};
+  h += '<h2>Prima di allenarti</h2><section class="card checklist">';
+  NZ.checklist.forEach(function (c, i3) {
+    h += '<label class="check"><input type="checkbox" data-chk="' + i3 + '"' + (spunte[i3] ? ' checked' : '') +
+      '><span>' + c + '</span></label>';
+  });
+  h += '</section>';
+  h += '<div class="note">' + NZ.disclaimer + '</div>';
+  h += '<button class="ghost" data-nsez="pasti">Torna alle ricette</button>';
+  return h + '</main>';
 }
 
 /* Cerca fra ricette (nome e ingredienti) e alimenti del diario. */
@@ -25907,6 +26079,20 @@ function collegaNutrizione() {
       ev.preventDefault();
       S.ctx.filtriR = {};
       rifaiElenco();
+    };
+  });
+
+  document.querySelectorAll('[data-vaisez]').forEach(function (b) {
+    b.onclick = function () {
+      var n = document.getElementById('sez-' + b.dataset.vaisez);
+      if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+  });
+  document.querySelectorAll('[data-chk]').forEach(function (c) {
+    c.onchange = function () {
+      if (!S.checklist || S.checklist.d !== oggi()) S.checklist = { d: oggi(), v: {} };
+      if (c.checked) S.checklist.v[c.dataset.chk] = 1; else delete S.checklist.v[c.dataset.chk];
+      save();
     };
   });
 
