@@ -1,7 +1,7 @@
 /* Service worker: cache-first sull'app, che e' un file solo.
    Il nome della cache cambia a ogni build, quindi una versione nuova
    sostituisce sempre la precedente invece di restare in coda. */
-var CACHE = 'palestra-vmuyq43aa';
+var CACHE = 'palestra-vmuyqdu4y';
 /* Le animazioni degli esercizi fuori scheda arrivano dal CDN e stanno in una
    cache SENZA versione: scaricate una volta, restano anche dopo le build
    successive. Sarebbe un peccato rifarle scaricare a ogni pubblicazione. */
