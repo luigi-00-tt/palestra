@@ -21541,8 +21541,93 @@ if (false) module.exports = { FOTO_RICETTE: FOTO_RICETTE };
 
 
 /* ===== foto-piatti.js ===== */
-/* foto-piatti.js — generato da app/genera_foto_piatti.py */
-var FOTO_PIATTI = {};
+/* foto-piatti.js — quali ricette hanno una foto propria fuori dall'HTML.
+   Generato da app/genera_foto_piatti.py: non si modifica a mano.
+   Il file è sito/foto/<chiave>.jpg (offline grazie al service worker).
+   Crediti: [autore, licenza, pagina] — le licenze CC chiedono l'attribuzione. */
+
+var FOTO_PIATTI = {
+  'alici-marinate-di-davide-guidara': ['C messier', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:%CE%93%CE%B1%CF%8D%CF%81%CE%BF%CF%82_%CE%BC%CE%B1%CF%81%CE%B9%CE%BD%CE%AC%CF%84%CE%BF%CF%82_2607.jpg'],
+  'amaretti-i': ['Photograph by Greg O\'Beirne', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Amaretti_gobeirne.JPG'],
+  'amaretti-ii': ['Photograph by Greg O\'Beirne', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Amaretti_gobeirne.JPG'],
+  'arista': ['Arnold Gatilao', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Arista_in_agrodolce.jpg'],
+  'baba': ['Romainbehar', 'CC0', 'https://commons.wikimedia.org/wiki/File:Lyon_1er_-_Quai_de_la_P%C3%AAcherie_-_Restaurant_Antolio_-_Baba_au_rhum.jpg'],
+  'biscotti-della-salute': ['F Ceragioli', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Biscotto_salute_01.jpg'],
+  'biscotto': ['Pudding4brains', 'Public domain', 'https://commons.wikimedia.org/wiki/File:Koekjestrommel_open.jpg'],
+  'bistecca-alla-fiorentina': ['mike packard', 'CC BY-SA 2.0', 'https://commons.wikimedia.org/wiki/File:Bistecca_alla_fiorentina-01.jpg'],
+  'bocca-di-dama-i': ['Geppi Simone', 'CC BY 3.0', 'https://commons.wikimedia.org/wiki/File:Sospiro_dolce.jpg'],
+  'bocca-di-dama-ii': ['Geppi Simone', 'CC BY 3.0', 'https://commons.wikimedia.org/wiki/File:Sospiro_dolce.jpg'],
+  'brioches': ['Jean Weber', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:29012008-Brioche_Cl_J_Weber04-2.jpg'],
+  'brodo': ['Игорь Хмиловский', 'CC0', 'https://commons.wikimedia.org/wiki/File:Bulion_Wolowy_-_1.jpg'],
+  'brodo-vegetale-di-iginio-massari': ['Игорь Хмиловский', 'CC0', 'https://commons.wikimedia.org/wiki/File:Bulion_Wolowy_-_1.jpg'],
+  'brutti-ma-buoni': ['Nyaleere', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Brutti_ma_buoni.JPG'],
+  'cacciucco-i': ['Hana Gaon', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Cacciucco_alla_Livornese_19_34_55_234000.jpeg'],
+  'cacciucco-ii': ['Hana Gaon', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Cacciucco_alla_Livornese_19_34_55_234000.jpeg'],
+  'cartellate': ['92bari', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Cartellate.JPG'],
+  'castagnaccio': ['Gordon Joly', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Castagnaccio_with_pine_nuts.jpg'],
+  'castagnole-i': ['Massimo Telò', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Castagnole.jpg'],
+  'castagnole-ii': ['Massimo Telò', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Castagnole.jpg'],
+  'cavallucci-di-siena': ['judywitts', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Cavallucci_(24190614015).jpg'],
+  'cheesecake-giapponese': ['Ocdp', 'CC0', 'https://commons.wikimedia.org/wiki/File:Souffl%C3%A9-style_cheesecake_001.jpg'],
+  'cotognata': ['Javier Lastras from España/Spain', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Dulce_de_Membrillo.jpg'],
+  'crauti-i': ['Dirk Ingo Franke', 'CC BY 3.0', 'https://commons.wikimedia.org/wiki/File:Wesselburenkraut_19.06.2012_18-35-26.jpg'],
+  'crauti-ii': ['Dirk Ingo Franke', 'CC BY 3.0', 'https://commons.wikimedia.org/wiki/File:Wesselburenkraut_19.06.2012_18-35-26.jpg'],
+  'crepes': ['David Monniaux', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Crepes_dsc07085.jpg'],
+  'croccante': ['Marcuscalabresus', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Croccante_calabrese.JPG'],
+  'crocchette': ['Nicholas Gemini', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Italian_Suppl%C3%AC.jpg'],
+  'crocchette-di-patate': ['Nicholas Gemini', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Italian_Suppl%C3%AC.jpg'],
+  'dorayaki': ['Ocdp', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Dorayaki_001_(3).jpg'],
+  'fagioli-all-uccelletto': ['Aplasia', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Fagioli_cannellini_all%27uccelletto.jpg'],
+  'fricando': ['Mgclape (talk)', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Fricand%C3%B3.jpg'],
+  'fricassea': ['Chicken_fricassee-01.jpg: Like_the_Grand_Canyon derivative work: Hic et nunc', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Chicken_fricassee-01-1.jpg'],
+  'frittelle-di-mele': ['Kitchen1000', 'Public domain', 'https://commons.wikimedia.org/wiki/File:Apple_fritters.jpg'],
+  'gelo-di-mellone': ['Dedda71', 'CC BY 3.0', 'https://commons.wikimedia.org/wiki/File:Gelo_di_mellone.jpg'],
+  'gnocchi': ['Paoletta S.', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Gnocchi_di_ricotta_burro_e_salvia.jpg'],
+  'gnocchi-alla-romana': ['lazy fri13th', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Gnocchi_alla_romana_1.jpg'],
+  'gnocchi-di-patate': ['Paoletta S.', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Gnocchi_di_ricotta_burro_e_salvia.jpg'],
+  'insalata-di-patate': ['Kobako', 'CC BY-SA 2.5', 'https://commons.wikimedia.org/wiki/File:Kartoffelsalat.jpg'],
+  'krapfen': ['Sebastian Koppehel', 'CC BY 4.0', 'https://commons.wikimedia.org/wiki/File:Berliner_Pfannkuchen_2.jpg'],
+  'krapfen-i': ['Sebastian Koppehel', 'CC BY 4.0', 'https://commons.wikimedia.org/wiki/File:Berliner_Pfannkuchen_2.jpg'],
+  'krapfen-ii': ['Sebastian Koppehel', 'CC BY 4.0', 'https://commons.wikimedia.org/wiki/File:Berliner_Pfannkuchen_2.jpg'],
+  'kugelhupf': ['VSchagow', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Minigugelhupf_auf_Teller_(Marmorkuchen)_2022.jpg'],
+  'latte-alla-portoghese': ['Popo le Chien', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Cremecaramel.jpg'],
+  'latte-brule': ['GastRomagna', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Latte_brul%C3%A8.jpg'],
+  'minestrone': ['Katrin Morenz from Aachen, Deutschland', 'CC BY-SA 2.0', 'https://commons.wikimedia.org/wiki/File:Minestrone_soup.jpg'],
+  'mozzarella-in-carrozza-di-peppe-guida': ['Catia Giaccherini', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Starters_06.jpg'],
+  'mozzarella-in-carrozza-di-viviana-lapertosa': ['Catia Giaccherini', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Starters_06.jpg'],
+  'nocino': ['Beemwej', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Cuor_D%27Emilia_PL.JPG'],
+  'panata': ['Giulia Pesacane', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Pane_cotto.jpg'],
+  'pasta-e-fagioli-umbricelli-di-grani-antichi-spuma-di-cotenna': ['Spinoziano', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Pasta_e_fagioli_cannellini.jpg'],
+  'pasta-frolla': ['Greta Ceresini from Piacenza', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Crostata_all%27albicocca_(13348608015).jpg'],
+  'pasta-genovese': ['Matthieu Blanco', 'CC BY 3.0', 'https://commons.wikimedia.org/wiki/File:G%C3%A2teau_G%C3%A9noise_Chocolat_(31315349).jpeg'],
+  'pasticcio-di-carne': ['Goddard\'s Pies Limited', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Steak_pie_09012012.JPG'],
+  'pizza-alla-napoletana': ['Valerio Capello at English Wikipedia', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Eq_it-na_pizza-margherita_sep2005_sml.jpg'],
+  'polenta-pasticciata': ['Mænsard vokser', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Polenta_%22uncia%22_servita_al_rifugio_del_Monte_Palanzone_%22Rifugio_Riella%22_(Como)_-_08-11-2015.JPG'],
+  'pollo-alla-cacciatora': ['Evan Joshua Swigart (TheCulinaryGeek) from Chicago, Illinois, USA; hometown of A', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Flickr_preppybyday_4618397089--Chicken_cacciatore.jpg'],
+  'pollo-alla-marengo': ['Arnaud 25', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Poulet_Marengo.jpg'],
+  'pomodori-ripieni': ['Vegan Feast Catering', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Artichoke_Stuffed_Tomato_(5052814731).jpg'],
+  'pomodori-verdi-fritti-di-viviana-lapertosa': ['ninjapoodles', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Fried_green_tomatoes.jpg'],
+  'presnitz': ['Holapaco77', 'CC BY 4.0', 'https://commons.wikimedia.org/wiki/File:Due_presnitz.jpg'],
+  'pure-di-patate': ['sousvideguy', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Sous_vide_mashed_potatoes.jpg'],
+  'risotto-alla-milanese-i': ['grobery from Milano, Italy', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Sun-rice_(11027684905).jpg'],
+  'risotto-alla-milanese-ii': ['grobery from Milano, Italy', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Sun-rice_(11027684905).jpg'],
+  'risotto-alla-milanese-iii': ['grobery from Milano, Italy', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Sun-rice_(11027684905).jpg'],
+  'sapa': ['Saba san giacomo.JPG', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Saba_san_giacomo.JPG'],
+  'strudel': ['Takeaway', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:2015_0723_Apfelstrudel_Gaislachalm_S%C3%B6lden.jpg'],
+  'sugo-di-pomodoro': ['Dennis Klein klein2', 'CC0', 'https://commons.wikimedia.org/wiki/File:Fresh_Tomato_Sauce_(Unsplash).jpg'],
+  'tagliatelle-verdi': ['Joy', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Making_a_better_homemade_pasta_-_16670047286.jpg'],
+  'the': ['patrick george from cochin, india', 'CC BY 2.0', 'https://commons.wikimedia.org/wiki/File:Black_tea.jpg'],
+  'torta-caprese-crema-all-arancia-salsa-caramello-al-whisky': ['Aron and Gianina', 'CC BY 3.0', 'https://commons.wikimedia.org/wiki/File:Torta_caprese_with_Faraglioni.png'],
+  'torta-di-carote': ['http://rezeptewiki.org/wiki/Benutzer:At_u', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Rueblitorte.jpg'],
+  'torta-di-pere-cioccolato-e-limone-verde': ['Manfred&Barbara Aulbach', 'CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Birnen-Ingwer-Kuchen.jpg'],
+  'torta-paradiso': ['Sciking', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Torta_del_Paradiso.jpg'],
+  'tortelli': ['Luca Vanzella from Milano, Italy', 'CC BY-SA 2.0', 'https://commons.wikimedia.org/wiki/File:Tortelli.jpg'],
+  'vincisgrassi': ['Daniele La Monaca', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Vincisgrassi_alla_maceratese.jpg'],
+  'vitello-tonnato': ['cyclonebill from Copenhagen, Denmark', 'CC BY-SA 2.0', 'https://commons.wikimedia.org/wiki/File:Vitello_tonnato_(7169906567).jpg'],
+  'zabaione': ['Michael Wittwer', 'CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Zabaglione_2021.jpg'],
+  'zuppa-di-acetosa': ['Michał Sulik', 'CC BY 3.0', 'https://commons.wikimedia.org/wiki/File:Sorrel_soup_with_egg_and_croutons_(Zupa_szczawiowa_z_jajkiem_i_grzankami).jpg'],
+  'zuppa-di-lenticchie': ['Matthias Lipinski', 'CC0', 'https://commons.wikimedia.org/wiki/File:Linseneintopf.jpg']
+};
 
 
 /* ===== passaggi.js ===== */
@@ -24741,7 +24826,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmuy9bwep';
+var BUILD = 'vmuyaelm4';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
