@@ -1331,6 +1331,130 @@ nav button.on::before {
 .pasto-t .sem { display: inline-flex; width: auto; font-size: 10.5px; margin-top: 8px; }
 /* il disegno di ripiego: più piccolo, su un fondo tenue, non a tutta scheda */
 .pasto .cibo { padding: 14% 20%; background: radial-gradient(circle at 50% 60%, var(--surface-3), var(--surface-2) 70%); }
+
+/* ============================================================
+   v24 (7 ottobre) — fluidità. Regole prese dai riferimenti scelti
+   dall'utente: Mobbin (card morbide, titoli grandi, anelli, chip a
+   capsula), Emil Kowalski (ease-out decise, 160-240 ms, si animano
+   solo transform e opacity) e Impeccable (scala tipografica e
+   spaziature fisse, niente bagliori decorativi).
+   ============================================================ */
+:root {
+  --ease: cubic-bezier(.23, 1, .32, 1);
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+}
+/* il fondo è piatto: il bagliore ciano in alto era decorazione e basta */
+body { background: var(--bg); }
+
+/* testata: titolo grande in cima alla pagina che si riduce scorrendo, come su iOS.
+   Animazione legata allo scorrimento: zero JavaScript, gira nel compositore. */
+header { border-bottom-color: transparent; }
+header h1 { font-size: 22px; font-weight: 700; letter-spacing: -.03em; line-height: 1.2; transform-origin: left center; }
+header .sub { font-size: 12.5px; margin-top: 1px; letter-spacing: 0; }
+@supports (animation-timeline: scroll()) {
+  header { animation: testata linear both; animation-timeline: scroll(root); animation-range: 0 64px; }
+  header h1 { animation: titolo linear both; animation-timeline: scroll(root); animation-range: 0 64px; }
+  @keyframes testata { to { border-bottom-color: var(--line); background: rgba(11, 14, 19, .92); } }
+  @keyframes titolo { to { transform: scale(.86); } }
+}
+@supports not (animation-timeline: scroll()) { header { border-bottom-color: var(--line); } }
+
+/* titoli di sezione: un gradino tipografico preciso */
+main h2 { font-size: 12px; letter-spacing: .08em; margin: var(--s5) 2px var(--s3); }
+
+/* tocchi: risposta immediata alla pressione, rilascio morbido */
+button, .pasto, .card.tap, .link-ricetta, .lib-r, .day, .ex, .pill {
+  transition: transform .16s var(--ease), background-color .2s, border-color .2s, color .2s, opacity .2s;
+}
+.pill:active, .day:active, .ex:active, .card.tap:active { transform: scale(.97); }
+/* le azioni ripetute a raffica non si animano: tasti ± e bicchieri dell'acqua */
+.bicchiere:active { transform: none; }
+
+/* chip a capsula (filtri) e controllo segmentato */
+.pill { border-radius: 999px; }
+.seg.tabs { border-radius: 999px; }
+.seg.tabs button { border-radius: 999px; }
+
+/* niente ombra dentro un'altra card */
+.card .card, .card .hint { box-shadow: none; }
+
+/* liste lunghe: le schede fuori schermo non si disegnano finché non servono */
+.griglia-pasti .pasto { content-visibility: auto; contain-intrinsic-size: auto 250px; }
+.lib-r { content-visibility: auto; contain-intrinsic-size: auto 72px; }
+/* le foto hanno già il loro posto: niente salti mentre arrivano */
+.foto-piatto { background: var(--surface-2); }
+.ricetta-img .foto-piatto.grande { aspect-ratio: 4 / 3; object-fit: cover; width: 100%; height: auto; view-transition-name: piatto; }
+
+/* barra in basso: l'indicatore entra allargandosi, la voce accesa si alza appena */
+nav { view-transition-name: barra; }
+nav button.on::before { animation: indicatore .28s var(--ease); }
+nav button svg { transition: transform .2s var(--ease); }
+nav button.on svg { transform: translateY(-1px); }
+@keyframes indicatore { from { transform: scaleX(0); opacity: 0; } }
+.timer { view-transition-name: timer; }
+.toast { view-transition-name: toast; }
+
+/* cambio di schermata (View Transitions): avanti entra da destra, indietro da sinistra */
+::view-transition-old(root) { animation: vt-esce .18s var(--ease) both; }
+::view-transition-new(root) { animation: vt-entra .26s var(--ease) both; }
+[data-dir="indietro"]::view-transition-old(root) { animation-name: vt-esce-ind; }
+[data-dir="indietro"]::view-transition-new(root) { animation-name: vt-entra-ind; }
+[data-dir="sezione"]::view-transition-old(root) { animation: vt-sfuma .14s ease-out both; }
+[data-dir="sezione"]::view-transition-new(root) { animation: vt-appare .22s var(--ease) both; }
+::view-transition-group(piatto) { animation-duration: .32s; animation-timing-function: var(--ease); }
+::view-transition-old(piatto), ::view-transition-new(piatto) { height: 100%; object-fit: cover; }
+@keyframes vt-esce { to { opacity: 0; transform: translateX(-14px); } }
+@keyframes vt-entra { from { opacity: 0; transform: translateX(18px); } }
+@keyframes vt-esce-ind { to { opacity: 0; transform: translateX(14px); } }
+@keyframes vt-entra-ind { from { opacity: 0; transform: translateX(-18px); } }
+@keyframes vt-sfuma { to { opacity: 0; } }
+@keyframes vt-appare { from { opacity: 0; transform: translateY(6px); } }
+
+/* anelli del Diario */
+.card.anelli { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s2); padding: var(--s4) var(--s2); text-align: center; }
+.anello { display: grid; justify-items: center; min-width: 0; }
+.anello svg, .anello b { grid-area: 1 / 1; }
+.anello svg { width: 100%; max-width: 70px; aspect-ratio: 1; transform: rotate(-90deg); }
+.anello circle { fill: none; stroke-width: 6; }
+.anello .fondo { stroke: var(--surface-3); }
+.anello .pieno { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .6s var(--ease); }
+.anello.good .pieno { stroke: var(--good); }
+.anello b { align-self: center; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.anello small { font-size: 10px; font-weight: 600; margin-left: 1px; color: var(--text-dim); }
+.anello span { font-size: 12px; font-weight: 600; margin-top: 6px; }
+.anello em { font-style: normal; font-size: 11px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+/* «Come deve venire»: i tre fotogrammi del passaggio */
+.passaggio { margin: var(--s2) 0 var(--s1); border-radius: var(--radius-s); overflow: hidden; background: var(--surface-2); border: 1px solid var(--line-soft); }
+.passaggio .fot { position: relative; aspect-ratio: 4 / 3; }
+.passaggio .fot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .5s ease; }
+.passaggio .fot img.on { opacity: 1; }
+.passaggio .fasi { display: flex; gap: 4px; padding: var(--s2) var(--s3) 0; }
+.passaggio .fasi button { flex: 1; height: 30px; border-radius: 999px; border: 0; background: var(--surface-3); color: var(--text-dim); font: inherit; font-size: 12px; font-weight: 600; }
+.passaggio .fasi button.on { background: var(--accent-soft); color: var(--accent); }
+.passaggio p { margin: 0; padding: var(--s2) var(--s3) var(--s3); font-size: 13.5px; color: var(--text-dim); }
+.passaggio p b { color: var(--text); }
+.passaggio .gen { display: block; font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+
+/* pulsante del video della ricetta */
+a.video-ricetta { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); margin: var(--s3) 0;
+  border-radius: var(--radius-s); background: var(--surface); border: 1px solid var(--line-soft); color: var(--text); text-decoration: none;
+  transition: transform .16s var(--ease); }
+a.video-ricetta:active { transform: scale(.98); }
+a.video-ricetta .play { width: 38px; height: 38px; border-radius: 50%; background: #ff3d3d; display: grid; place-items: center; flex: none; }
+a.video-ricetta .play::after { content: ''; border-left: 12px solid #fff; border-top: 7px solid transparent; border-bottom: 7px solid transparent; margin-left: 3px; }
+a.video-ricetta b { display: block; font-size: 14.5px; }
+a.video-ricetta span { font-size: 12px; color: var(--text-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  header, header h1 { animation: none !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  .passaggio .fot img { transition: none; }
+}
+
+/* pulsanti col font dell'app e freccia indietro grande abbastanza da prendere col pollice */
+button { font-family: inherit; }
+.back { font-size: 30px; line-height: 1; min-width: 36px; min-height: 40px; padding: 0 6px 4px 0; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -23994,7 +24118,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmuwj23qm';
+var BUILD = 'vmuy83ldp';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -24597,33 +24721,71 @@ var PILA = [];
 
 function vai(v, ctx) {
   if (S.vista) PILA.push({ v: S.vista, ctx: S.ctx });
-  applica(v, ctx);
+  applica(v, ctx, 'avanti');
   try { history.pushState({ n: PILA.length }, '', '#' + v); } catch (e) {}
 }
 
 function indietro() {
   var p = PILA.pop();
-  if (p) applica(p.v, p.ctx);
-  else applica('home', {});
+  if (p) applica(p.v, p.ctx, 'indietro');
+  else applica('home', {}, 'indietro');
 }
 
 /* Le voci della barra in basso non impilano: sostituiscono la sezione corrente,
    altrimenti il ritorno indietro attraverserebbe tutte le sezioni visitate. */
 function vaiSezione(v) {
   PILA.length = 0;
-  applica(v, {});
+  applica(v, {}, 'sezione');
   try { history.replaceState({ n: 0 }, '', '#' + v); } catch (e) {}
 }
 
-function applica(v, ctx) {
+function movimentoRidotto() {
+  try {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  } catch (e) { return false; }
+}
+
+/* v24 (7/10): il cambio di schermata passa dalle View Transitions quando il
+   browser le ha (Chrome per Android sì): la vista nuova entra scorrendo di
+   poco da destra andando avanti, da sinistra tornando indietro, e la foto
+   della ricetta «si apre» dalla sua scheda. Dove mancano resta la dissolvenza
+   di anima(). */
+function applica(v, ctx, dir) {
+  var vecchia = S.vista, vecchioCtx = S.ctx || {};
+  /* lo stato cambia subito, sincrono: chi chiama vai() e poi ritocca S.ctx
+     (succede) non deve vedersi sovrascrivere il ritocco dal ridisegno */
   chiudiLente();
   fermaAlterna();
   S.vista = v; S.ctx = ctx || {};
   /* il pannello «mi dà fastidio» si chiude uscendo dall'esercizio */
   if (FD && (v !== 'esercizio' || S.ctx.ex !== FD.ex)) FD = null;
-  render();
-  window.scrollTo(0, 0);
-  anima('main');
+  var fai = function () {
+    render();
+    /* tornando dalla ricetta, la foto rientra nella sua scheda */
+    if (vecchia === 'ricetta' && vecchioCtx.ricetta) nomeFotoVT(vecchioCtx.ricetta);
+    window.scrollTo(0, 0);
+  };
+  if (!document.startViewTransition || movimentoRidotto() || !vecchia) {
+    fai();
+    anima('main');
+    return;
+  }
+  document.documentElement.setAttribute('data-dir', dir || 'avanti');
+  if (v === 'ricetta' && ctx && ctx.ricetta) nomeFotoVT(ctx.ricetta);
+  try {
+    var t = document.startViewTransition(fai);
+    /* una transizione interrotta da un tocco veloce non è un errore */
+    var zitto = function () {};
+    if (t) [t.ready, t.finished, t.updateCallbackDone].forEach(function (p) { if (p && p.catch) p.catch(zitto); });
+  } catch (e) { fai(); }
+}
+
+/* la foto della scheda della ricetta riceve lo stesso nome della foto grande */
+function nomeFotoVT(id) {
+  document.querySelectorAll('[style*="view-transition-name"]').forEach(function (x) { x.style.viewTransitionName = ''; });
+  var n = document.querySelector('.pasto[data-ricetta="' + id + '"] .foto-piatto, ' +
+                                 '.pasto[data-ricetta="' + id + '"] .cibo');
+  if (n) n.style.viewTransitionName = 'piatto';
 }
 
 /* v24: una dissolvenza breve quando cambia la schermata o l'elenco. Solo lì:
@@ -24644,9 +24806,9 @@ function anima(sel) {
 window.addEventListener('popstate', function () {
   if (PILA.length) {
     var p = PILA.pop();
-    applica(p.v, p.ctx);
+    applica(p.v, p.ctx, 'indietro');
   } else {
-    applica('home', {});
+    applica('home', {}, 'indietro');
   }
 });
 
@@ -27523,13 +27685,16 @@ function vDiario() {
       ['Carboidrati', t.c, f.carb, ' g'],
       ['Grassi', t.f, f.gras, ' g']
     ];
-    h += '<div class="card">' + righe.map(function (r, i) {
-      var perc = Math.min(100, r[1] / r[2] * 100);
-      return '<div class="volrow"' + (i === righe.length - 1 ? ' style="margin-bottom:0"' : '') + '>' +
-        '<div class="volhead"><span>' + r[0] + '</span>' +
-        '<span class="dim"><b>' + r[1] + r[3] + '</b> / ' + r[2] + r[3] + '</span></div>' +
-        '<div class="bar"><i class="' + (r[1] >= r[2] * 0.9 ? 'good' : '') +
-        '" style="width:' + perc + '%"></i></div></div>';
+    /* v24 (7/10): quattro anelli invece di quattro barre, si leggono a colpo d'occhio */
+    h += '<div class="card anelli">' + righe.map(function (r) {
+      var perc = r[2] ? Math.min(100, r[1] / r[2] * 100) : 0;
+      var C = 2 * Math.PI * 26;
+      return '<div class="anello' + (r[1] >= r[2] * 0.9 ? ' good' : '') + '">' +
+        '<svg viewBox="0 0 64 64" aria-hidden="true"><circle class="fondo" cx="32" cy="32" r="26"/>' +
+        '<circle class="pieno" cx="32" cy="32" r="26" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' +
+        (C * (1 - perc / 100)).toFixed(1) + '"/></svg>' +
+        '<b>' + r[1] + '<small>' + r[3].trim() + '</small></b>' +
+        '<span>' + r[0] + '</span><em>di ' + r[2] + r[3] + '</em></div>';
     }).join('') + '</div>';
     if (t.fi) h += '<div class="dim" style="margin:-6px 0 12px">Fibra di oggi: <b>' + t.fi +
       ' g</b>.' + (!ha('ibs') ? '</div>' : ' Con l\'IBS conta pi&ugrave; il tipo che la quantit&agrave;: la fibra solubile ' +
