@@ -1552,6 +1552,9 @@ details.manca summary { cursor: pointer; color: var(--text-dim); font-size: 13.5
 .sport-nuovo { display: flex; gap: 8px; align-items: end; margin: 8px 0; }
 .sport-nuovo select { flex: 1; min-width: 0; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 10px; font: inherit; }
 .sport-nuovo .np-l { flex: 0 0 120px; }
+
+/* v28 (R27): nella riga dell agenda il testo prende lo spazio, «togli» va a destra */
+.luogo > span { flex: 1; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -29807,7 +29810,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw15ob1f';
+var BUILD = 'vmw169zqh';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -29839,6 +29842,7 @@ var S = {
   controlloBlocco: null, // v21: '<giro>-<blocco>' dell'ultimo controllo dei dolori
   idLocale: null,   // v28: codice di questo profilo, solo sul telefono (idUtente)
   luoghi: null,     // v28: { attivo, riga, elenco: [{ id, nome, attrezzi }] } dove ci si allena (questionario.js)
+  agenda: [],       // v28 (R27): [{ id, d: 'AAAA-MM-GG', h: 'HH:MM' | '', t, fatto }] eventi e promemoria
   prefEsercizi: {}, // v28: { 'panca-piana': { bil: 20 }, 'barchetta': { min: 1 } } bilanciere scelto, tempo in minuti
   vista: 'home', ctx: {}
 };
@@ -29926,7 +29930,7 @@ function datiDaSalvare() {
 }
 var CHIAVI_DATI = ['profilo', 'log', 'diario', 'ultimo', 'prodotti', 'exExtra',
                    'preferiti', 'cibiMiei', 'dispensa', 'questionario', 'dolori', 'scambi', 'riprese',
-                   'checklist', 'menu', 'prefEsercizi', 'luoghi'];// v27: mancavano, il ripristino li perdeva (controlloBlocco è una stringa, a parte)
+                   'checklist', 'menu', 'prefEsercizi', 'luoghi', 'agenda'];// v27: mancavano, il ripristino li perdeva (controlloBlocco è una stringa, a parte)
 
 /* Se il salvataggio fallisce l'utente DEVE saperlo: prima la cosa passava in
    silenzio e ci si accorgeva dei dati persi solo alla riapertura. */
@@ -30197,6 +30201,7 @@ function render() {
   collegaLuoghi();
   collegaDueSchede();
   collegaAltriSport();
+  collegaCapisci();
   collegaDolori();
   collegaPassaggi();
   collegaCrono();
@@ -33974,9 +33979,15 @@ function piattoDa(v) {
   return { v: v, pers: pers, righe: righe, porzCotta: porz + (amido ? amido.g * (amido.resa - 1) : 0), amido: amido };
 }
 function piattiTrovati(q) {
-  var reQ = new RegExp('(^|[^a-z0-9à-ÿ])' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\/*__JS__*/')), out = [];
+  /* tutte le parole, dall'inizio della parola: «pasta al sugo» trova «Pasta … sugo …» */
+  var parole = q.toLowerCase().split(/\s+/).filter(function (w) { return w.length >= 3 && ['con', 'del', 'della', 'alla', 'allo', 'dei'].indexOf(w) < 0; });
+  if (!parole.length) return [];
+  var re = parole.map(function (w) { return new RegExp('(^|[^a-z0-9à-ÿ])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\/*__JS__*/')); }), out = [];
   PASTI.gruppi.forEach(function (gr, gi) {
-    gr.voci.forEach(function (v, vi) { if (v.kcal > 0 && reQ.test(v.nome.toLowerCase())) out.push({ v: v, id: gi + ':' + vi }); });
+    gr.voci.forEach(function (v, vi) {
+      var n = v.nome.toLowerCase();
+      if (v.kcal > 0 && re.every(function (r) { return r.test(n); })) out.push({ v: v, id: gi + ':' + vi });
+    });
   });
   return out;
 }
@@ -34276,7 +34287,7 @@ function vDiario() {
 
   /* v18: «I cibi» (il semaforo FODMAP), «Sintomi» e «Andamento» esistono solo
      per chi ha dichiarato disturbi di stomaco o intestino */
-  var schede = [['cibo', 'Cibo']];
+  var schede = [['cibo', 'Cibo'], ['agenda', 'Agenda']];   /* v28 (R27): l'agenda */
   if (semaforoAttivo()) schede.push(['cibi', 'I cibi']);
   if (haStomaco() || ha('vescica')) schede.push(['sintomi', 'Sintomi'], ['storico', 'Andamento']);
   if (!schede.some(function (s) { return s[0] === sez; })) sez = 'cibo';
@@ -34284,7 +34295,7 @@ function vDiario() {
   var h = testata('Diario', schede.length > 2 ? 'cibo, acqua e sintomi di oggi' : 'cibo e acqua di oggi') + '<main>';
 
   if (schede.length > 1) {
-    h += '<div class="seg tabs ' + ['', '', 'due', 'tre', 'quattro'][schede.length] + '">' +
+    h += '<div class="seg tabs ' + ['', '', 'due', 'tre', 'quattro', 'cinque'][schede.length] + '">' +
       schede.map(function (s) {
         return '<button data-sez="' + s[0] + '" class="' + (sez === s[0] ? 'on' : '') + '">' + s[1] + '</button>';
       }).join('') + '</div>';
@@ -34294,11 +34305,13 @@ function vDiario() {
      anche prima che il profilo sia compilato. Per questo sta prima del
      controllo su fabbisogno(). */
   if (sez === 'cibi') return h + vCibi() + '</main>';
+  if (sez === 'agenda') return h + vAgenda() + '</main>';
 
   if (!f) return h + invitoProfilo('Gli obiettivi giornalieri del diario si calcolano sui tuoi ' +
     'dati.') + '</main>';
 
   if (sez === 'cibo') {
+    h += riquadroCapisci();   /* v28 (R27) */
     /* riepilogo della giornata */
     var righe = [
       ['Calorie', t.k, f.kcal, ''],
@@ -35014,7 +35027,7 @@ function collegaDiario() {
     b.onclick = function () {
       S.ctx.alim = undefined; S.ctx.modifica = undefined;
       S.ctx.piatto = S.ctx.piatto === b.dataset.piatto ? undefined : b.dataset.piatto;
-      S.ctx.pesato = undefined; S.ctx.qta = 100; render();
+      S.ctx.pesato = undefined; S.ctx.qta = S.ctx.qtaPiatto || 100; S.ctx.qtaPiatto = undefined; render();
     };
   });
   document.querySelectorAll('[data-pesato]').forEach(function (b) {
@@ -35171,6 +35184,147 @@ function salvaOraBagno(g) {
     allineaVecchiCampi(g);
     save(); toast('Giornata salvata'); S.ctx.sez = 'storico'; S.ctx.bagnoAperto = null; render();
   };
+}
+
+/* ---------- v28 (R27): «scrivi cosa è successo» ----------
+   Regole locali, niente AI e niente rete: dalla frase si capisce se è un
+   allenamento («panca 4x8 60 kg»), un sintomo («bruciore dopo cena»), un impegno
+   («domani dentista alle 10») o un cibo («pranzo 100 g di pasta al sugo»). L'app
+   mostra cosa ha capito e non salva niente finché non confermi. */
+var GIORNI_NOMI = ['domenica', 'lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato'];
+var MESI_NOMI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+var PAROLE_SINTOMI = [['bruciore', 'bruciore'], ['reflusso', 'reflusso'], ['acidità', 'acidità'], ['acidita', 'acidità'], ['gonfi', 'gonfiore'],
+  ['mal di pancia', 'mal di pancia'], ['dolore alla pancia', 'mal di pancia'], ['crampi', 'crampi'], ['nausea', 'nausea'], ['diarrea', 'diarrea'],
+  ['stitic', 'stitichezza'], ['aria nella pancia', 'gonfiore'], ['rigurgit', 'rigurgito']];
+var PAROLE_AGENDA = /chiamat|telefonat|appuntament|ricordami|promemoria|dentista|medico|dottor|visita|riunion|compleann|esame|colloquio|partita|allenamento di|cena con|pranzo con/;
+function dataIso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function senzaAccenti(t) { return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+function capisciData(t) {
+  var o = new Date(), m;
+  if (/\bdopodomani\b/.test(t)) { o.setDate(o.getDate() + 2); return dataIso(o); }
+  if (/\bdomani\b/.test(t)) { o.setDate(o.getDate() + 1); return dataIso(o); }
+  if (/\boggi\b|stasera|stamattina|stanotte/.test(t)) return dataIso(o);
+  for (var i = 0; i < 7; i++) if (new RegExp('\\b' + GIORNI_NOMI[i]).test(t)) {
+    var avanti = (i - o.getDay() + 7) % 7 || 7; o.setDate(o.getDate() + avanti); return dataIso(o);
+  }
+  if ((m = t.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/))) {
+    var a = m[3] ? (+m[3] < 100 ? 2000 + +m[3] : +m[3]) : o.getFullYear();
+    return a + '-' + String(+m[2]).padStart(2, '0') + '-' + String(+m[1]).padStart(2, '0');
+  }
+  for (var k = 0; k < 12; k++) if ((m = t.match(new RegExp('\\b(\\d{1,2})\\s+' + MESI_NOMI[k])))) {
+    var anno = o.getFullYear(); if (k < o.getMonth()) anno++;
+    return anno + '-' + String(k + 1).padStart(2, '0') + '-' + String(+m[1]).padStart(2, '0');
+  }
+  return null;
+}
+function capisciOra(t) {
+  var m = t.match(/\b(?:alle|ore|verso le|per le|dalle)\s+(\d{1,2})(?:[:.,](\d{2}))?\b/) || t.match(/\b(\d{1,2})[:.](\d{2})\b/);
+  if (!m || +m[1] > 23) return '';
+  return String(+m[1]).padStart(2, '0') + ':' + (m[2] || '00');
+}
+function capisciTesto(frase) {
+  var t = senzaAccenti(frase).trim();
+  if (!t) return null;
+  /* 1. allenamento: «panca 4x8 60 kg» */
+  var sr = t.match(/(\d+)\s*[x×*]\s*(\d+)/);
+  if (sr && typeof giorniCorrenti === 'function') {
+    var cand = [];
+    giorniCorrenti().forEach(function (g) { eserciziDi(g).forEach(function (e) { var x = esercizioDi(e.ex); if (x && cand.indexOf(e.ex) < 0) cand.push(e.ex); }); });
+    var parole = t.replace(/\d.*$/, '').split(/\s+/).filter(function (w) { return w.length >= 3; });
+    var ex = cand.filter(function (id) { var n = senzaAccenti(esercizioDi(id).nome); return parole.length && parole.every(function (w) { return n.indexOf(w) >= 0; }); })[0];
+    if (ex) {
+      var kg = t.match(/(\d+(?:[.,]\d+)?)\s*kg/);
+      return { tipo: 'serie', ex: ex, serie: +sr[1], rip: +sr[2], kg: kg ? parseFloat(kg[1].replace(',', '.')) : undefined,
+        testo: esercizioDi(ex).nome + ': ' + sr[1] + ' serie da ' + sr[2] + (kg ? ' con ' + kg[1] + ' kg' : '') + ', registrate oggi' };
+    }
+  }
+  /* 2. sintomo */
+  var s = PAROLE_SINTOMI.filter(function (p) { return t.indexOf(p[0]) >= 0; })[0];
+  if (s && !PAROLE_AGENDA.test(t)) return { tipo: 'sintomo', nome: s[1], ora: capisciOra(t) || oraAdesso(), frase: frase.trim(),
+    testo: 'Sintomo: ' + s[1] + ', alle ' + (capisciOra(t) || oraAdesso()) + ', nelle note di oggi' };
+  /* 3. impegno o promemoria */
+  var d = capisciData(t), h = capisciOra(t);
+  var cibo = /\b(\d+)\s*(g|gr|grammi)\b|colazione|pranzo|cena|spuntino|merenda|mangiat|bevut/.test(t) && !/ con /.test(t);
+  if (PAROLE_AGENDA.test(t) || ((d || h) && !cibo)) {
+    d = d || dataIso(new Date());
+    var testo = frase.trim().replace(/^(ricordami di|ricordami|promemoria:?)\s*/i, '');
+    return { tipo: 'agenda', d: d, h: h, t: testo.charAt(0).toUpperCase() + testo.slice(1),
+      testo: 'In agenda: «' + testo + '», ' + (d === dataIso(new Date()) ? 'oggi' : dataIt(d)) + (h ? ' alle ' + h : '') };
+  }
+  /* 4. cibo: i grammi e il piatto o l'alimento che combacia (R24) */
+  var gr = t.match(/(\d+)\s*(?:g|gr|grammi)\b/), q = gr ? +gr[1] : 100;
+  var nome = t.replace(/\b(\d+)\s*(?:g|gr|grammi)\b/, ' ').replace(/\b(a |per )?(colazione|pranzo|cena|spuntino|merenda)\b|\bho mangiato\b|\bho bevuto\b|\bdi\b|\bun[ao]?\b|\bdel(la|lo)?\b/g, ' ').replace(/\s+/g, ' ').trim();
+  if (nome.length >= 3) {
+    /* un alimento che comincia con quelle parole vince («yogurt greco»); poi un piatto con tutte le parole; poi un alimento simile */
+    var pulisci = function (x) { return senzaAccenti(x).replace(/\b(di|del|della|dello|un|una|uno)\b/g, ' ').replace(/\s+/g, ' ').trim(); };
+    var al = catalogo(), esatto = al.filter(function (v) { return pulisci(v.a.n).indexOf(nome) === 0; })[0];
+    var np = !esatto ? piattiTrovati(nome).length : 0;
+    /* i piatti li sceglie la persona fra quelli che combaciano (deciso con Luigi il 3/11) */
+    if (np) return { tipo: 'piatti', nome: nome, q: q, testo: 'Cibo: «' + nome + '», ' + q + ' g. ' + (np === 1 ? 'C’è un piatto che combacia: toccalo' : 'Scegli il piatto fra i ' + np + ' che combaciano') + ', poi di’ che cosa hai pesato.' };
+    var a = esatto || al.filter(function (v) { return senzaAccenti(v.a.n).indexOf(nome) >= 0 || nome.indexOf(senzaAccenti(v.a.n).split(' ')[0]) >= 0; })[0];
+    if (a) return { tipo: 'alimento', chiave: a.chiave, q: q, testo: 'Cibo: ' + a.a.n + ', ' + q + ' g' };
+  }
+  return { tipo: 'niente', testo: 'Non ho capito. Prova così: «pranzo 100 g di pasta al sugo», «domani dentista alle 10», «bruciore dopo cena», «panca 4x8 60 kg».' };
+}
+function eseguiCapito(c) {
+  var d = oggi();
+  if (c.tipo === 'serie') {
+    if (!S.log[d]) S.log[d] = { giorno: null, serie: {} };
+    var arr = S.log[d].serie[c.ex] = S.log[d].serie[c.ex] || [];
+    for (var i = 0; i < c.serie; i++) arr.push({ kg: c.kg, rip: c.rip, fatto: true, t: Date.now() });
+    save(); toast('Registrate ' + c.serie + ' serie'); return;
+  }
+  if (c.tipo === 'sintomo') {
+    var g = giornoDiario(d);
+    g.note = (g.note ? g.note + '\n' : '') + c.ora + ' ' + c.frase;
+    save(); toast('Messo nelle note di oggi'); return;
+  }
+  if (c.tipo === 'agenda') {
+    S.agenda = (S.agenda || []).concat([{ id: Date.now().toString(36), d: c.d, h: c.h, t: c.t, fatto: false }]);
+    save(); toast('Messo in agenda'); return;
+  }
+  S.ctx.qcibo = '';
+  if (c.tipo === 'piatti') { S.ctx.qcibo = c.nome; S.ctx.qtaPiatto = c.q; }
+  if (c.tipo === 'alimento') { S.ctx.alim = c.chiave; S.ctx.qta = c.q; }
+}
+function riquadroCapisci() {
+  var c = S.ctx.capito;
+  return '<div class="card capisci"><label class="field"><span>Scrivi cosa è successo</span>' +
+    '<input type="text" id="capisci-t" placeholder="es. pranzo 100 g di pasta al sugo" value="' + esc(S.ctx.capisciT || '') + '"></label>' +
+    '<p class="dim">Puoi anche dettare: tocca il microfono della tastiera del telefono (senza rete può non funzionare).</p>' +
+    (c ? '<div class="hint">' + esc(c.testo) + '</div>' + (c.tipo !== 'niente' ?
+      '<div class="pan-azioni"><button class="primary" id="capisci-ok">Va bene</button><button class="ghost" id="capisci-no">Annulla</button></div>' : '') :
+      '<button class="ghost" id="capisci-vai">Capisci</button>') + '</div>';
+}
+function vAgenda() {
+  var oggiD = oggi(), el = (S.agenda || []).slice().sort(function (a, b) { return (a.d + a.h).localeCompare(b.d + b.h); });
+  var future = el.filter(function (x) { return x.d >= oggiD; }), passate = el.filter(function (x) { return x.d < oggiD; }).slice(-10);
+  var riga = function (x) {
+    return '<div class="luogo' + (x.fatto ? ' fatto' : '') + '"><button class="pill' + (x.fatto ? ' on' : '') + '" data-ag-fatto="' + esc(x.id) + '" aria-label="fatto">✓</button>' +
+      '<span><b>' + (x.d === oggiD ? 'Oggi' : esc(dataIt(x.d))) + (x.h ? ' · ' + esc(x.h) : '') + '</b><br>' + esc(x.t) + '</span>' +
+      '<button class="link" data-ag-via="' + esc(x.id) + '">togli</button></div>';
+  };
+  var h = '<div class="card">' + (future.length ? future.map(riga).join('') : '<p class="dim">Niente in programma. Scrivilo nel campo del Cibo, per esempio «domani dentista alle 10».</p>') + '</div>';
+  if (passate.length) h += '<details><summary>Passati</summary><div class="card">' + passate.map(riga).join('') + '</div></details>';
+  return h + '<p class="dim">Gli avvisi sul telefono arriveranno con le notifiche; per ora l\u2019agenda si guarda qui.</p>';
+}
+function collegaCapisci() {
+  var inp = document.getElementById('capisci-t');
+  if (!inp) return;
+  var vai = function () { S.ctx.capisciT = inp.value; S.ctx.capito = capisciTesto(inp.value); render(); };
+  inp.onkeydown = function (e) { if (e.key === 'Enter') vai(); };
+  inp.oninput = function () { S.ctx.capisciT = inp.value; if (S.ctx.capito) { S.ctx.capito = null; } };
+  var b = document.getElementById('capisci-vai'); if (b) b.onclick = vai;
+  var ok = document.getElementById('capisci-ok');
+  if (ok) ok.onclick = function () { eseguiCapito(S.ctx.capito); S.ctx.capito = null; S.ctx.capisciT = ''; render(); };
+  var no = document.getElementById('capisci-no');
+  if (no) no.onclick = function () { S.ctx.capito = null; render(); };
+  document.querySelectorAll('[data-ag-fatto]').forEach(function (x) {
+    x.onclick = function () { S.agenda.forEach(function (a) { if (a.id === x.dataset.agFatto) a.fatto = !a.fatto; }); save(); render(); };
+  });
+  document.querySelectorAll('[data-ag-via]').forEach(function (x) {
+    x.onclick = function () { S.agenda = S.agenda.filter(function (a) { return a.id !== x.dataset.agVia; }); save(); render(); };
+  });
 }
 
 
