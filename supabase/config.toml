@@ -1,0 +1,7 @@
+# Letto dall'integrazione GitHub di Supabase: le migrazioni in migrations/ si
+# applicano a ogni push su main. La conferma via email in produzione va spenta
+# a mano (Authentication -> Providers -> Email): questo file vale per i rami di prova.
+project_id = "palestra"
+
+[auth.email]
+enable_confirmations = false
