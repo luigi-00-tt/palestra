@@ -28671,7 +28671,7 @@ var CLOUD = {
   chiave: 'sb_publishable_sxruj-i-eWNYrRhZDeANlg_EP1W2KiR', // pubblica per costruzione: proteggono le regole RLS
   // shortcut: email finte (Supabase vuole un'email, questo dominio non riceve posta), quindi niente recupero password; con utenti veri chiedere un'email
   dominio: 'utenti.luigi-00-tt.github.io',
-  registrazioneAperta: false, // R1: si apre quando l'informativa ha il contatto del titolare (LEGALE_CONTATTO)
+  registrazioneAperta: true, // aperta il 3/11/2026 su richiesta di Luigi; R1: LEGALE_CONTATTO da scrivere prima della pubblicazione
   versioneConsenso: '2026-11-03'
 };
 var KEY_SESSIONE = 'palestra_sessione';
@@ -28933,7 +28933,7 @@ function collegaAccount() {
    con i pagamenti vanno aggiunti e fatti rivedere da un legale. */
 var LEGALE_AGGIORNATO = '3 novembre 2026';
 var LEGALE_TITOLARE = 'Luigi, che sviluppa e gestisce l\'app come persona privata';
-var LEGALE_CONTATTO = ''; // R1: da indicare prima di aprire la registrazione (CLOUD.registrazioneAperta)
+var LEGALE_CONTATTO = ''; // R1: da indicare prima della pubblicazione (la registrazione è già aperta, in prova)
 
 var LEGALE = {
   privacy: {
@@ -28942,7 +28942,7 @@ var LEGALE = {
       return '<p class="dim">Aggiornata al ' + LEGALE_AGGIORNATO + '.</p>' +
         '<h2>Chi tratta i dati</h2><p>Titolare del trattamento: ' + esc(LEGALE_TITOLARE) +
         (LEGALE_CONTATTO ? '. Contatto: <b>' + esc(LEGALE_CONTATTO) + '</b>.' :
-          '. <b>Il contatto non è ancora indicato</b>: finché manca, la registrazione degli account resta chiusa.') + '</p>' +
+          '. <b>Il contatto non è ancora indicato</b>: l\'app è in prova fra pochi amici e verrà aggiunto prima della pubblicazione.') + '</p>' +
 
         '<h2>Senza account: i dati restano sul telefono</h2>' +
         '<p>Tutto quello che inserisci (questionario, allenamenti, diario, dispensa) viene salvato ' +
@@ -29063,7 +29063,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw0kkuuv';
+var BUILD = 'vmw0qpk9k';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
