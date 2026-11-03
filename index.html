@@ -1487,6 +1487,22 @@ button { font-family: inherit; }
 .pallini s { text-decoration: none; opacity: .25; }
 .studio-tit { font-style: italic; font-size: 13px; margin: 6px 0 4px; }
 .studio p { font-size: 13.5px; line-height: 1.45; }
+
+/* v26: menù della settimana */
+.menu .m-giorno { padding: 6px 15px 10px; }
+.menu .m-tipo { border: 1.5px solid var(--accent); }
+.m-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 9px 0 6px; border-bottom: 1px solid var(--line-soft); }
+.m-testa b { font-size: 15px; font-weight: 650; }
+.m-testa span { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.m-riga { display: grid; grid-template-columns: 74px 1fr auto; gap: 4px 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+.m-riga:last-of-type { border-bottom: 0; }
+.m-pasto { font-size: 12px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; }
+.m-piatto { cursor: pointer; min-width: 0; }
+.m-piatto b { display: block; font-size: 14px; font-weight: 600; line-height: 1.3; }
+.m-piatto span { display: block; font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.m-cambia { font-size: 12px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--text-dim); }
+.m-nota { margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; }
+.menu > p.dim { font-size: 13px; line-height: 1.5; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -7748,6 +7764,7 @@ function generaScheda(q) {
     });
     perche.cardio = { settimana: cardio.settimana, inSeduta: inSeduta, fuori: Math.max(0, cardio.settimana - inSeduta), fonti: cardio.fonti };
   }
+  tempoInPiu(blocchi, q, fam, minuti, perche);
 
   spiega(q, fam, str, target, esclusi, perche, blocchi);
 
@@ -7769,6 +7786,42 @@ function generaScheda(q) {
   };
   verificaSicurezza(scheda, q, esclusi);
   return scheda;
+}
+
+/* v26: sedute da 1 h ¾ fino a 3 ore. Il volume NON cresce col tempo: oltre il
+   tetto dell'intervallo i guadagni salgono sempre meno (Pelland 2025, A01), e il
+   tetto è già quello delle regole. Il tempo in più va ai recuperi pieni dei
+   multiarticolari (recuperi oltre 60-90 secondi un po' meglio per l'ipertrofia,
+   soprattutto sui multiarticolari: A11) e, dove serve, al cardio, che
+   cardioPer() ha già messo. Vale solo sopra i 90 minuti: le schede di prima non
+   cambiano. */
+function tempoInPiu(blocchi, q, fam, minuti, perche) {
+  if (minuti <= 90) return;
+  var usati = 0;
+  blocchi.forEach(function (b) {
+    b.giorni.forEach(function (g) {
+      g.esercizi.forEach(function (e) {
+        var c = CATALOGO[e.ex];
+        if (!c || !c.m || e.fisso || e.opzionale) return;
+        var m = String(e.rec || '').match(/^(\d+)-(\d+) min$/);
+        if (!m) return;
+        var prima = e.rec;
+        e.rec = m[2] + ' min';
+        if (durataGiorno(g, true) > minuti) e.rec = prima;
+      });
+      usati = Math.max(usati, durataGiorno(g, true));
+    });
+  });
+  var resto = minuti - usati;
+  if (resto < 15) return;
+  var dove = fam === 'sport' ? 'Il tempo che resta è per il campo: allenamenti di squadra, tecnica e partite contano più di altre serie in sala.' :
+    perche.cardio ? 'Il resto va al cardio, già messo in fondo alle sedute, e a una camminata o allo stretching se ti va.' :
+    'Il resto puoi usarlo per un riscaldamento con calma, lo stretching alla fine o una camminata: niente di obbligatorio.';
+  perche.voci.push(['Perché la seduta dura meno di ' + (minuti % 60 ? Math.floor(minuti / 60) + ' h ' + (minuti % 60) + ' min' : minuti / 60 + (minuti === 60 ? ' ora' : ' ore')),
+    'La seduta più lunga della scheda dura circa <b>' + usati + ' minuti</b>, pause comprese. Le serie sono già al massimo ' +
+    'dell\'intervallo utile per ogni muscolo: aggiungerne altre dà guadagni sempre più piccoli e più fatica da recuperare.' + fonti(['A01']) +
+    ' Una parte del tempo in più è andata ai recuperi degli esercizi multiarticolari, portati al massimo: recuperi più lunghi ' +
+    'aiutano un po\' la crescita, soprattutto su questi esercizi.' + fonti(['A11']) + ' ' + dove]);
 }
 
 function etichettaObiettivo(o) {
@@ -27950,7 +28003,8 @@ function vQuestionario() {
     h += '<div class="field"><span>Quanti giorni a settimana puoi andare in palestra</span>' +
       pillole('giorni', [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], d.giorni, true) + '</div>';
     h += '<div class="field"><span>Quanto tempo hai per ogni seduta, riscaldamento compreso</span>' +
-      pillole('minuti', [[30, '30 min'], [45, '45 min'], [60, '1 ora'], [75, '1 ora e ¼'], [90, '1 ora e ½']], d.minuti, true) + '</div>';
+      pillole('minuti', [[30, '30 min'], [45, '45 min'], [60, '1 ora'], [75, '1 ora e ¼'], [90, '1 ora e ½'],
+        [105, '1 ora e ¾'], [120, '2 ore'], [150, '2 ore e ½'], [180, '3 ore']], d.minuti, true) + '</div>';
     h += '</div>';
   } else if (p === 1) {
     h += '<p>Che cosa c\'è nella tua palestra? Togli quello che manca: la scheda userà solo ' +
@@ -28242,19 +28296,23 @@ function sottotitoloNutrizione() {
    mandorle, mandorla e farina di mandorle. */
 var ESCLUDI_INGREDIENTI = {
   lattosio: /\b(latte(?! di (soia|mandorl|riso|avena|cocco))|yogurt|ricotta|mozzarell|panna|burro(?! di arachid)|stracchino|crescenza|besciamella|mascarpone|fiordilatte|burrata|scamorza|provola|kefir|caciotta|gelato|formaggio fresco|robiola|fontina|asiago|gorgonzola|brie)/,
-  latticini: /\b(latte(?! di (soia|mandorl|riso|avena|cocco))|yogurt|ricotta|mozzarell|panna|burro(?! di arachid)|stracchino|crescenza|besciamella|mascarpone|fiordilatte|burrata|scamorza|provola|kefir|caciotta|gelato|formagg|robiola|fontina|asiago|gorgonzola|brie|parmigian|grana|pecorino|emmental|feta|skyr|quark|siero)/,
-  glutine: /\b(pasta(?! di (riso|mais|legumi|lenticch|ceci|piselli))|spaghett|penne|fusilli|rigatoni|lasagn|tagliatell|tortellin|raviol|gnocch|pane|panino|farina(?! di (riso|mais|ceci|castagn|mandorl|cocco))|orzo|farro|cous ?cous|bulgur|seitan|pangrattato|grissin|cracker|fette biscottate|biscott|cereali|miel pops|pizza|piadina|frisell|tarall|segale|avena|crusca|malto)/,
+  latticini: /\b(latte(?! di (soia|mandorl|riso|avena|cocco))|yogurt|ricotta|mozzarell|panna|burro(?! d(i |')?arachid)|stracchin|crescenza|besciamella|mascarpone|fiordilatte|burrata|scamorza|provola|kefir|caciotta|gelato|formagg|robiola|fontina|asiago|gorgonzola|brie|parmigian|grana|pecorino|emmental|feta|skyr|quark|siero|caciocavall|provolon|taleggi|caprin|tomin|montasio|squacquer|bufala\b|groviera|gruy|ementa)/,
+  /* v26: aggiunte semola, grano (non saraceno), frumento, kamut, spelta, semolino e la pasta fresca dei libri */
+  glutine: /\b(pasta(?! di (riso|mais|legumi|lenticch|ceci|piselli|nocciol|mandorl|pistacch|olive|zucchero|arachid|sesamo|acciug))|spaghett|penne|fusilli|rigatoni|lasagn|tagliatell|tortellin|raviol|gnocch|pane|panino|farina(?! di (riso|mais|ceci|castagn|mandorl|cocco))|orzo|farro|cous ?cous|bulgur|seitan|pangrattato|grissin|cracker|fette biscottate|biscott|cereali|miel pops|pizza|piadina|frisell|tarall|segale|avena|crusca|malto|semol(a|ino|e)\b|grano(?! saraceno)|frumento|kamut|spelt|bigol|tagliolin|pappardell|maccheron|bucatin|linguin|vermicell|capellin|trenett|orecchiett|cannellon|tortell|agnolott|anolin|cappellett|pici\b|trofie|fregola|savoiard|pan ?di ?spagna|sfoglia|brioche|croissant)/,
   nichel: /\b(pomodor|cacao|cioccolat|fagiol|ceci|lenticch|piselli|soia|mandorl|noci|nocciol|arachid|spinaci|asparag|funghi|kiwi|pere|avena|integral|crusca|cozze|vongole|gamber|tonno|salmone|sgombro|aringh|lievito)/,
   fruttosio: /\b(miele|mel[ae]\b|mele|pera|pere|mango|anguria|sciroppo|agave|succo di frutta|fichi|ciliegi|marmellat|confettur|uvetta|datteri)/,
   'frutta-secca': /\b(mandorl|noci|nocciol|pistacch|anacard|pinoli|macadamia|pecan|frutta secca|frutta a guscio|gianduia|nutella|marzapane)/,
   arachidi: /\b(arachid|noccioline)/,
-  crostacei: /\b(gamber|scamp|mazzancoll|aragost|astice|granchi|granseola|canocchi|crostace)/,
-  pesce: /\b(pesce|salmone|tonno|merluzz|branzin|orata|sgombr|alici|acciugh|sardin|trota|baccal|nasello|platessa|spigola|spada|cernia|sogliola|dentice|ricciola|halibut|stoccafisso|bottarga|colatura|surimi)/,
+  crostacei: /\b(gamber|scamp|mazzancoll|aragost|astice|granc|granseola|canocchi|cicale di mare|crostace)/,
+  /* v26: le radici non prendevano «sarde», «acciuga», gli agoni, il garum e i pesci di lago dei libri */
+  pesce: /\b(pesce|pesci\b|salmone|tonn|merluzz|branzin|orata|sgombr|alic[ei]|acciug|sarde\b|sardin|sardell|sardon|agon[ei]\b|trota|baccal|nasello|platessa|spigola|spada|cernia|sogliola|dentice|ricciola|halibut|stoccafisso|bottarga|colatura|surimi|garum|salsa di pesce|colla di pesce|trigli|anguill|rombo|palombo|luccio|carpa\b|tinca|persico|coregon|lavarell|missoltin|storion|caviale|cefal|muggine|sugarell|aguglia|bianchetti|gianchetti|ricci di mare|uova di lompo|pescatrice|coda di rospo|razza\b|zerri|boga\b|occhiat|sarago|mormora|scorfan|gallinella|merlan|aringh|spratt|sgombro)/,
   uova: /\b(uov[ao]|tuorl|album|frittat|maionese|carbonara)/,
   soia: /\b(soia|tofu|edamame|tempeh|miso)/,
   sesamo: /\b(sesamo|tahin)/,
-  carne: /\b(pollo|tacchino|manzo|vitell|maiale|prosciutto|speck|bresaola|salame|salsicc|pancetta|guanciale|mortadella|agnello|coniglio|carne|macinat|hamburger|bistecc|filetto|lonza|arista|cotolett|polpett|rag[uù]|bacon|wurstel|brodo di (carne|pollo)|fegat|anatra|cinghiale|lardo|coppa|capocollo|trippa|porchetta|straccett|spezzatino|arrosticin)/,
-  molluschi: /\b(cozze|vongole|calamar|seppi|polpo|totan|moscardin|capesante|ostric|lumach)/,
+  /* v26: frattaglie, cacciagione e pollame dei ricettari (Artusi, Talismano), e il «brodo» semplice,
+     che nei libri è di carne salvo dire il contrario */
+  carne: /\b(pollo|polli\b|pollastr|tacchin|manzo|vitell|maiale|prosciutt|speck|bresaola|salam[ae]\b|salamin|salamell|salsicc|pancett|guancial|mortadell|agnell|coniglio|carne|carni\b|macinat|hamburger|bistecc|filetto|lonza|arista|cotolett|polpett|rag[uù]\b|bacon|wurstel|brodo(?! (vegetal|vegan|dashi|di (verdur|zucca|funghi|pesce|legumi|ceci|dado vegetale|miso|alghe|cavol|borlott|fagiol|patat|pomodor|porr|cipoll|asparag|pisell|carciof|finocch|sedan|ortagg|erbe|riso|crostace|gamber|vongol|cozz|mare)))|fegat|anatra|cinghial|lardo|lardell|strutto|coppa|capocollo|trippa|porchetta|straccett|spezzatino|arrosticin|coratell|animell|cervell|rognon|frattagli|midollo|ossobuc|stinco|cotechin|zampon|gallin[ae]\b|cappone|piccion|quaglia|fagian|lepre|\boca\b|faraona|capretto|abbacchio|capriol|cervo|camoscio|selvaggina|beccacc|tordi\b|allodol|pernic|rane\b|polmone|sanguinacc|nervetti|testina|piedini|zampett|lingua\b|cosciotto|lombat|lombo|costat|costolett|fesa|girello|scamone|noce di vitello|petto d'|petti di|cosce d|ali di pollo|ragout|bollito misto|lesso di|sugo di carne|estratto di carne|dado di carne)/,
+  molluschi: /\b(cozze|vongole|calamar|seppi|polp[oi]\b|polipo|polipett|totan|moscardin|capesante|ostric|lumach|canestrell|cannolicchi|fasolar|tellin|datteri di mare|garusol|murici|bombett)/,
   miele: /\bmiele/,
   maiale: /\b(maiale|prosciutto|speck|salame|salsicc|pancetta|guanciale|mortadella|lardo|coppa|capocollo|porchetta|strutto|cotechino|zampone|bacon|wurstel)/,
   alcol: /\b(vino|marsala|birra|liquore|rum|cognac|brandy|grappa|limoncello)/
@@ -28265,7 +28323,9 @@ var ESCLUDI_INGREDIENTI = {
 var ESENTI = {
   glutine: /senza glutine|certificat/,
   lattosio: /delattosat|senza lattosio|di soia|vegetal|di riso|di mandorl|di cocco|di avena/,
-  latticini: /di soia|vegetal|di riso|di mandorl|di cocco|di avena/
+  latticini: /di soia|vegetal|di riso|di mandorl|di cocco|di avena/,
+  /* v26: «macinato» è carne, ma non la farina macinata a pietra né il caffè o il pepe */
+  carne: /^(farina|caff|zucchero|pepe|mandorl|nocciol|pistacch|noci|semi)\b[^,]*macinat/
 };
 
 function testoIngredienti(v) {
@@ -28358,6 +28418,256 @@ function testoAggiustaKcal() {
 }
 
 
+/* ===== menu.js ===== */
+/* ============================================================
+   MENÙ DELLA SETTIMANA (versione 26)
+
+   Sette giorni di pasti scelti fra le ricette dell'app (le nostre, il Gambero
+   Rosso, Artusi, il Cucchiaio d'argento, il Talismano) per chi ha compilato il
+   questionario. È un'INDICAZIONE per orientarsi su cosa e quanto mangiare, non
+   una dieta prescritta: la schermata lo dice in testa.
+
+   Come sceglie, pasto per pasto:
+   1. filtri duri: allergie, intolleranze, dieta e «non mangio» (ricettaAdatta,
+      questionario.js); con colon irritabile o gonfiore niente ricette «da
+      evitare» del semaforo FODMAP;
+   2. la porzione si scala (da ½ a 1 e ½) per avvicinare le kcal del pasto, che
+      vengono dal fabbisogno e dal riparto dei pasti (giornataGenerica);
+   3. punteggio = distanza dalle kcal del pasto + proteine mancanti (pesano di
+      più) + scatenanti del reflusso per chi ce l'ha (di più a cena: nessun cibo
+      è vietato, ma un pasto grasso e tardivo è quello che dà più sintomi);
+   4. varietà: nessun piatto due volte nella settimana, la stessa portata non
+      due giorni di fila nello stesso pasto, e un po' di caso con un seme fisso
+      per settimana, così il menù non cambia a ogni apertura.
+   «Cambia» su un piatto prende il successivo della classifica di quel pasto.
+   La giornata tipo è il giorno che si avvicina di più ai numeri del giorno.
+   ============================================================ */
+
+var MENU_GIORNI = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+var MENU_GRUPPO = { Colazione: 0, Spuntino: 1, Pranzo: 2, Merenda: 3, Cena: 4 };
+/* portate che non sono un pasto da sole */
+var MENU_MAI = { basi: 1, salse: 1, conserve: 1, bevande: 1, 'ricette-base': 1, 'salse-e-sughi': 1 };
+/* a pranzo e a cena: un piatto che regge il pasto */
+var MENU_PRINCIPALI = { primi: 1, secondi: 1, 'piatti-unici': 1, brodi: 1, pane: 1 };
+
+function menuRng(seme) {
+  var a = seme >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    var t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function menuPortata(v) {
+  return typeof portataDi === 'function' ? portataDi(v) : (v.por || '');
+}
+function menuSem(v) {
+  return v.sem || (typeof semRicetta === 'function' ? semRicetta(v) : 'giallo');
+}
+function menuScatenantiReflusso(v) {
+  return (v.refl || []).length;
+}
+function menuChiave(v) { return v.s || v.nome; }
+
+/* Le ricette che possono stare in un pasto: un elenco per gruppo, calcolato una volta. */
+function menuCandidati(gi, nome, cond) {
+  var g = PASTI.gruppi[gi];
+  if (!g) return [];
+  var out = [];
+  g.voci.forEach(function (v, vi) {
+    if (!(v.kcal > 0)) return;
+    if (typeof ricettaAdatta === 'function' && !ricettaAdatta(v)) return;
+    var por = menuPortata(v);
+    if (MENU_MAI[por]) return;
+    if ((nome === 'Pranzo' || nome === 'Cena') && !MENU_PRINCIPALI[por]) return;
+    if (cond.intestino && menuSem(v) === 'rosso') return;
+    out.push({ v: v, vi: vi, por: por });
+  });
+  return out;
+}
+
+function menuFattore(kT, kcal, snack) {
+  var f = Math.round(kT / kcal * 4) / 4;
+  return Math.max(snack ? 0.5 : 0.75, Math.min(1.5, f));
+}
+
+/* quanto è lontano un piatto dal pasto ideale: più basso è meglio */
+function menuDistanza(c, kT, pT, nome, cond) {
+  var v = c.v, fatt = menuFattore(kT, v.kcal, nome !== 'Pranzo' && nome !== 'Cena' && nome !== 'Colazione');
+  var k = v.kcal * fatt, p = (v.prot || 0) * fatt;
+  var d = Math.abs(k - kT) / kT + 1.2 * Math.max(0, pT - p) / Math.max(pT, 1);
+  if (cond.intestino) d += menuSem(v) === 'giallo' ? 0.1 : 0;
+  if (cond.reflusso) d += menuScatenantiReflusso(v) * (nome === 'Cena' ? 0.08 : 0.04);
+  return { d: d, fatt: fatt, k: Math.round(k), p: Math.round(p) };
+}
+
+/* f: fabbisogno ({kcal, prot}); pasti: 2-5; seme: intero; cambi: { 'giorno-pasto': n }; cond: {intestino, reflusso} */
+function generaMenu(f, pasti, seme, cambi, cond) {
+  cond = cond || {};
+  cambi = cambi || {};
+  var riparto = RIPARTO_PASTI[Math.max(2, Math.min(5, pasti || 4))];
+  var quote = riparto.reduce(function (a, x) { return a + x[2]; }, 0);
+  var slot = riparto.map(function (x) {
+    return { nome: x[0], gi: MENU_GRUPPO[x[0]], kT: f.kcal * x[1], pT: f.prot * x[2] / quote };
+  });
+  var cand = {};
+  slot.forEach(function (s) { if (!cand[s.nome]) cand[s.nome] = menuCandidati(s.gi, s.nome, cond); });
+  var rnd = menuRng(seme), usati = {}, ieri = {}, giorni = [], classifiche = [];
+  var voce = function (s, m) {
+    return { nome: s.nome, gi: s.gi, vi: m.c.vi, v: m.c.v, fatt: m.fatt, k: m.k, p: m.p, kT: Math.round(s.kT), pT: Math.round(s.pT) };
+  };
+  /* prima passata: la settimana di base */
+  for (var d = 0; d < 7; d++) {
+    var pastiGiorno = [];
+    classifiche.push([]);
+    slot.forEach(function (s, si) {
+      var classifica = function (pool) {
+        return pool.map(function (c) {
+          var m = menuDistanza(c, s.kT, s.pT, s.nome, cond);
+          if (ieri[s.nome] && ieri[s.nome] === c.por) m.d += 0.08;
+          m.ord = m.d + rnd() * 0.12;
+          m.c = c;
+          return m;
+        }).sort(function (a, b) { return a.ord - b.ord; }).slice(0, 40);
+      };
+      var lista = classifica(cand[s.nome].filter(function (c) { return !usati[menuChiave(c.v)]; }));
+      var ripetuto = false;
+      /* con risposte molto restrittive le ricette adatte finiscono: meglio ripetere un piatto che lasciare il pasto vuoto */
+      if (!lista.length && cand[s.nome].length) { lista = classifica(cand[s.nome]); ripetuto = true; }
+      classifiche[d].push(lista);
+      if (!lista.length) { pastiGiorno.push({ nome: s.nome, kT: Math.round(s.kT), pT: Math.round(s.pT), vuoto: true }); return; }
+      usati[menuChiave(lista[0].c.v)] = 1;
+      ieri[s.nome] = lista[0].c.por;
+      var x = voce(s, lista[0]);
+      x.ripetuto = ripetuto;
+      pastiGiorno.push(x);
+    });
+    giorni.push({ nome: MENU_GIORNI[d], pasti: pastiGiorno });
+  }
+  /* seconda passata: «cambia» tocca solo quel pasto, con un piatto che non è altrove nella settimana */
+  Object.keys(cambi).sort().forEach(function (k) {
+    var ds = k.split('-'), d = +ds[0], si = +ds[1], n = cambi[k] | 0;
+    var lista = classifiche[d] && classifiche[d][si];
+    if (!n || !lista || !lista.length) return;
+    var libere = lista.filter(function (m) { return !usati[menuChiave(m.c.v)]; });
+    if (!libere.length) return;
+    var m = libere[(n - 1) % libere.length], vecchio = giorni[d].pasti[si];
+    if (vecchio.v) delete usati[menuChiave(vecchio.v)];
+    usati[menuChiave(m.c.v)] = 1;
+    giorni[d].pasti[si] = voce(slot[si], m);
+  });
+  giorni.forEach(function (g) {
+    g.k = g.pasti.reduce(function (a, x) { return a + (x.k || 0); }, 0);
+    g.p = g.pasti.reduce(function (a, x) { return a + (x.p || 0); }, 0);
+  });
+  var tipo = 0, migliore = Infinity;
+  giorni.forEach(function (g, i) {
+    var e = Math.abs(g.k - f.kcal) / f.kcal + Math.max(0, f.prot - g.p) / f.prot;
+    if (e < migliore) { migliore = e; tipo = i; }
+  });
+  return { giorni: giorni, tipo: tipo };
+}
+
+function testoPorzione(f) {
+  return { 0.5: 'mezza porzione', 0.75: '¾ di porzione', 1: '1 porzione', 1.25: '1 porzione e ¼', 1.5: '1 porzione e ½' }[f] || f + ' porzioni';
+}
+
+/* ---------- lo stato: seme della settimana e «cambia» ---------- */
+
+function settimanaIso(d) {
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var g = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - g);
+  var inizio = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return d.getUTCFullYear() * 100 + Math.ceil(((d - inizio) / 86400000 + 1) / 7);
+}
+
+function statoMenu() {
+  var sett = settimanaIso(new Date());
+  if (!S.menu || S.menu.sett !== sett) S.menu = { sett: sett, giro: 0, cambi: {} };
+  return S.menu;
+}
+
+function condizioniMenu() {
+  return { intestino: ha('ibs') || ha('gonfiore'), reflusso: ha('reflusso') || ha('gastrite') };
+}
+
+function menuDiOggi(f) {
+  var m = statoMenu();
+  return generaMenu(f, S.questionario && S.questionario.pasti, m.sett * 31 + m.giro * 7919, m.cambi, condizioniMenu());
+}
+
+/* ---------- la vista ---------- */
+
+function rigaPastoMenu(x, d, si) {
+  if (x.vuoto) return '<div class="m-riga"><div class="m-pasto">' + esc(x.nome) + '</div><div class="m-piatto dim">' +
+    'Nessuna ricetta adatta: componi il pasto con circa ' + x.kT + ' kcal e ' + x.pT + ' g di proteine.</div></div>';
+  return '<div class="m-riga"><div class="m-pasto">' + esc(x.nome) + '</div>' +
+    '<div class="m-piatto" data-ricetta="' + x.gi + '-' + x.vi + '"><b>' + esc(x.v.nome) + '</b>' +
+    '<span>' + testoPorzione(x.fatt) + ' · ' + x.k + ' kcal · ' + x.p + ' g prot.' +
+    (x.ripetuto ? ' · già in un altro giorno: per le tue risposte le ricette adatte sono poche' : '') + '</span></div>' +
+    '<button class="m-cambia" data-cambia="' + d + '-' + si + '" aria-label="Cambia piatto">Cambia</button></div>';
+}
+
+function cartaGiornoMenu(g, d, f, tipo) {
+  var h = '<section class="card m-giorno' + (tipo ? ' m-tipo' : '') + '"><div class="m-testa"><b>' +
+    (tipo ? 'Giornata tipo · ' : '') + esc(g.nome) + '</b><span>' + g.k + ' kcal · ' + g.p + ' g prot.</span></div>';
+  g.pasti.forEach(function (x, si) { h += rigaPastoMenu(x, d, si); });
+  var manca = f.kcal - g.k, mancaP = f.prot - g.p;
+  if (manca > f.kcal * 0.1 || mancaP > f.prot * 0.1) {
+    h += '<p class="dim m-nota">Per arrivare ai tuoi numeri mancano circa ' +
+      (manca > 0 ? manca + ' kcal' : '') + (manca > 0 && mancaP > 0 ? ' e ' : '') + (mancaP > 0 ? mancaP + ' g di proteine' : '') +
+      ': aggiungi pane, frutta o verdura' + (mancaP > 0 ? ', e uno yogurt, un uovo o un po\' di legumi' : '') + '.</p>';
+  }
+  return h + '</section>';
+}
+
+function vMenu(f) {
+  var h = testata('Il tuo menù della settimana', 'Un\'indicazione, non una dieta') + '<main class="menu">';
+  h += '<button class="torna" data-nsez="pasti">‹ Torna alle ricette</button>';
+  if (suMisura()) return h + '<p>Il tuo piano è già scritto su misura nelle ricette e nei numeri.</p></main>';
+  var M = menuDiOggi(f);
+  h += '<div class="note"><b>Serve a orientarti.</b> È un esempio di come potresti mangiare in una settimana con i tuoi numeri (' +
+    f.kcal + ' kcal e ' + f.prot + ' g di proteine al giorno), scelto fra le ricette dell\'app: non è una dieta da seguire alla lettera. ' +
+    'Scambia i piatti, sposta i giorni, ripeti quelli che ti piacciono: conta il totale della giornata.</div>';
+  var c = condizioniMenu(), dette = [];
+  if (c.intestino) dette.push('niente ricette «da evitare» per l\'intestino');
+  if (c.reflusso) dette.push('i piatti più grassi o con più scatenanti del reflusso vanno in fondo, soprattutto a cena');
+  if (dette.length) h += '<p class="dim m-nota">Per le tue risposte: ' + dette.join('; ') + '. Conta come reagisci tu: segnalalo nel Diario. ' +
+    'Per un piano alimentare vero, con i tuoi disturbi, serve il gastroenterologo o un dietista.</p>';
+  h += cartaGiornoMenu(M.giorni[M.tipo], M.tipo, f, true);
+  h += '<h2>La settimana</h2>';
+  M.giorni.forEach(function (g, d) { if (d !== M.tipo) h += cartaGiornoMenu(g, d, f, false); });
+  h += '<button class="ghost" data-menu-nuovo="1">Proponimi un\'altra settimana</button>';
+  h += avvisoFiltroAlimentare();
+  h += '<p class="dim">Le kcal dei piatti vengono dagli ingredienti (tabelle CREA) e sono stime. La giornata tipo è quella più vicina ai tuoi numeri.</p>';
+  return h + '</main>';
+}
+
+function collegaMenu() {
+  document.querySelectorAll('[data-cambia]').forEach(function (b) {
+    b.onclick = function (ev) {
+      ev.stopPropagation();
+      var m = statoMenu(), k = b.dataset.cambia;
+      m.cambi[k] = (m.cambi[k] || 0) + 1;
+      save(); render();
+    };
+  });
+  document.querySelectorAll('[data-menu-nuovo]').forEach(function (b) {
+    b.onclick = function () {
+      var m = statoMenu();
+      m.giro++; m.cambi = {};
+      save(); render(); window.scrollTo(0, 0);
+    };
+  });
+}
+
+if (false) module.exports = { generaMenu: generaMenu, menuCandidati: menuCandidati };
+
+
 /* ===== app.js ===== */
 /* ============================================================
    LOGICA APPLICAZIONE
@@ -28380,7 +28690,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw0goa7f';
+var BUILD = 'vmw0hz793';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -28487,7 +28797,8 @@ function datiDaSalvare() {
     scambi: S.scambi,
     riprese: S.riprese,
     controlloBlocco: S.controlloBlocco,
-    checklist: S.checklist // v24: le spunte di oggi della checklist prima della seduta
+    checklist: S.checklist, // v24: le spunte di oggi della checklist prima della seduta
+    menu: S.menu // v26: seme della settimana e piatti cambiati del menù
   };
 }
 var CHIAVI_DATI = ['profilo', 'log', 'diario', 'ultimo', 'prodotti', 'exExtra',
@@ -30760,6 +31071,7 @@ function vNutrizione() {
 
   /* v24: i numeri e le regole sono una vista a parte */
   if (f && sez === 'numeri') return vNumeri(f);
+  if (f && sez === 'menu' && !suMisura()) return vMenu(f);   /* v26 */
 
   var h = testata('Nutrizione', sottotitoloNutrizione()) + '<main>';
 
@@ -30880,6 +31192,7 @@ function vNutrizione() {
     });
 
     h += avvisoFiltroAlimentare();
+    if (!suMisura()) h += '<button class="ghost" data-nsez="menu">Il tuo menù della settimana</button>';
     h += '<button class="ghost" data-nsez="numeri">Vedi i tuoi numeri e le regole</button>';
 
   }
@@ -33359,6 +33672,7 @@ function collegaNutrizione() {
   document.querySelectorAll('[data-nsez]').forEach(function (b) {
     b.onclick = function () { S.ctx.nsez = b.dataset.nsez; render(); window.scrollTo(0, 0); };
   });
+  if (typeof collegaMenu === 'function') collegaMenu();   /* v26: «cambia» e «un'altra settimana» */
 
   /* ricerca: si ridisegna dopo una breve pausa, poi si rimette il cursore
      dov'era, altrimenti scrivere diventa impossibile */
