@@ -3481,12 +3481,6 @@ function libCerca(q, filtro, limite) {
   return out;
 }
 
-function libAttrezzi() {
-  var visti = {}, out = [];
-  LIB.forEach(function (r) { if (!visti[r[3]]) { visti[r[3]] = 1; out.push(r[3]); } });
-  return out.sort();
-}
-
 if (false) module.exports = { LIB: LIB, libCerca: libCerca };
 
 
@@ -7287,10 +7281,16 @@ function migliorePossibile(schema, q, fam) {
 
 /* ---------- volume ---------- */
 
+/* v27: l'unico calcolo dell'età in tutta l'app (anni compiuti, 30 se manca;
+   NaN se la data non è valida, così i controlli la scartano). */
 function etaDa(nascita) {
   if (!nascita) return 30;
-  return Math.floor((Date.now() - new Date(nascita + 'T00:00:00').getTime()) / 31557600000);
+  var n = new Date(nascita + 'T00:00:00'), o = new Date();
+  var a = o.getFullYear() - n.getFullYear(), m = o.getMonth() - n.getMonth();
+  if (m < 0 || (m === 0 && o.getDate() < n.getDate())) a--;
+  return a;
 }
+var ETA_MIN = 14, ETA_MAX = 100; // 14: età del consenso digitale in Italia (art. 2-quinquies Codice privacy)
 
 function targetVolume(q) {
   var fam = famiglia(q.obiettivo), liv = Math.max(0, Math.min(3, q.esperienza | 0));
@@ -9480,12 +9480,6 @@ var SEMAFORO_NOMI = {
   verde: 'Consigliata',
   giallo: 'Da testare',
   rosso: 'Da evitare'
-};
-
-var SEMAFORO_SPIEGA = {
-  verde: 'Niente FODMAP alti e niente che alimenti il reflusso.',
-  giallo: 'Si puo\' mangiare, ma con una correzione o in porzione contenuta.',
-  rosso: 'Con il tuo intestino e il tuo reflusso, questa e\' da lasciar perdere.'
 };
 
 /* --- il giudizio su un alimento singolo (Diario dei cibi) ----------------- */
@@ -28151,8 +28145,8 @@ function erroreQz() {
   var d = QZ.d;
   if (QZ.passo === 0) {
     if (!d.nascita) return 'Manca la data di nascita.';
-    var anni = (Date.now() - new Date(d.nascita + 'T00:00:00').getTime()) / 31557600000;
-    if (!(anni >= 14 && anni <= 90)) return 'La data di nascita non sembra giusta.';
+    var anni = etaDa(d.nascita);
+    if (!(anni >= ETA_MIN && anni <= ETA_MAX)) return 'La data di nascita non sembra giusta.';
     if (!d.sesso) return 'Scegli il sesso: serve alla formula delle calorie.';
     if (!(d.peso >= 35 && d.peso <= 250)) return 'Il peso deve stare fra 35 e 250 kg.';
     if (!(d.altezza >= 130 && d.altezza <= 220)) return 'L\'altezza deve stare fra 130 e 220 cm.';
@@ -28690,7 +28684,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw0hz793';
+var BUILD = 'vmw0j73lt';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -28802,7 +28796,8 @@ function datiDaSalvare() {
   };
 }
 var CHIAVI_DATI = ['profilo', 'log', 'diario', 'ultimo', 'prodotti', 'exExtra',
-                   'preferiti', 'cibiMiei', 'dispensa', 'questionario', 'dolori', 'scambi', 'riprese'];
+                   'preferiti', 'cibiMiei', 'dispensa', 'questionario', 'dolori', 'scambi', 'riprese',
+                   'checklist', 'menu']; // v27: mancavano, il ripristino li perdeva (controlloBlocco è una stringa, a parte)
 
 /* Se il salvataggio fallisce l'utente DEVE saperlo: prima la cosa passava in
    silenzio e ci si accorgeva dei dati persi solo alla riapertura. */
@@ -28892,12 +28887,7 @@ function eta() {
   var p = S.profilo;
   /* se manca la data di nascita si ricade su un valore sensato invece di
      lasciare l'intera schermata senza numeri */
-  if (!p.nascita) return p.eta || 26;
-  var n = new Date(p.nascita + 'T00:00:00'), o = new Date();
-  var a = o.getFullYear() - n.getFullYear();
-  var m = o.getMonth() - n.getMonth();
-  if (m < 0 || (m === 0 && o.getDate() < n.getDate())) a--;
-  return a;
+  return p.nascita ? etaDa(p.nascita) : (p.eta || 26);
 }
 
 /* Il profilo e' completo quando l'utente ha confermato i suoi dati. Nella copia
@@ -30377,39 +30367,9 @@ function vEsercizio() {
   return h;
 }
 
-/* ---------- salvare un file, nei due posti in cui gira l'app ----------
-   Sul sito https il modo normale funziona: un link con `download` e un blob.
-   Dentro un Artifact NO: la piattaforma non concede il permesso di scaricare e
-   il click non fa niente, in silenzio — l'app direbbe «salvato» senza aver
-   salvato. La' esiste pero' un canale apposta, la capability `downloads`, che
-   mostra all'utente una conferma e poi salva davvero.
-   Si prova quello e si ricade sull'altro: lo stesso file funziona in entrambi. */
-var SCARICO = { canale: null };   // 'claude' | 'browser' | 'no'
-
-function preparaScarico() {
-  if (typeof window.claude === 'object' && window.claude && typeof window.claude.use === 'function') {
-    window.claude.use('downloads').then(function (d) {
-      SCARICO.canale = d ? 'claude' : 'browser';
-      SCARICO.api = d || null;
-      if (S.vista === 'impostazioni') render();
-    }).catch(function () { SCARICO.canale = 'browser'; });
-  } else {
-    SCARICO.canale = 'browser';
-  }
-}
-
-/* `esito(ok, messaggio)` viene chiamata una volta sola. */
+/* ---------- salvare un file: un link con `download` e un blob ----------
+   `esito(ok, messaggio)` viene chiamata una volta sola. */
 function salvaFile(nome, testo, esito) {
-  if (SCARICO.canale === 'claude' && SCARICO.api) {
-    SCARICO.api.save({ filename: nome, data: testo }).then(function () {
-      esito(true, 'Salvato: ' + nome);
-    }).catch(function (err) {
-      var c = (err && err.code) || 'unavailable';
-      esito(false, c === 'declined' ? 'Salvataggio annullato.'
-        : 'Non sono riuscito a salvare il file qui: usa il copia e incolla.');
-    });
-    return;
-  }
   try {
     var blob = new Blob([testo], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
@@ -30451,7 +30411,6 @@ function applicaBackup(testo) {
   /* backup fatti prima della v9 non hanno i prodotti: meglio un archivio vuoto
      che lasciare `undefined` in giro */
   if (!S.prodotti) S.prodotti = {};
-  if (!S.extra) S.extra = {};
   /* stessa ragione per i campi nati con la v11 e con la v12 */
   if (!S.preferiti) S.preferiti = {};
   if (!S.cibiMiei) S.cibiMiei = {};
@@ -30784,12 +30743,6 @@ function passaCon(c, f) {
   if (f.proteica && !c.proteica) return false;
   if (f.veloce && !c.veloce) return false;
   return true;
-}
-
-function passaFiltri(v) {
-  /* v18: prima di tutto, le ricette che la persona non può o non vuole mangiare */
-  if (!ricettaAdatta(v)) return false;
-  return passaCon(caratteriRicetta(v), filtriAttivi());
 }
 
 /* v24: i conteggi sono della SCHEDA APERTA (Colazione, Pranzo...), non di tutta
@@ -34094,8 +34047,8 @@ function collegaImpostazioni() {
     if (!nascita) { toast('Manca la data di nascita'); return; }
     if (!(peso > 30 && peso < 250)) { toast('Il peso non sembra giusto'); return; }
     if (!(altezza > 120 && altezza < 230)) { toast('L\'altezza non sembra giusta'); return; }
-    var anni = new Date().getFullYear() - new Date(nascita + 'T00:00:00').getFullYear();
-    if (!(anni >= 14 && anni <= 100)) { toast('La data di nascita non sembra giusta'); return; }
+    var anni = etaDa(nascita);
+    if (!(anni >= ETA_MIN && anni <= ETA_MAX)) { toast('La data di nascita non sembra giusta'); return; }
     S.profilo.nascita = nascita;
     S.profilo.peso = peso;
     S.profilo.altezza = altezza;
@@ -34238,11 +34191,6 @@ render();
    cosi' non li butta per fare spazio. Da PWA installata il permesso arriva da
    solo, senza domande all'utente. Se non si puo', l'app funziona uguale. */
 chiediPersistenza(function () { if (S.vista === 'impostazioni') render(); });
-
-/* Si guarda subito da che parte passera' il salvataggio del file di backup:
-   la capability degli Artifact risponde con calma, e quando l'utente arriva
-   sul pulsante la risposta c'e' gia'. */
-preparaScarico();
 
 /* Un salvataggio che fallisce non deve piu' passare inosservato: si prova a
    scrivere subito, cosi' l'avviso compare all'avvio e non dopo un'ora di

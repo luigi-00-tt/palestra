@@ -1,7 +1,7 @@
 /* Service worker: cache-first sull'app, che e' un file solo.
    Il nome della cache cambia a ogni build, quindi una versione nuova
    sostituisce sempre la precedente invece di restare in coda. */
-var CACHE = 'palestra-vmw0hz793';
+var CACHE = 'palestra-vmw0j73lt';
 /* Le animazioni degli esercizi fuori scheda arrivano dal CDN e stanno in una
    cache SENZA versione: scaricate una volta, restano anche dopo le build
    successive. Sarebbe un peccato rifarle scaricare a ogni pubblicazione. */
@@ -26,33 +26,24 @@ self.addEventListener('activate', function (e) {
   }).then(function () { return self.clients.claim(); }));
 });
 
+/* cache-first in una cache permanente: una volta preso, il file resta */
+function daCachePermanente(e, nome) {
+  e.respondWith(caches.open(nome).then(function (c) {
+    return c.match(e.request).then(function (hit) {
+      return hit || fetch(e.request).then(function (r) {
+        if (r && r.ok) c.put(e.request, r.clone()).catch(function () {});
+        return r;
+      });
+    });
+  }));
+}
+
 self.addEventListener('fetch', function (e) {
   var u = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
-  /* Animazioni della libreria: cache-first, e una volta prese restano. */
-  if (e.request.url.indexOf(CDN) === 0) {
-    e.respondWith(caches.open(CACHE_LIB).then(function (c) {
-      return c.match(e.request).then(function (hit) {
-        return hit || fetch(e.request).then(function (r) {
-          if (r && r.ok) c.put(e.request, r.clone()).catch(function () {});
-          return r;
-        });
-      });
-    }));
-    return;
-  }
-  /* Foto dei piatti: cache-first nella cache permanente. */
-  if (u.origin === location.origin && u.pathname.indexOf('/foto/') >= 0) {
-    e.respondWith(caches.open(CACHE_FOTO).then(function (c) {
-      return c.match(e.request).then(function (hit) {
-        return hit || fetch(e.request).then(function (r) {
-          if (r && r.ok) c.put(e.request, r.clone()).catch(function () {});
-          return r;
-        });
-      });
-    }));
-    return;
-  }
+  /* animazioni della libreria (CDN) e foto dei piatti */
+  if (e.request.url.indexOf(CDN) === 0) return daCachePermanente(e, CACHE_LIB);
+  if (u.origin === location.origin && u.pathname.indexOf('/foto/') >= 0) return daCachePermanente(e, CACHE_FOTO);
   /* Le richieste a Open Food Facts non vanno mai in cache: devono passare
      direttamente in rete, e se non c'e' rete deve fallire subito perche'
      l'app possa proporre l'inserimento a mano. */
