@@ -6649,6 +6649,9 @@ var REGOLE = {
   priorita: { piu: 4, tetto: 20, fonti: ['A01', 'A39'] },
   /* sotto questa soglia l'effetto è minimo */
   minimoAssoluto: 4,
+  /* v28: oltre ~11 serie frazionarie per muscolo nella stessa seduta il
+     vantaggio non si vede più (Remmert 2025, A31): conta per la monofrequenza */
+  perSeduta: { serie: 11, fonti: ['A31'] },
 
   /* ripetizioni, RIR e recuperi per tipo di obiettivo e tipo di esercizio.
      multi = multiarticolare, iso = isolamento. I tre valori di `rip` sono
@@ -7170,8 +7173,49 @@ var TIPI_SEDUTA = {
   lower: { nome: 'Parte bassa', gruppi: ['Quadricipiti', 'Femorali', 'Glutei', 'Polpacci'] },
   push:  { nome: 'Spinta', gruppi: ['Petto', 'Spalle', 'Tricipiti'] },
   pull:  { nome: 'Tirata', gruppi: ['Dorso', 'Spalle', 'Bicipiti'] },
-  legs:  { nome: 'Gambe', gruppi: ['Quadricipiti', 'Femorali', 'Glutei', 'Polpacci'] }
+  legs:  { nome: 'Gambe', gruppi: ['Quadricipiti', 'Femorali', 'Glutei', 'Polpacci'] },
+  /* v28: monofrequenza, ogni muscolo una volta a settimana */
+  petto:   { nome: 'Petto', gruppi: ['Petto'] },
+  dorso:   { nome: 'Dorso', gruppi: ['Dorso'] },
+  spalle:  { nome: 'Spalle', gruppi: ['Spalle'] },
+  braccia: { nome: 'Braccia', gruppi: ['Bicipiti', 'Tricipiti'] },
+  pettotri: { nome: 'Petto e tricipiti', gruppi: ['Petto', 'Tricipiti'] },
+  dorsobi:  { nome: 'Dorso e bicipiti', gruppi: ['Dorso', 'Bicipiti'] },
+  gambespalle: { nome: 'Gambe e spalle', gruppi: ['Quadricipiti', 'Femorali', 'Glutei', 'Polpacci', 'Spalle'] },
+  spallebraccia: { nome: 'Spalle e braccia', gruppi: ['Spalle', 'Bicipiti', 'Tricipiti'] }
 };
+
+/* v28 (R12): la divisione la sceglie l'utente; «auto» (o nessuna risposta) è
+   quella di sempre, decisa dai giorni. La monofrequenza si adatta ai giorni. */
+var DIVISIONI = {
+  full: { nome: 'Full body', tipi: ['full'] },
+  ul:   { nome: 'Parte alta / parte bassa', tipi: ['upper', 'lower'] },
+  ppl:  { nome: 'Spinta / tirata / gambe', tipi: ['push', 'pull', 'legs'] },
+  mono: { nome: 'Monofrequenza', perGiorni: { 2: ['upper', 'lower'], 3: ['pettotri', 'dorsobi', 'gambespalle'],
+          4: ['petto', 'dorso', 'legs', 'spallebraccia'], 5: ['petto', 'dorso', 'legs', 'spalle', 'braccia'] } }
+};
+/* La divisione scelta non sta nei giorni (alta/bassa in 3 o 5, spinta/tirata/gambe
+   in 2, 4 o 5)? Con `ruota` diverso da 'no' le sedute girano in sequenza. */
+function divisioneScelta(g, q) {
+  var d = q && DIVISIONI[q.divisione];
+  if (!d) return null;
+  var ridotti = 0;
+  if (d.perGiorni) {
+    if (g > 5) { ridotti = g - 5; g = 5; }
+    return { tipi: d.perGiorni[g], nome: d.nome + ' ' + g + '×', ridotti: ridotti };
+  }
+  var T = d.tipi, tipi = [];
+  if (g % T.length === 0 || q.ruota === 'no') {
+    for (var i = 0; i < g; i++) tipi.push(T[i % T.length]);
+    var manca = gruppiMancanti(tipi);
+    return { tipi: tipi, nome: d.nome + ' ' + g + '×', fissa: g % T.length !== 0, mancano: manca };
+  }
+  /* a rotazione: il ciclo è più lungo (o più corto) della settimana */
+  return { tipi: T.slice(), nome: d.nome + ' a rotazione (' + g + ' sedute a settimana)', ciclo: T.length / g };
+}
+function gruppiMancanti(tipi) {
+  return GRUPPI.filter(function (gr) { return !tipi.some(function (t) { return TIPI_SEDUTA[t].gruppi.indexOf(gr) >= 0; }); });
+}
 
 /* Giorni disponibili → sequenza di sedute. Con volume equiparato la
    frequenza cambia poco l'ipertrofia (Schoenfeld 2019, Pelland 2025): la
@@ -7183,11 +7227,16 @@ function struttura(giorni, esperienza, q) {
   if (q && famiglia(q.obiettivo) === 'sport') {
     var gm = Math.min(g, REGOLE.sport.giorniMax[stagioneDi(q)]);
     var tipi = []; for (var i = 0; i < gm; i++) tipi.push('full');
+    var sc = divisioneScelta(gm, q);
+    if (sc) { sc.ridotti = (sc.ridotti || 0) + (g > gm ? g - gm : 0); sc.tetto = g > gm ? 'sport' : ''; return sc; }
     return { tipi: tipi, nome: 'Full body ' + gm + '×', ridotti: g > gm ? g - gm : 0 };
   }
   /* chi comincia da zero: oltre 4 sedute di pesi non guadagna nulla, i
      giorni in più diventano cardio o riposo */
+  var g0 = g;
   if (esperienza === 0 && g > 4) g = 4;
+  var scelta = divisioneScelta(g, q);
+  if (scelta) { scelta.ridotti = (scelta.ridotti || 0) + (g0 - g); scelta.tetto = g0 > g ? 'principiante' : ''; return scelta; }
   if (g <= 3) return { tipi: g === 2 ? ['full', 'full'] : ['full', 'full', 'full'], nome: 'Full body ' + g + '×' };
   if (g === 4) return { tipi: ['upper', 'lower', 'upper', 'lower'], nome: 'Parte alta / parte bassa 4×' };
   if (g === 5) return { tipi: ['upper', 'lower', 'push', 'pull', 'legs'], nome: 'Alta / bassa + spinta / tirata / gambe' };
@@ -7499,7 +7548,8 @@ function costruisciGiorno(tipo, quota, q, fam, blocco, esclusi, perche, occorren
     if ((fam === 'forza' || fam === 'sport') && g === 'Femorali') schemi = ['hinge', 'femorali-iso'];
     /* fino a 4 serie un esercizio solo; oltre, due esercizi di schemi diversi
        (Kassiano 2022: variare gli esercizi aiuta la crescita regionale) */
-    var parti = n <= REGOLE.seriePerEsercizio.max ? [n] : [Math.ceil(n / 2), Math.floor(n / 2)];
+    var cap = REGOLE.seriePerEsercizio.max + 1;
+    var parti = n <= REGOLE.seriePerEsercizio.max ? [n] : [Math.min(cap, Math.ceil(n / 2)), Math.min(cap, Math.floor(n / 2))];
     for (var i = 0; i < schemi.length && scelti.length < parti.length; i++) {
       var cand = candidati(schemi[i], q, fam, esclusi);
       if (!cand.length) continue;
@@ -7550,7 +7600,7 @@ function costruisciGiorno(tipo, quota, q, fam, blocco, esclusi, perche, occorren
 }
 
 /* Distribuisce il volume settimanale fra le sedute che contengono il gruppo. */
-function quote(tipi, target) {
+function quote(tipi, target, margine) {
   var freq = {};
   tipi.forEach(function (t) { TIPI_SEDUTA[t].gruppi.forEach(function (g) { freq[g] = (freq[g] || 0) + 1; }); });
   /* le serie dirette partono dal centro dell'intervallo, meno una stima
@@ -7569,7 +7619,7 @@ function quote(tipi, target) {
        poco più di un terzo, per non restare sotto il minimo */
     DA[g].forEach(function (s) { ind += dirette[s] * 0.35; });
     var d = Math.round(centro - ind);
-    dirette[g] = d >= 2 ? d : (ind >= target[g][0] ? 0 : 2);
+    dirette[g] = d >= 2 ? d : (ind >= target[g][0] + (margine || 0) ? 0 : 2);
   });
   /* almeno 2 serie per esercizio: con poco volume il gruppo si allena in
      meno sedute invece di spargere serie singole ovunque */
@@ -7756,13 +7806,26 @@ function generaScheda(q) {
   var fam = famiglia(q.obiettivo);
   var str = struttura(q.giorni, q.esperienza | 0, q);
   var tv = targetVolume(q), target = tv.target;
+  /* v28: tetto per seduta (A31) e, a rotazione, il volume di un giro del ciclo */
+  var volte = {}, tagliati = [];
+  str.tipi.forEach(function (t) { TIPI_SEDUTA[t].gruppi.forEach(function (g) { volte[g] = (volte[g] || 0) + 1 / (str.ciclo || 1); }); });
+  GRUPPI.forEach(function (g) {
+    var max = Math.floor(REGOLE.perSeduta.serie * (volte[g] || 0));
+    if (volte[g] && target[g][0] > max) tagliati.push(g);
+    if (volte[g]) target[g] = [Math.min(target[g][0], max), Math.min(target[g][1], max)];
+  });
+  var tCiclo = target;
+  if (str.ciclo) {
+    tCiclo = {};
+    GRUPPI.forEach(function (g) { tCiclo[g] = target[g].map(function (x) { return Math.ceil(x * str.ciclo); }); });
+  }
   var esclusi = flagEsclusi(q);
   var minuti = q.minuti || 60;
   var perche = { voci: [], mancanti: {}, avvisi: [] };
   var lettere = 'ABCDEF';
 
   var blocchi = [0, 1, 2].map(function (b) {
-    var qu = quote(str.tipi, target);
+    var qu = quote(str.tipi, tCiclo, DIVISIONI[q.divisione] ? 2 : 0);
     var giorni = str.tipi.map(function (t, i) {
       return {
         id: lettere[i], nome: 'Seduta ' + lettere[i] + ' — ' + TIPI_SEDUTA[t].nome.toLowerCase(),
@@ -7780,13 +7843,13 @@ function generaScheda(q) {
       });
     }
     aggiungiPerCondizione(giorni, str.tipi, q, esclusi);
-    aggiusta(giorni, target);
+    aggiusta(giorni, tCiclo);
     /* primo tentativo: dentro l'intervallo consigliato. Se non basta, si
        scende al minimo efficace (4 serie frazionarie, Pelland 2025) e lo si
        dice; solo se non basta nemmeno quello il tempo è dichiarato stretto. */
-    if (staNelTempo(giorni, target, minuti, tv.prio)) {
+    if (staNelTempo(giorni, tCiclo, minuti, tv.prio)) {
       var minimo = {};
-      GRUPPI.forEach(function (g) { minimo[g] = [REGOLE.minimoAssoluto, target[g][1]]; });
+      GRUPPI.forEach(function (g) { minimo[g] = [Math.min(REGOLE.minimoAssoluto, tCiclo[g][1]), tCiclo[g][1]]; });
       perche.volumeRidotto = true;
       if (staNelTempo(giorni, minimo, minuti, tv.prio)) perche.tempoStretto = true;
     }
@@ -7821,6 +7884,9 @@ function generaScheda(q) {
   }
   tempoInPiu(blocchi, q, fam, minuti, perche);
 
+  perche.tagliatiSeduta = tagliati;
+  if (str.fissa || (str.mancano && str.mancano.length)) perche.divisioneCorta = true;
+  if (DIVISIONI[q.divisione]) perche.divisione = q.divisione;
   spiega(q, fam, str, target, esclusi, perche, blocchi);
 
   var scheda = {
@@ -7828,6 +7894,8 @@ function generaScheda(q) {
     generata: true,
     nome: str.nome + ' — ' + (fam === 'sport' ? sportDi(q).nome + ' (' + { off: 'fuori stagione', pre: 'preparazione', 'in': 'in stagione' }[stagioneDi(q)] + ')' : etichettaObiettivo(q.obiettivo)),
     settimanePerBlocco: 6, settimanaScarico: 6,
+    /* v28: a rotazione, quante settimane dura un giro delle sedute (1 = una settimana) */
+    ciclo: str.ciclo || 1,
     target: target,
     blocchi: blocchi,
     perche: perche,
@@ -7916,6 +7984,7 @@ function coreGenerato(q, esclusi) {
 function fonti(arr) { return arr && arr.length ? ' <span class="fonte">[' + arr.join(', ') + ']</span>' : ''; }
 
 function spiega(q, fam, str, target, esclusi, perche, blocchi) {
+  var sedute = str.ciclo ? Math.round(str.tipi.length / str.ciclo) : str.tipi.length;
   var V = perche.voci;
   /* v20: i dolori per primi, perché vengono prima di tutto il resto */
   var dol = doloriAttivi(q);
@@ -7955,12 +8024,20 @@ function spiega(q, fam, str, target, esclusi, perche, blocchi) {
       '). Poi la forza sui movimenti fondamentali, lontano dal cedimento (2-3 ripetizioni di margine), perché la fatica non deve arrivare in campo. In fondo gli esercizi di prevenzione degli infortuni tipici del tuo sport. Se nello stesso giorno fai anche corsa o cardio lungo, meglio a qualche ora di distanza: nella stessa seduta la forza esplosiva cresce meno, a 3 ore o più no.' +
       fonti(R.fonti.concat(['G19', 'G30', 'G28']))]);
     V.push([st === 'in' ? 'In stagione' : st === 'pre' ? 'In preparazione' : 'Fuori stagione',
-      (st === 'in' ? 'Con le partite ogni settimana bastano ' + str.tipi.length + ' sedute brevi: volumi ridotti mantengono forza e potenza costruite prima. Mettile lontano dalla partita: niente salti né carichi pesanti nelle 48 ore prima.'
-                   : 'È il momento di costruire: ' + str.tipi.length + ' sedute a settimana con più volume. In stagione la scheda si alleggerisce da sola: basta cambiare la risposta dalle Impostazioni.') +
+      (st === 'in' ? 'Con le partite ogni settimana bastano ' + sedute + ' sedute brevi: volumi ridotti mantengono forza e potenza costruite prima. Mettile lontano dalla partita: niente salti né carichi pesanti nelle 48 ore prima.'
+                   : 'È il momento di costruire: ' + sedute + ' sedute a settimana con più volume. In stagione la scheda si alleggerisce da sola: basta cambiare la risposta dalle Impostazioni.') +
       (str.ridotti ? ' Gli altri ' + str.ridotti + ' giorni che avevi indicato sono per il tuo sport e per il recupero.' : '') + fonti(['G20', 'G21'])]);
     if (perche.senzaPotenza) V.push(['Niente salti', 'Con quello che hai indicato (dolori o condizioni) i salti restano fuori: la parte di potenza tornerà quando il problema sarà risolto.']);
   }
-  V.push(['Perché ' + str.nome.toLowerCase(),
+  if (DIVISIONI[q.divisione]) V.push(['Perché ' + str.nome.toLowerCase(),
+    'È la divisione che hai scelto tu. A parità di serie totali la frequenza cambia poco la crescita: conta il volume.' + fonti(['A01'].concat(REGOLE.struttura.fonti)) +
+    (str.ciclo ? ' Le sedute non stanno tutte in una settimana: si fanno in sequenza, una dopo l’altra, e il volume è calcolato perché in media ogni muscolo riceva le sue serie settimanali.' : '') +
+    (str.fissa ? ' Le sedute non stanno in una settimana e hai scelto di non farle girare: alcuni muscoli si allenano meno degli altri.' : '') +
+    (str.mancano && str.mancano.length ? ' Con questa divisione e questi giorni non si allenano: ' + str.mancano.join(', ').toLowerCase() + '.' : '') +
+    (q.divisione === 'mono' ? ' Ogni muscolo si allena una volta a settimana: oltre ~' + REGOLE.perSeduta.serie + ' serie per muscolo nella stessa seduta il vantaggio non si vede più, quindi il volume settimanale può restare più basso che dividendolo in due sedute.' + fonti(REGOLE.perSeduta.fonti) : '') +
+    (str.tetto === 'sport' ? ' Per chi fa sport le sedute di pesi restano al massimo ' + sedute + ': il lavoro vero è in campo.' + fonti(['G20', 'G21']) : '') +
+    (str.tetto === 'principiante' ? ' Chi comincia cresce già con 4-8 serie a settimana per muscolo: oltre 4 sedute non serve, gli altri giorni restano per il cardio o il riposo.' + fonti(['A01', 'D13']) : '')]);
+  else V.push(['Perché ' + str.nome.toLowerCase(),
     'Con ' + q.giorni + ' giorni a disposizione è la struttura che fa stare il volume settimanale nel tempo di ogni ' +
     'seduta. A parità di serie totali la frequenza cambia poco la crescita: conta il volume, e allenare ogni muscolo almeno due volte a settimana basta.' + fonti(['A01'].concat(REGOLE.struttura.fonti)) +
     ((q.esperienza | 0) === 0 && q.giorni > 4 ? ' Chi comincia cresce già con 4-8 serie a settimana per muscolo: in quattro sedute ci stanno con margine, e gli altri giorni restano per il cardio o il riposo.' + fonti(['A01', 'D13']) : '')]);
@@ -27933,6 +28010,7 @@ function bozzaQuestionario() {
       sport: v.sport || '', stagione: v.stagione || '',
       intolleranze: v.intolleranze || [], allergie: (al.allergie || []).slice(), dieta: v.dieta || 'onnivora',
       allergieTesto: al.allergieTesto || '', nessunaAllergia: !!al.nessunaAllergia,
+      divisione: v.divisione || 'auto', ruota: v.ruota || 'si',
       pasti: v.pasti || 4, integratori: v.integratori || [], nonMangia: v.nonMangia || ''
     }
   };
@@ -28102,6 +28180,21 @@ function pillole(nome, voci, scelti, singola) {
     }).join('') + '</div>';
 }
 
+/* v28 (R12): la divisione la sceglie l'utente. Se le sedute non stanno nei
+   giorni, chiede se farle girare in sequenza. */
+var QZ_DIVISIONI = [['auto', 'Decidi tu'], ['full', 'Full body'], ['ul', 'Parte alta / parte bassa'],
+  ['ppl', 'Spinta / tirata / gambe'], ['mono', 'Monofrequenza (un muscolo per seduta)']];
+function domandeDivisione(d) {
+  var h = '<div class="field"><span>Come vuoi dividere i muscoli nelle sedute</span>' + pillole('divisione', QZ_DIVISIONI, d.divisione, true) +
+    '<p class="dim">«Decidi tu»: la sceglie l’app in base ai giorni.' + (d.divisione === 'mono' ? ' In monofrequenza ogni muscolo si allena una volta a settimana: il volume settimanale resta più basso.' : '') + '</p></div>';
+  var D = DIVISIONI[d.divisione];
+  if (D && D.tipi && d.giorni % D.tipi.length) h += '<div class="field"><span>Le ' + D.tipi.length + ' sedute non stanno in ' + d.giorni +
+    ' giorni. Le facciamo girare in sequenza, una dopo l’altra?</span>' +
+    pillole('ruota', [['si', 'Sì, a rotazione'], ['no', 'No, settimana fissa']], d.ruota, true) +
+    (d.ruota === 'no' ? '<p class="dim">Con la settimana fissa alcuni muscoli si allenano meno degli altri.</p>' : '') + '</div>';
+  return h;
+}
+
 function vQuestionario() {
   var z = bozzaQuestionario(), d = z.d, p = z.passo;
   /* v28: dal profilo si cambia una voce sola (QZ.solo), poi si vede cosa cambia */
@@ -28124,6 +28217,7 @@ function vQuestionario() {
     h += '<div class="field"><span>Quanto tempo hai per ogni seduta, riscaldamento compreso</span>' +
       pillole('minuti', [[30, '30 min'], [45, '45 min'], [60, '1 ora'], [75, '1 ora e ¼'], [90, '1 ora e ½'],
         [105, '1 ora e ¾'], [120, '2 ore'], [150, '2 ore e ½'], [180, '3 ore']], d.minuti, true) + '</div>';
+    h += domandeDivisione(d);
     h += '<p class="dim">Peso e altezza li cambi nella scheda «Il tuo profilo» delle Impostazioni: contano solo per le calorie.</p></div>';
   } else if (p === 0) {
     h += '<p>Ti faccio qualche domanda, una sezione alla volta. Dalle risposte l\'app costruisce ' +
@@ -28143,6 +28237,7 @@ function vQuestionario() {
     h += '<div class="field"><span>Quanto tempo hai per ogni seduta, riscaldamento compreso</span>' +
       pillole('minuti', [[30, '30 min'], [45, '45 min'], [60, '1 ora'], [75, '1 ora e ¼'], [90, '1 ora e ½'],
         [105, '1 ora e ¾'], [120, '2 ore'], [150, '2 ore e ½'], [180, '3 ore']], d.minuti, true) + '</div>';
+    h += domandeDivisione(d);
     h += '</div>';
   } else if (p === 1) {
     h += '<p>Che cosa c\'è nella tua palestra? Togli quello che manca: la scheda userà solo ' +
@@ -29354,7 +29449,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw0yxxdv';
+var BUILD = 'vmw0zppr4';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
