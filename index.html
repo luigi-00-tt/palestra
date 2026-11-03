@@ -29705,7 +29705,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw12k602';
+var BUILD = 'vmw12tb2o';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -30255,6 +30255,16 @@ function collega() {
      cosi' dopo l'aggiunta si torna dove si era. */
   var ag = document.getElementById('agg-ex');
   if (ag) ag.onclick = function () { applica('libreria', { giorno: S.ctx.giorno, q: '', filtro: '' }); };
+  /* v28 (R20): addominali, stretching e cardio in coda alla seduta, ricordati per le prossime volte */
+  document.querySelectorAll('[data-aggiunta]').forEach(function (b) {
+    b.onclick = function () {
+      var q = S.questionario, id = S.ctx.giorno, k = b.dataset.aggiunta;
+      if (!q.aggiunte) q.aggiunte = {};
+      var a = q.aggiunte[id] = q.aggiunte[id] || {};
+      if (k === 'core') a.core = a.core === false; else a[k] = !a[k];
+      save(); render();
+    };
+  });
 
   var via = document.getElementById('ex-via');
   if (via) via.onclick = function () {
@@ -30535,7 +30545,28 @@ function serieDi(e) {
    vuole fare ogni volta. Sono `opzionale: true`, quindi restano fuori dalla
    durata stimata e dal conteggio del volume. */
 function eserciziDi(g) {
-  return g.esercizi.concat(SCHEDA.core ? SCHEDA.core.esercizi : []);
+  /* v28 (R20): gli addominali si possono spegnere seduta per seduta */
+  return g.esercizi.concat(SCHEDA.core && aggiunteDi(g.id).core !== false ? SCHEDA.core.esercizi : []);
+}
+
+/* ---------- v28 (R20): cosa aggiungere in coda a una seduta ----------
+   In S.questionario.aggiunte[idSeduta]: core (acceso di partenza, come prima),
+   stretching e cardio. Gli esercizi scelti da te stanno in R19 (propri). */
+var CARDIO_AGGIUNTO = 15;
+function aggiunteDi(id) { var q = S.questionario; return (q && q.aggiunte && q.aggiunte[id]) || {}; }
+function cardioDi(g) {
+  if (g.cardio) return g.cardio;
+  if (!aggiunteDi(g.id).cardio) return null;
+  return { minuti: CARDIO_AGGIUNTO, testo: CARDIO_AGGIUNTO + ' minuti a intensità moderata, dopo i pesi: riesci a parlare ma non a cantare.' };
+}
+function riquadroAggiunte(g) {
+  if (!S.questionario) return '';
+  var a = aggiunteDi(g.id), voci = [['core', 'Addominali', a.core !== false], ['stretching', 'Stretching', !!a.stretching],
+    ['cardio', 'Cardio ' + CARDIO_AGGIUNTO + ' min', !!a.cardio || !!g.cardio]];
+  return '<h2>In coda a questa seduta</h2><div class="qz-pills">' + voci.map(function (v) {
+    var fisso = v[0] === 'cardio' && g.cardio;   /* il cardio della scheda resta */
+    return '<button class="pill' + (v[2] ? ' on' : '') + '"' + (fisso ? ' disabled' : '') + ' data-aggiunta="' + v[0] + '">' + esc(v[1]) + '</button>';
+  }).join('') + '</div><p class="dim">Resta per le prossime volte, solo in questa seduta.</p>';
 }
 
 /* ---------- serie di avvicinamento ----------
@@ -31189,12 +31220,21 @@ function vGiorno() {
       (fatte ? '<div class="state">' + fatte + '/' + nS + '</div>' : '<div class="chev">›</div>') +
       '</div>';
   });
-  /* v18: il cardio delle schede generate per chi vuole dimagrire o per la salute */
-  if (g.cardio) {
-    h += '<div class="blocco-h"><b>Cardio</b><span>' + g.cardio.minuti + ' min</span></div>' +
+  /* v18: il cardio delle schede generate per chi vuole dimagrire o per la salute; v28: o aggiunto da te */
+  var cardio = cardioDi(g);
+  if (cardio) {
+    h += '<div class="blocco-h"><b>Cardio</b><span>' + cardio.minuti + ' min</span></div>' +
       '<div class="card cardio-card">' +
-      '<b>Dopo i pesi</b><span class="dim">' + esc(g.cardio.testo) + '</span></div>';
+      '<b>Dopo i pesi</b><span class="dim">' + esc(cardio.testo) + '</span></div>';
   }
+  /* v28 (R20): lo stretching in coda, con la pagina che c'è già */
+  var iStr = SCHEDA.extra.map(function (e) { return e.id; }).indexOf('stretching');
+  if (aggiunteDi(g.id).stretching && iStr >= 0) {
+    h += '<div class="blocco-h"><b>Stretching</b><span>a fine seduta</span></div>' +
+      '<div class="ex extra-riga" data-extra="' + iStr + '"><div class="t"><b>' + esc(SCHEDA.extra[iStr].titolo) + '</b><span>' +
+      esc(SCHEDA.extra[iStr].quando) + '</span></div><div class="chev">›</div></div>';
+  }
+  h += riquadroAggiunte(g);
   /* Quello che si fa in piu' rispetto alla scheda: prima non si poteva
      registrare, e quelle serie sparivano. */
   h += '<button class="agg" id="agg-ex">+ Aggiungi un esercizio a oggi</button>';
