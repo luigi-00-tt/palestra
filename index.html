@@ -26594,16 +26594,39 @@ function eanValido(cifre) {
   return ((10 - (somma % 10)) % 10) === cifre[n - 1];
 }
 
-/* Da una riga di pixel (chiaro/scuro gia' deciso) alle lunghezze delle
-   strisce, con il colore della prima. */
-function strisceDaRiga(scuro) {
-  var run = [], corrente = scuro[0], lung = 0;
-  for (var i = 0; i < scuro.length; i++) {
-    if (scuro[i] === corrente) { lung++; }
-    else { run.push(lung); corrente = scuro[i]; lung = 1; }
+/* v28 (R28): da una riga di luminanza alle lunghezze delle strisce, in pixel con
+   i decimali. La soglia e' LOCALE (media di una finestra attorno al punto), cosi'
+   reggono la luce che cala da un lato e il riflesso; un'isteresi evita che il
+   rumore nelle zone chiare spezzi la zona di rispetto in tante strisce; il bordo
+   si mette dove la luminanza attraversa la soglia, interpolando fra due pixel:
+   cosi' le barre di un pixel e mezzo diventano misurabili. */
+var EAN_REGOLE = { finestra: 14, isteresi: 0.08, minima: 3 };   /* v28: tarate con app/prove/test-barcode.js */
+function strisceDaRiga(lum, larg, globale) {
+  var w = Math.max(8, Math.round(larg / EAN_REGOLE.finestra)), i, a, b;
+  var pref = new Float64Array(larg + 1), media = new Float32Array(larg);
+  for (i = 0; i < larg; i++) pref[i + 1] = pref[i] + lum[i];
+  /* `globale` (un numero): una soglia sola per tutta la riga, la lettura di sempre */
+  for (i = 0; i < larg; i++) {
+    if (globale !== undefined) { media[i] = globale; continue; }
+    a = Math.max(0, i - w); b = Math.min(larg, i + w + 1); media[i] = (pref[b] - pref[a]) / (b - a);
   }
-  run.push(lung);
-  return { run: run, primoScuro: scuro[0] };
+  /* quanto varia la riga attorno al punto: grande sulle barre, piccolo nelle zone
+     chiare. L'isteresi ne e' una parte, cosi' nelle zone chiare il rumore non basta
+     a cambiare colore e sulle barre il bordo resta dove deve. */
+  var pd = new Float64Array(larg + 1), ist = new Float32Array(larg);
+  for (i = 0; i < larg; i++) pd[i + 1] = pd[i] + Math.abs(lum[i] - media[i]);
+  for (i = 0; i < larg; i++) { a = Math.max(0, i - w); b = Math.min(larg, i + w + 1); ist[i] = Math.max(EAN_REGOLE.minima, EAN_REGOLE.isteresi * (pd[b] - pd[a]) / (b - a)); }
+  var scuro = lum[0] < media[0], primoScuro = scuro ? 1 : 0, run = [], ultimo = 0;
+  for (i = 1; i < larg; i++) {
+    var ora = scuro ? lum[i] < media[i] + ist[i] : lum[i] < media[i] - ist[i];
+    if (ora === scuro) continue;
+    /* dove la riga attraversa la media fra i-1 e i */
+    var d0 = lum[i - 1] - media[i - 1], d1 = lum[i] - media[i], f = d0 === d1 ? 0.5 : d0 / (d0 - d1);
+    var bordo = i - 1 + Math.max(0, Math.min(1, f));
+    run.push(bordo - ultimo); ultimo = bordo; scuro = ora;
+  }
+  run.push(larg - ultimo);
+  return { run: run, primoScuro: primoScuro };
 }
 
 /* Prova a leggere un EAN-13 a partire dalla striscia `p` di `run`.
@@ -26614,9 +26637,10 @@ function leggiEAN13(run, p) {
 
   /* la guardia iniziale sono tre strisce larghe un modulo */
   var unita = (run[p] + run[p + 1] + run[p + 2]) / 3;
-  /* Sotto i due pixel per modulo le misure diventano rumore e ogni tanto
-     compone per caso una sequenza che supera anche la cifra di controllo. */
-  if (unita < 2) return null;
+  /* Sotto 1,4 pixel per modulo (v28: prima 2, con i bordi a pixel interi) le
+     misure diventano rumore e ogni tanto compongono per caso una sequenza che
+     supera anche la cifra di controllo. */
+  if (unita < 1.4) return null;
   /* Zona di rispetto: prima delle barre un codice vero ha sempre un'area
      chiara larga almeno una decina di moduli. E' il filtro che distingue un
      codice da una tessitura qualsiasi inquadrata per sbaglio.
@@ -26660,6 +26684,8 @@ function leggiEAN13(run, p) {
   for (k = 0; k < 3; k++) {
     if (Math.abs(run[i + k] - unita) > unita * 0.75) return null;
   }
+  /* v28: zona chiara anche dopo, se la riga non finisce li' */
+  if (i + 4 < run.length && run[i + 3] < unita * 3) return null;
 
   var prima = EAN_PARITA.indexOf(parita);
   if (prima < 0) return null;
@@ -26673,7 +26699,7 @@ function leggiEAN13(run, p) {
 function leggiEAN8(run, p) {
   if (p + 43 > run.length) return null;
   var unita = (run[p] + run[p + 1] + run[p + 2]) / 3;
-  if (unita < 2) return null;
+  if (unita < 1.4) return null;
   if (p > 1 && run[p - 1] < unita * 3) return null;
   for (var g = 0; g < 3; g++) if (Math.abs(run[p + g] - unita) > unita * 0.6) return null;
 
@@ -26695,6 +26721,7 @@ function leggiEAN8(run, p) {
   for (k = 0; k < 3; k++) {
     if (Math.abs(run[i + k] - unita) > unita * 0.75) return null;
   }
+  if (i + 4 < run.length && run[i + 3] < unita * 3) return null;   /* v28: zona chiara dopo */
   if (cifre.length !== 8 || !eanValido(cifre)) return null;
   return cifre.join('');
 }
@@ -26712,12 +26739,12 @@ function decodificaRiga(lum, larg) {
     if (v > max) max = v;
   }
   if (max - min < 40) return null;        /* riga piatta: niente barre */
-  var soglia = (min + max) / 2;
+  /* v28 (R28): prima la soglia della riga intera, poi quella locale (luce che
+     sfuma, riflessi). Vale la prima lettura che supera tutti i controlli. */
+  return decodificaStrisce(strisceDaRiga(lum, larg, (min + max) / 2)) || decodificaStrisce(strisceDaRiga(lum, larg));
+}
 
-  var scuro = new Uint8Array(larg);
-  for (i = 0; i < larg; i++) scuro[i] = lum[i] < soglia ? 1 : 0;
-
-  var s = strisceDaRiga(scuro);
+function decodificaStrisce(s) {
   var run = s.run;
   /* le strisce scure sono quelle in posizione pari se la riga comincia scura */
   var primoIndiceScuro = s.primoScuro ? 0 : 1;
@@ -26808,6 +26835,23 @@ function decodificaFotogramma(sorgente, righe, largMax) {
     conteggi[ean] = (conteggi[ean] || 0) + 1;
     if (conteggi[ean] > meglio) { meglio = conteggi[ean]; migliore = ean; }
     if (meglio >= 2) break;        /* due righe d'accordo bastano */
+  }
+  /* v28 (R28): niente in orizzontale? Si provano le colonne della fascia centrale:
+     sulle confezioni alte il codice e' spesso girato di 90 gradi */
+  if (!migliore) {
+    var x0 = Math.round(larg * 0.28), x1 = Math.round(larg * 0.72), colonne;
+    try { colonne = ctx.getImageData(x0, 0, x1 - x0 + 1, alt).data; } catch (e) { colonne = null; }
+    if (colonne) {
+      var lc = x1 - x0 + 1, col = new Uint8Array(alt), pc = Math.max(1, Math.round(lc / righe));
+      for (var c = 0; c < lc; c += pc) {
+        for (var yy = 0, jj = c * 4; yy < alt; yy++, jj += lc * 4) col[yy] = (colonne[jj] * 77 + colonne[jj + 1] * 150 + colonne[jj + 2] * 29) >> 8;
+        var ev = decodificaRiga(col, alt);
+        if (!ev) continue;
+        conteggi[ev] = (conteggi[ev] || 0) + 1;
+        if (conteggi[ev] > meglio) { meglio = conteggi[ev]; migliore = ev; }
+        if (meglio >= 2) break;
+      }
+    }
   }
   return migliore ? { ean: migliore, conferme: meglio } : null;
 }
@@ -27010,7 +27054,8 @@ function scansionaAvvia(quando) {
      di suo e non ha bisogno di conferme. */
   var candidato = null;
   function nostraLettura() {
-    var r = decodificaFotogramma(video);
+    /* v28 (R28): 960 px invece di 640: le barre di un codice lontano diventano larghe abbastanza */
+    var r = decodificaFotogramma(video, 15, 960);
     if (!r) { candidato = null; return null; }
     if (r.conferme >= 2) return r.ean;
     if (candidato === r.ean) return r.ean;
@@ -27071,6 +27116,7 @@ function scansionaAvvia(quando) {
     if (riquadro) riquadro.style.display = '';
     if (bottone) bottone.hidden = true;
     video.srcObject = s;
+    luceEFuoco(s);
     var avviato = video.play();
     if (avviato && avviato.catch) {
       avviato.catch(function () {
@@ -27081,6 +27127,24 @@ function scansionaAvvia(quando) {
     dire('Tieni il codice <b>dentro il riquadro</b>, orizzontale e ben illuminato, ' +
          'a una decina di centimetri.');
     partiIlCiclo();
+  }
+
+  /* v28 (R28): messa a fuoco continua e, dove c'e' (Android), il pulsante della
+     torcia. L'iPhone non permette la torcia alle pagine web: li' il pulsante non compare. */
+  function luceEFuoco(s) {
+    var t = s.getVideoTracks && s.getVideoTracks()[0], cap = {};
+    try { cap = (t && t.getCapabilities && t.getCapabilities()) || {}; } catch (e) { cap = {}; }
+    if ((cap.focusMode || []).indexOf('continuous') >= 0) t.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {});
+    if (!cap.torch || n.querySelector('#scan-luce')) return;
+    var acceso = false, b = document.createElement('button');
+    b.id = 'scan-luce'; b.className = 'ghost'; b.textContent = 'Accendi la luce';
+    b.onclick = function () {
+      acceso = !acceso;
+      t.applyConstraints({ advanced: [{ torch: acceso }] }).then(function () {
+        b.textContent = acceso ? 'Spegni la luce' : 'Accendi la luce';
+      }).catch(function () { acceso = false; b.hidden = true; });
+    };
+    riquadro.parentNode.insertBefore(b, riquadro.nextSibling);
   }
 
   /* `spiegato` diventa vero appena si e' detto all'utente qualcosa di preciso:
@@ -27118,11 +27182,11 @@ function scansionaAvvia(quando) {
     spiegato = false;
     if (riquadro) riquadro.style.display = '';
     dire('Chiedo il permesso per la fotocamera…');
-    chiediFotocamera({ video: { facingMode: { ideal: 'environment' } }, audio: false }, false);
+    chiediFotocamera({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }, false);
   };
 
   dire('Chiedo il permesso per la fotocamera…');
-  chiediFotocamera({ video: { facingMode: { ideal: 'environment' } }, audio: false }, false);
+  chiediFotocamera({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }, false);
 
   /* Se dopo qualche secondo non e' successo niente — niente anteprima, nessun
      errore e nessuna spiegazione gia' data — quasi sempre vuol dire che la
@@ -29810,7 +29874,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw169zqh';
+var BUILD = 'vmw17mxb6';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -30202,6 +30266,12 @@ function render() {
   collegaDueSchede();
   collegaAltriSport();
   collegaCapisci();
+  /* v28 (R29): gli avvisi in cima alla Home */
+  document.querySelectorAll('[data-avviso]').forEach(function (a) {
+    a.onclick = function (e) { e.preventDefault(); if (a.dataset.avviso === 'agenda') { vaiSezione('diario'); S.ctx.sez = 'agenda'; render(); } else vaiSezione('dispensa'); };
+  });
+  var av = document.getElementById('avvisi-via');
+  if (av) av.onclick = function () { S.profilo.avvisiNascosti = oggi(); save(); render(); };
   collegaDolori();
   collegaPassaggi();
   collegaCrono();
@@ -30855,7 +30925,7 @@ function vHome() {
   var prossimo = ultimoGiorno && ordine.indexOf(ultimoGiorno) >= 0 ? ordine[(ordine.indexOf(ultimoGiorno) + 1) % ordine.length] : ordine[0];
 
   var c = statoCiclo(), b = bloccoCorrente();
-  var h = testata(SCHEDA.nome, b.nome) + '<main>' + rigaLuogo();
+  var h = testata(SCHEDA.nome, b.nome) + '<main>' + rigaLuogo() + riquadroAvvisi();   /* v28 (R29) */
   /* v21: a ogni cambio di blocco, due domande sui dolori */
   h += riquadroControlloDolori();
 
@@ -32071,6 +32141,26 @@ function collegaEsercizio() {
       aggiornaContatore();
     };
   });
+}
+
+/* ---------- v28 (R29): gli avvisi all'apertura ----------
+   Niente notifiche ad app chiusa (servirebbe un server: deciso il 3/11 di
+   rimandare): aprendo l'app, in cima alla Home, quello che scade nella dispensa
+   da ieri a dopodomani e gli impegni di oggi ancora da fare. Si nasconde per oggi. */
+function riquadroAvvisi() {
+  if ((S.profilo && S.profilo.avvisiNascosti) === oggi()) return '';
+  var scad = (typeof dispensaLista === 'function' ? dispensaLista() : []).filter(function (v) {
+    var g = giorniAllaScadenza(v); return g !== null && g >= -1 && g <= 2;
+  });
+  var ag = (S.agenda || []).filter(function (x) { return x.d === oggi() && !x.fatto; })
+    .sort(function (a, b) { return (a.h || '99').localeCompare(b.h || '99'); });
+  if (!scad.length && !ag.length) return '';
+  var h = '<div class="hint warm avvisi">';
+  if (ag.length) h += '<b>Oggi:</b> ' + ag.map(function (x) { return (x.h ? esc(x.h) + ' ' : '') + esc(x.t); }).join(' · ') +
+    ' <a href="#" data-avviso="agenda">agenda</a><br>';
+  if (scad.length) h += '<b>Nella dispensa:</b> ' + scad.slice(0, 5).map(function (v) { return esc(v.n) + ' (' + esc(scadenzaTesto(v)) + ')'; }).join(', ') +
+    (scad.length > 5 ? ' e altri ' + (scad.length - 5) : '') + ' <a href="#" data-avviso="dispensa">dispensa</a><br>';
+  return h + '<button class="link" id="avvisi-via">Nascondi fino a domani</button></div>';
 }
 
 
