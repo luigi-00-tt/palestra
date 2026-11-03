@@ -1531,6 +1531,9 @@ button { font-family: inherit; }
 /* v28: i pulsanti ghost e link sono larghi tutta la riga: qui stanno accanto al resto */
 .luogo .link { width: auto; padding: 10px 6px; }
 .luogo-nuovo button { width: auto; flex: 0 0 auto; margin: 0; }
+/* v28 (R18): il calendario delle due schede, sette caselle su una riga */
+.calendario { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 6px 0 10px; }
+.calendario .pill { padding: 6px 0; min-height: 48px; line-height: 1.3; font-size: 13px; }
 .riga-luogo { font-size: 13px; color: var(--text-dim); margin: 0 0 10px; }
 details.manca { margin: 10px 0; }
 details.manca summary { cursor: pointer; color: var(--text-dim); font-size: 13.5px; padding: 6px 0; }
@@ -7264,6 +7267,8 @@ function gruppiMancanti(tipi) {
    frequenza cambia poco l'ipertrofia (Schoenfeld 2019, Pelland 2025): la
    struttura si sceglie per far stare il volume nel tempo, non per magia. */
 function struttura(giorni, esperienza, q) {
+  /* v28 (R18): con due schede una può avere un giorno solo a settimana */
+  if ((giorni | 0) === 1 && q && q.quotaVolume) return { tipi: ['full'], nome: 'Full body 1×' };
   var g = Math.max(2, Math.min(6, giorni | 0));
   /* chi fa sport: la palestra sostiene lo sport, non lo sostituisce. Full
      body, al massimo 3 sedute (2 in stagione); gli altri giorni sono suoi */
@@ -7470,6 +7475,11 @@ function targetVolume(q) {
     t[g] = [Math.max(REGOLE.minimoAssoluto, lo), Math.max(REGOLE.minimoAssoluto, hi)];
     /* per lo sport le braccia non sono un obiettivo: bastano le serie indirette di trazioni e spinte */
     if (fam === 'sport' && !prio[g] && (g === 'Bicipiti' || g === 'Tricipiti')) t[g] = [0, 6];
+  });
+  /* v28 (R18): con due schede il volume della settimana si divide fra le due, in
+     proporzione ai giorni del calendario: il totale resta quello delle regole */
+  if (q.quotaVolume) GRUPPI.forEach(function (g) {
+    t[g] = t[g].map(function (x) { return x ? Math.max(2, Math.round(x * q.quotaVolume)) : 0; });
   });
   return { target: t, prio: prio };
 }
@@ -8216,7 +8226,54 @@ function spiega(q, fam, str, target, esclusi, perche, blocchi) {
     'Doppia progressione: prima aumenti le ripetizioni dentro l\'intervallo indicato; quando le fai tutte al massimo con il RIR giusto, la volta dopo aumenti il carico del passo più piccolo possibile. Dove il salto di peso è grande (manubri fissi, macchine a scatti larghi) si può salire solo di ripetizioni: funziona allo stesso modo.' + fonti(REGOLE.progressione.fonti)]);
 }
 
-if (false) module.exports = { generaScheda: generaScheda, REGOLE: REGOLE, CONDIZIONI: CONDIZIONI,
+/* ---------- v28 (R18): due schede insieme ----------
+   q.seconda dice cosa cambia nella seconda (ambito, obiettivo e sport) e
+   q.calendario quale scheda tocca in ogni giorno della settimana (0 = domenica).
+   Il motore le unisce in una scheda sola: le sedute della seconda hanno id «2A»,
+   «2B»… e `scheda: 2`, così registro, ciclo e storico restano quelli di sempre. */
+function giorniCalendario(cal, n) { return Object.keys(cal || {}).filter(function (d) { return cal[d] === n; }).length; }
+function generaSchede(q) {
+  var d1 = giorniCalendario(q.calendario, 1), d2 = giorniCalendario(q.calendario, 2);
+  if (!q.seconda || !d1 || !d2) return generaScheda(q);
+  var q1 = {}, q2 = {}, k;
+  for (k in q) { q1[k] = q[k]; q2[k] = q[k]; }
+  for (k in q.seconda) q2[k] = q.seconda[k];
+  q1.giorni = d1; q2.giorni = d2;
+  q1.quotaVolume = d1 / (d1 + d2); q2.quotaVolume = d2 / (d1 + d2);
+  if (q.seconda.obiettivo !== undefined && q.seconda.obiettivo !== 'sport') { delete q2.sport; delete q2.stagione; }
+  q2.divisione = 'auto';   /* la seconda la costruisce il motore sui suoi giorni */
+  var s1 = generaScheda(q1), s2 = generaScheda(q2);
+  var nome2 = nomeSeconda(q.seconda);
+  var s = {}; for (k in s1) s[k] = s1[k];
+  s.nome = s1.nome + ' + ' + nome2;
+  s.seconda = { nome: nome2, nome1: s1.nome };
+  s.ciclo = 1;
+  s.target = {};
+  GRUPPI.forEach(function (g) { s.target[g] = [s1.target[g][0] + s2.target[g][0], s1.target[g][1] + s2.target[g][1]]; });
+  s.blocchi = s1.blocchi.map(function (b, i) {
+    var bb = {}; for (var x in b) bb[x] = b[x];
+    bb.giorni = b.giorni.map(function (g) { g.scheda = 1; g.ciclo = s1.ciclo; return g; }).concat(s2.blocchi[i].giorni.map(function (g) {
+      var gg = {}; for (var y in g) gg[y] = g[y];
+      gg.id = '2' + g.id; gg.scheda = 2; gg.ciclo = s2.ciclo;
+      gg.nome = nome2 + ' · ' + g.nome.replace(/^Seduta /, 'seduta ');
+      return gg;
+    }));
+    return bb;
+  });
+  s.perche = {}; for (k in s1.perche) s.perche[k] = s1.perche[k];
+  ['tempoStretto', 'volumeRidotto'].forEach(function (f) { s.perche[f] = s1.perche[f] || s2.perche[f]; });
+  for (k in s2.perche.mancanti) s.perche.mancanti[k] = true;
+  s.perche.voci = s1.perche.voci.concat([['Due schede, un volume solo',
+    'Hai ' + d1 + ' giorni di «' + s1.nome + '» e ' + d2 + ' di «' + nome2 + '». Le serie della settimana sono contate insieme: ogni muscolo riceve il suo volume in totale, diviso fra le due schede in proporzione ai giorni, invece del doppio.' + fonti(REGOLE.volume.fonti)]])
+    .concat(s2.perche.voci.filter(function (v) { return !/^Quante serie|^Perché /.test(v[0]); }).map(function (v) { return [nome2 + ': ' + v[0].charAt(0).toLowerCase() + v[0].slice(1), v[1]]; }));
+  return s;
+}
+function nomeSeconda(sec) {
+  if (sec.obiettivo === 'sport') return 'Preparazione ' + sportDi(sec).nome.toLowerCase();
+  return { corpo: 'Corpo libero', casa: 'A casa', sala: 'Sala pesi' }[sec.ambito] || 'Seconda scheda';
+}
+
+if (false) module.exports = { generaScheda: generaScheda, generaSchede: generaSchede, REGOLE: REGOLE, CONDIZIONI: CONDIZIONI,
   volumeSettimana: volumeSettimana, durataGiorno: durataGiorno, motivoEsclusione: motivoEsclusione, flagEsclusi: flagEsclusi,
   alternativaPer: alternativaPer, zonePlausibili: zonePlausibili, faseRientro: faseRientro, RIENTRO: RIENTRO };
 
@@ -28279,7 +28336,7 @@ function applicaScheda() {
   else {
     try {
       /* v21: con le fasi di rientro dei dolori passati (dolori.js) */
-      base = generaScheda(qConRientri(S.questionario));
+      base = generaSchede(qConRientri(S.questionario));   /* v28: anche con la seconda scheda */
     } catch (e) {
       /* un motore che si rompe non deve lasciare l'app senza scheda */
       base = SCHEDA_SU_MISURA;
@@ -29646,7 +29703,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw11hsmh';
+var BUILD = 'vmw128amg';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -30034,6 +30091,7 @@ function render() {
   collegaQuestionario();
   collegaSchedaImpostazioni();
   collegaLuoghi();
+  collegaDueSchede();
   collegaDolori();
   collegaPassaggi();
   collegaCrono();
@@ -30648,8 +30706,12 @@ function vHome() {
   for (var d in S.log) fatti[S.log[d].giorno] = d;
   var ultimaData = ultimaDataLog();
   var ultimoGiorno = ultimaData ? S.log[ultimaData].giorno : null;
-  var ordine = giorniCorrenti().map(function (g) { return g.id; });
-  var prossimo = ultimoGiorno ? ordine[(ordine.indexOf(ultimoGiorno) + 1) % ordine.length] : ordine[0];
+  /* v28 (R18): con due schede la prossima seduta è quella della scheda di oggi nel calendario */
+  var schedaOggi = SCHEDA.seconda ? (S.questionario.calendario || {})[new Date().getDay()] || 0 : 0;
+  var suoi = giorniCorrenti().filter(function (g) { return !schedaOggi || g.scheda === schedaOggi; });
+  var ordine = suoi.map(function (g) { return g.id; });
+  if (schedaOggi) ultimoGiorno = ultimaDiScheda(schedaOggi);
+  var prossimo = ultimoGiorno && ordine.indexOf(ultimoGiorno) >= 0 ? ordine[(ordine.indexOf(ultimoGiorno) + 1) % ordine.length] : ordine[0];
 
   var c = statoCiclo(), b = bloccoCorrente();
   var h = testata(SCHEDA.nome, b.nome) + '<main>' + rigaLuogo();
@@ -30702,6 +30764,10 @@ function vHome() {
   h += '<div class="ciclo-idea">' + b.idea + '</div>';
   h += '</div>';
 
+  /* v28 (R18): quale scheda dice il calendario oggi */
+  if (SCHEDA.seconda) h += '<div class="hint">' + (schedaOggi ? 'Oggi nel tuo calendario tocca a <b>«' +
+    esc(schedaOggi === 2 ? SCHEDA.seconda.nome : SCHEDA.seconda.nome1) + '»</b>.' :
+    'Oggi nel tuo calendario è riposo. Se ti alleni lo stesso, scegli una seduta qui sotto.') + '</div>';
   if (c.scarico) {
     h += '<div class="hint warm"><b>Settimana di scarico, scelta da te.</b> Stessi carichi, <b>metà ' +
          'delle serie</b>: le trovi già dimezzate qui sotto. ' +
@@ -30721,7 +30787,10 @@ function vHome() {
          (ultimaData ? ' &middot; ultima il ' + dataIt(ultimaData) : '') + '</div>';
   }
 
-  giorniCorrenti().forEach(function (g) {
+  giorniCorrenti().forEach(function (g, i, tutti) {
+    /* v28 (R18): con due schede un titolo sopra le sedute di ciascuna */
+    if (SCHEDA.seconda && (i === 0 || tutti[i - 1].scheda !== g.scheda))
+      h += '<h2>' + (g.scheda === 2 ? '2 · ' + esc(SCHEDA.seconda.nome) : '1 · ' + esc(SCHEDA.seconda.nome1)) + '</h2>';
     var nSerie = g.esercizi.reduce(function (a, e) { return a + serieDi(e); }, 0);
     var fattaOggi = fatti[g.id] === oggi();
     h += '<div role="button" tabindex="0" class="day' + (fattaOggi ? ' done' : '') + '" data-giorno="' + g.id + '">' +
@@ -30773,20 +30842,26 @@ function vHome() {
   return h;
 }
 
+/* v28 (R18): l'ultima seduta fatta di una delle due schede */
+function ultimaDiScheda(n) {
+  var date = Object.keys(S.log).filter(function (d) { var g = giornoDi(S.log[d].giorno); return g && g.scheda === n; }).sort();
+  return date.length ? S.log[date[date.length - 1]].giorno : null;
+}
+
 function volumiSettimanali() {
   var v = {};
   giorniCorrenti().forEach(function (g) {
+    var c = g.ciclo || SCHEDA.ciclo || 1;   /* v28: ogni scheda col suo giro */
     g.esercizi.forEach(function (e) {
       var ex = esercizioDi(e.ex); if (!ex) return;
       /* conteggio frazionale: le serie contano intere sul gruppo primario
          e a meta' sui gruppi coinvolti indirettamente */
-      v[ex.gruppo] = (v[ex.gruppo] || 0) + e.serie;
-      (e.indiretti || []).forEach(function (m) { v[m] = (v[m] || 0) + e.serie * 0.5; });
+      v[ex.gruppo] = (v[ex.gruppo] || 0) + e.serie / c;
+      (e.indiretti || []).forEach(function (m) { v[m] = (v[m] || 0) + e.serie * 0.5 / c; });
     });
   });
   /* v28: a rotazione un giro delle sedute dura SCHEDA.ciclo settimane */
-  var ciclo = SCHEDA.ciclo || 1;
-  for (var k in v) v[k] = Math.round(v[k] / ciclo * 10) / 10;
+  for (var k in v) v[k] = Math.round(v[k] * 10) / 10;
   return v;
 }
 
@@ -34958,6 +35033,7 @@ function vImpostazioni() {
   var h = testata('Impostazioni', 'installazione, ciclo e backup', 'home') + '<main>';
   h += sezioneSchedaImpostazioni();
   h += sezioneLuoghi();
+  h += sezioneDueSchede();
   h += sezioneDoloriImpostazioni();
 
   /* ---------- profilo ----------
@@ -35444,6 +35520,83 @@ function collegaImpostazioni() {
       try { localStorage.removeItem(KEY); } catch (e) {}
       location.reload();
     } else { a.dataset.sure = '1'; a.textContent = 'Sicuro? Tocca di nuovo per cancellare'; }
+  };
+}
+
+/* ---------- v28 (R18): la seconda scheda e il calendario ----------
+   La seconda la costruisce il motore (corpo libero, casa, sala o preparazione
+   per uno sport); il calendario dice quale scheda tocca in ogni giorno. */
+var GIORNI_SETT = [[1, 'Lun'], [2, 'Mar'], [3, 'Mer'], [4, 'Gio'], [5, 'Ven'], [6, 'Sab'], [0, 'Dom']];
+var TIPI_SECONDA = [['corpo', 'Corpo libero'], ['casa', 'A casa'], ['sala', 'Sala pesi'], ['sport', 'Preparazione per uno sport']];
+function tipoSeconda(sec) { return sec.obiettivo === 'sport' ? 'sport' : sec.ambito; }
+function sezioneDueSchede() {
+  var q = S.questionario;
+  if (!q || q.preset) return '';
+  var sec = q.seconda, cal = q.calendario || {};
+  var h = '<h2>Due schede</h2><div class="card">';
+  if (!sec) return h + '<p class="dim">Puoi affiancare alla tua scheda una seconda, per esempio a corpo libero o di preparazione per la pallavolo. ' +
+    'Le serie della settimana si contano insieme: ogni muscolo riceve il suo volume in totale, non il doppio.</p>' +
+    '<div class="qz-pills">' + TIPI_SECONDA.map(function (t) { return '<button class="pill" data-sec-tipo="' + t[0] + '">' + esc(t[1]) + '</button>'; }).join('') + '</div></div>';
+  h += '<p><b>Seconda scheda:</b> ' + esc(nomeSeconda(sec)) + '</p>';
+  if (sec.obiettivo === 'sport') {
+    h += pillole('sec-sport', QZ_SPORT, sec.sport, true) + pillole('sec-stagione', QZ_STAGIONE, sec.stagione, true);
+  } else if (sec.ambito === 'casa') {
+    h += '<p class="dim">Che cosa hai a casa?</p>' + pillole('sec-casa', ATTREZZI_CASA, sec.attrezziCasa || []);
+  }
+  h += '<p class="dim">Il calendario: tocca un giorno per passare da riposo a 1 (la tua scheda) a 2 (la seconda).</p><div class="calendario">' +
+    GIORNI_SETT.map(function (d) {
+      var n = cal[d[0]] || 0;
+      return '<button class="pill' + (n ? ' on' : '') + '" data-cal="' + d[0] + '"><b>' + d[1] + '</b><br>' + (n ? n : '—') + '</button>';
+    }).join('') + '</div>';
+  var d1 = giorniCalendario(cal, 1), d2 = giorniCalendario(cal, 2);
+  if (!d1 || !d2) h += '<div class="hint warm">Metti almeno un giorno per ciascuna scheda: finché manca, vale solo la tua scheda.</div>';
+  else h += '<p class="dim">' + d1 + ' giorni di scheda 1, ' + d2 + ' di scheda 2.</p>';
+  h += '<button class="ghost" id="sec-togli">Togli la seconda scheda</button></div>';
+  return h;
+}
+function collegaDueSchede() {
+  var q = S.questionario;
+  if (!q || q.preset) return;
+  var salva = function (msg) { applicaScheda(); save(); if (msg) toast(msg); render(); };
+  document.querySelectorAll('[data-sec-tipo]').forEach(function (b) {
+    b.onclick = function () {
+      var t = b.dataset.secTipo;
+      q.seconda = t === 'sport' ? { obiettivo: 'sport', sport: 'pallavolo', stagione: 'off' } : { ambito: t, attrezziCasa: [] };
+      /* calendario di partenza: i giorni della scheda 1 a giorni alterni, poi uno per la seconda */
+      if (!q.calendario) {
+        var ord = [1, 3, 5, 2, 4, 6, 0], g = Math.min(5, q.giorni || 3);
+        q.calendario = {};
+        ord.slice(0, g).forEach(function (d) { q.calendario[d] = 1; });
+        q.calendario[ord[g]] = 2;
+      }
+      salva('Seconda scheda aggiunta: controlla il calendario');
+    };
+  });
+  document.querySelectorAll('[data-cal]').forEach(function (b) {
+    b.onclick = function () {
+      var d = b.dataset.cal, n = ((q.calendario[d] || 0) + 1) % 3;
+      if (n) q.calendario[d] = n; else delete q.calendario[d];
+      salva();
+    };
+  });
+  var pills = { 'sec-sport': 'sport', 'sec-stagione': 'stagione' };
+  Object.keys(pills).forEach(function (gr) {
+    document.querySelectorAll('[data-gruppo="' + gr + '"] [data-qv]').forEach(function (b) {
+      b.onclick = function () { q.seconda[pills[gr]] = b.dataset.qv; salva(); };
+    });
+  });
+  document.querySelectorAll('[data-gruppo="sec-casa"] [data-qv]').forEach(function (b) {
+    b.onclick = function () {
+      var a = q.seconda.attrezziCasa = q.seconda.attrezziCasa || [], i = a.indexOf(b.dataset.qv);
+      if (i >= 0) a.splice(i, 1); else a.push(b.dataset.qv);
+      salva();
+    };
+  });
+  var via = document.getElementById('sec-togli');
+  if (via) via.onclick = function () {
+    if (!via.dataset.sure) { via.dataset.sure = '1'; via.textContent = 'Tocca ancora per togliere la seconda scheda'; return; }
+    delete q.seconda; delete q.calendario;
+    salva('Seconda scheda tolta: lo storico resta');
   };
 }
 
