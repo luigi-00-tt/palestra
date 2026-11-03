@@ -1513,6 +1513,21 @@ button { font-family: inherit; }
 .unita-t, #pe-unita { margin: 0 0 10px; }
 #pe-unita button { height: 36px; font-size: 13px; }
 #tot-bil { margin: 4px 0 8px; font-size: 12.5px; }
+
+/* v28 Lotto 2: profilo voce per voce, luoghi, «qui non c'è» */
+.qz-voci { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+.qz-anteprima { margin: 14px 0; }
+.qz-anteprima p { margin: 6px 0; font-size: 13.5px; }
+.luogo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.luogo .dim { font-size: 12px; flex: 1; }
+.luogo-nuovo { display: flex; gap: 8px; margin: 10px 0; }
+.luogo-nuovo input {
+  flex: 1; min-width: 0; background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
+  border-radius: 9px; padding: 9px 10px; font: inherit; font-size: 14px;
+}
+.riga-luogo { font-size: 13px; color: var(--text-dim); margin: 0 0 10px; }
+details.manca { margin: 10px 0; }
+details.manca summary { cursor: pointer; color: var(--text-dim); font-size: 13.5px; padding: 6px 0; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -27007,6 +27022,15 @@ function giudizioDispensa(v) {
     }
   }
 
+  /* v28: le allergie scritte a mano, anche nelle tracce */
+  if (typeof allergieScritte === 'function') {
+    var tr = /\b(puo contenere|tracce)\b/.test(testoEt) ? testoEt.split(/\b(?:puo contenere|tracce)\b/).slice(1).join(' ') : '';
+    allergieScritte().forEach(function (a) {
+      if (pezzi.some(function (x) { return a.re.test(x); })) segna(2, 'Contiene ' + a.nome + ', che hai indicato fra le allergie.');
+      else if (tr && a.re.test(tr)) segna(2, 'Può contenere tracce di ' + a.nome + ': con un\'allergia vale come ingrediente.');
+    });
+  }
+
   /* 2. reflusso: le regole delle ricette sul nome e sui primi ingredienti */
   if (ha('reflusso')) {
     [nome].concat(ingr).forEach(function (t) {
@@ -27487,7 +27511,7 @@ function zoneAttive() {
    questionario, oppure la palestra e il reflusso della scheda su misura. */
 function personaApp() {
   if (S.questionario && !S.questionario.preset) return S.questionario;
-  return { attrezzi: tuttiGliAttrezzi().filter(function (a) { return a !== 'calfs'; }), esperienza: 3,
+  return { attrezzi: attrezziAttivi(), esperienza: 3,   /* v28: gli attrezzi del luogo attivo */
            obiettivo: 'massa', condizioni: { reflusso: {} }, dolori: zoneAttive() };
 }
 
@@ -27889,6 +27913,8 @@ function bozzaQuestionario() {
   if (QZ) return QZ;
   var v = S.questionario && !S.questionario.preset ? JSON.parse(JSON.stringify(S.questionario)) : {};
   var p = S.profilo || {};
+  /* v28: le allergie valgono anche per la scheda su misura, che le tiene nel preset */
+  var al = S.questionario || {};
   QZ = {
     passo: 0,
     d: {
@@ -27897,7 +27923,7 @@ function bozzaQuestionario() {
       peso: v.peso || p.peso || '', altezza: v.altezza || p.altezza || '',
       esperienza: v.esperienza !== undefined ? v.esperienza : null,
       giorni: v.giorni || 3, minuti: v.minuti || 60,
-      attrezzi: v.attrezzi || tuttiGliAttrezzi(),
+      attrezzi: (v.attrezzi || attrezziAttivi()).slice(),
       obiettivo: v.obiettivo || '', priorita: v.priorita || [],
       condizioni: v.condizioni || {}, altroSalute: v.altroSalute || '',
       /* v20: i dolori di adesso. Un questionario vecchio non li ha: si parte da
@@ -27905,7 +27931,8 @@ function bozzaQuestionario() {
       dolori: Array.isArray(v.dolori) ? v.dolori.slice() : leggiAltro(v.altroSalute || ''),
       altroLetto: v.altroSalute || '',
       sport: v.sport || '', stagione: v.stagione || '',
-      intolleranze: v.intolleranze || [], allergie: v.allergie || [], dieta: v.dieta || 'onnivora',
+      intolleranze: v.intolleranze || [], allergie: (al.allergie || []).slice(), dieta: v.dieta || 'onnivora',
+      allergieTesto: al.allergieTesto || '', nessunaAllergia: !!al.nessunaAllergia,
       pasti: v.pasti || 4, integratori: v.integratori || [], nonMangia: v.nonMangia || ''
     }
   };
@@ -27964,9 +27991,80 @@ function testoPerTe(s) {
 function haStomaco() { return ha('reflusso') || ha('ibs') || ha('gastrite') || ha('gonfiore') || ha('nausea'); }
 
 /* Quale scheda è in uso. Chiamata all'avvio e dopo ogni questionario. */
+/* ---------- v28: i luoghi in cui ci si allena ----------
+   Ogni persona ha i suoi attrezzi (la palestra di Milano non è quella di Cosenza,
+   a casa c'è quello che si è comprato) e può avere più elenchi: «Palestra», «Casa».
+   S.luoghi = { attivo, riga, elenco: [{ id, nome, attrezzi }] }. Il luogo attivo si
+   sceglie dalle Impostazioni; chi ha il questionario ne copia gli attrezzi in
+   S.questionario.attrezzi, la scheda su misura li usa per le sostituzioni. */
+function attrezziSuMisura() { return tuttiGliAttrezzi().filter(function (a) { return a !== 'calfs'; }); }
+function luoghi() {
+  if (!S.luoghi || !S.luoghi.elenco || !S.luoghi.elenco.length) {
+    var q = S.questionario;
+    S.luoghi = { attivo: 'palestra', riga: false, elenco: [{ id: 'palestra', nome: 'Palestra',
+      attrezzi: (q && !q.preset && q.attrezzi ? q.attrezzi : q && q.preset ? attrezziSuMisura() : tuttiGliAttrezzi()).slice() }] };
+  }
+  return S.luoghi;
+}
+function luogoDi(id) { return luoghi().elenco.filter(function (l) { return l.id === id; })[0] || null; }
+function luogoAttivo() { var L = luoghi(); return luogoDi(L.attivo) || L.elenco[0]; }
+function attrezziAttivi() { return luogoAttivo().attrezzi; }
+/* Dopo ogni cambio di luogo o di attrezzi: la scheda del motore si rifà con gli
+   attrezzi del luogo attivo, quella su misura riceve le sostituzioni. */
+function allineaLuogo() {
+  if (S.questionario && !S.questionario.preset) S.questionario.attrezzi = attrezziAttivi().slice();
+  applicaScheda();
+}
+var NOME_ATTREZZO = {};
+if (typeof ATTREZZI !== 'undefined') ATTREZZI.forEach(function (g) { g[1].forEach(function (a) { NOME_ATTREZZO[a[0]] = a[1]; }); });
+
+/* La scheda su misura è scritta per la palestra di Luigi: dove manca un attrezzo,
+   l'esercizio passa all'equivalente scelto dal motore (lo stesso di «mi dà
+   fastidio»). Niente si salva: tornando in palestra la scheda torna quella. */
+function adattaAttrezzi(base) {
+  var att = attrezziAttivi(), q = personaApp(), nomeL = luogoAttivo().nome;
+  var manca = function (id) { var c = CATALOGO[id]; return c && c.a.some(function (a) { return att.indexOf(a) < 0; }); };
+  /* niente da cambiare: la scheda resta lo stesso oggetto, come scritta a mano */
+  var tutte = [].concat.apply([], base.blocchi.map(function (b) { return b.giorni; })).concat(base.core ? [base.core] : []);
+  if (!tutte.some(function (g) { return g.esercizi.some(function (e) { return manca(e.ex); }); })) return base;
+  var giornata = function (g) {
+    if (!g.esercizi.some(function (e) { return manca(e.ex); })) return g;
+    var gg = {}; for (var k in g) gg[k] = g[k];
+    var presenti = g.esercizi.map(function (e) { return e.ex; });
+    gg.esercizi = g.esercizi.map(function (e) {
+      if (!manca(e.ex)) return e;
+      var con = alternativaPer(e.ex, null, 'attrezzo', q, presenti).lista[0];
+      var n = {}; for (var k in e) n[k] = e[k];
+      var mancanti = CATALOGO[e.ex].a.filter(function (a) { return att.indexOf(a) < 0; }).map(function (a) { return (NOME_ATTREZZO[a] || a).toLowerCase(); });
+      /* nessun equivalente libero qui: l'esercizio resta, con l'avviso (non lo si toglie in silenzio) */
+      if (!con) {
+        n.senzaAlternativa = true;
+        n.nota = 'In «' + nomeL + '» manca ' + mancanti.join(', ') + ' e non c’è un equivalente che non sia già nella seduta: saltalo o fallo dove c’è. ' +
+          (e.nota && !/^In «/.test(e.nota) ? e.nota : '');
+        return n;
+      }
+      presenti.push(con);
+      n.ex = con; n.scambiato = e.ex;
+      if (!CATALOGO[con] || !CATALOGO[con].m) delete n.avvicinamento;
+      n.nota = 'Al posto di: ' + ESERCIZI[e.ex].nome.toLowerCase() + ', perché in «' + nomeL + '» manca ' + mancanti.join(', ') + '. ' +
+        (e.nota && !/^Al posto di/.test(e.nota) ? e.nota : '');
+      return n;
+    });
+    return gg;
+  };
+  var s = {}; for (var k in base) s[k] = base[k];
+  s.blocchi = base.blocchi.map(function (b) {
+    var bb = {}; for (var k in b) bb[k] = b[k];
+    bb.giorni = b.giorni.map(giornata);
+    return bb;
+  });
+  if (base.core) { s.core = {}; for (var c in base.core) s.core[c] = base.core[c]; s.core.esercizi = giornata(base.core).esercizi; }
+  return s;
+}
+
 function applicaScheda() {
   var base;
-  if (!S.questionario || suMisura()) base = SCHEDA_SU_MISURA;
+  if (!S.questionario || suMisura()) base = adattaAttrezzi(SCHEDA_SU_MISURA);
   else {
     try {
       /* v21: con le fasi di rientro dei dolori passati (dolori.js) */
@@ -28006,13 +28104,28 @@ function pillole(nome, voci, scelti, singola) {
 
 function vQuestionario() {
   var z = bozzaQuestionario(), d = z.d, p = z.passo;
-  var h = testata('La tua scheda', 'passo ' + (p + 1) + ' di ' + QZ_PASSI.length + ' · ' + QZ_PASSI[p],
+  /* v28: dal profilo si cambia una voce sola (QZ.solo), poi si vede cosa cambia */
+  var h = z.solo
+    ? testata('Il tuo profilo', p === 1 && z.luogo ? 'attrezzi di «' + (luogoDi(z.luogo) || {}).nome + '»' : VOCI_PROFILO[p], 'impostazioni') + '<main class="qz">'
+    : testata('La tua scheda', 'passo ' + (p + 1) + ' di ' + QZ_PASSI.length + ' · ' + QZ_PASSI[p],
                   S.questionario ? 'impostazioni' : null) + '<main class="qz">';
-  h += '<div class="qz-barra">' + QZ_PASSI.map(function (t, i) {
+  if (!z.solo) h += '<div class="qz-barra">' + QZ_PASSI.map(function (t, i) {
     return '<i class="' + (i < p ? 'fatto' : i === p ? 'ora' : '') + '"></i>';
   }).join('') + '</div>';
 
-  if (p === 0) {
+  if (p === 0 && z.solo) {
+    h += '<div class="card">';
+    h += '<label class="field"><span>Data di nascita</span><input type="date" id="qz-nascita" value="' + esc(d.nascita) + '"></label>';
+    h += '<div class="field"><span>Sesso</span>' + pillole('sesso', [['m', 'Uomo'], ['f', 'Donna']], d.sesso, true) + '</div>';
+    h += '<div class="field"><span>Da quanto ti alleni con i pesi</span>' +
+      pillole('esperienza', [[0, 'Mai'], [1, 'Meno di 6 mesi'], [2, '6-12 mesi'], [3, 'Oltre un anno']], d.esperienza, true) + '</div>';
+    h += '<div class="field"><span>Quanti giorni a settimana puoi andare in palestra</span>' +
+      pillole('giorni', [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], d.giorni, true) + '</div>';
+    h += '<div class="field"><span>Quanto tempo hai per ogni seduta, riscaldamento compreso</span>' +
+      pillole('minuti', [[30, '30 min'], [45, '45 min'], [60, '1 ora'], [75, '1 ora e ¼'], [90, '1 ora e ½'],
+        [105, '1 ora e ¾'], [120, '2 ore'], [150, '2 ore e ½'], [180, '3 ore']], d.minuti, true) + '</div>';
+    h += '<p class="dim">Peso e altezza li cambi nella scheda «Il tuo profilo» delle Impostazioni: contano solo per le calorie.</p></div>';
+  } else if (p === 0) {
     h += '<p>Ti faccio qualche domanda, una sezione alla volta. Dalle risposte l\'app costruisce ' +
       'la <b>tua</b> scheda: struttura, esercizi, serie e calorie, ognuno con il perché e la fonte ' +
       'scientifica. Le risposte restano <b>soltanto su questo telefono</b>, a meno che tu non crei un account.</p>' +
@@ -28111,12 +28224,23 @@ function vQuestionario() {
       (letti.every(function (z) { return d.dolori.indexOf(z) >= 0; }) ? 'l\'ho acceso qui sopra.' : 'se c\'è ancora, accendilo qui sopra.') +
       ' Se ho capito male, spegnilo.</div>';
   } else if (p === 4) {
-    h += '<h2>Intolleranze</h2>' + pillole('intolleranze', QZ_INTOLLERANZE, d.intolleranze);
-    h += '<h2>Allergie</h2>' + pillole('allergie', QZ_ALLERGIE, d.allergie);
+    /* la scheda su misura ha già le sue regole sul cibo: qui solo le allergie */
+    if (!(QZ.solo && suMisura())) h += '<h2>Intolleranze</h2>' + pillole('intolleranze', QZ_INTOLLERANZE, d.intolleranze);
+    h += '<h2>Allergie</h2><p class="dim">Facoltativo: se non rispondi, le ricette non vengono filtrate.</p>' +
+      '<div class="qz-pills"><button class="pill' + (d.nessunaAllergia ? ' on' : '') + '" id="qz-nessuna-all">Nessuna allergia</button></div>' +
+      pillole('allergie', QZ_ALLERGIE, d.allergie);
+    h += '<label class="field"><span>Altre allergie: scrivile tu, separate da una virgola</span>' +
+      '<input type="text" id="qz-allergie-testo" placeholder="es. kiwi, sedano, senape" value="' + esc(d.allergieTesto) + '"></label>';
+    if (d.allergieTesto || d.allergie.length) h += '<p class="dim">Tolgo ogni ricetta che contiene quello che hai indicato, ' +
+      'anche nelle sue forme (sedano, sedano rapa). Con un\'allergia controlla comunque sempre l\'etichetta.</p>';
+    if (QZ.solo && suMisura()) {
+      /* niente dieta, pasti e integratori: la scheda su misura li ha scritti a mano */
+    } else {
     h += '<h2>Che dieta segui</h2>' + pillole('dieta', QZ_DIETE, d.dieta, true);
     h += '<h2>Quanti pasti riesci a fare al giorno</h2>' + pillole('pasti', [[2, '2'], [3, '3'], [4, '4'], [5, '5 o più']], d.pasti, true);
     h += '<h2>Integratori che usi o vorresti usare</h2>' + pillole('integratori', QZ_INTEGRATORI, d.integratori);
-    h += '<label class="field"><span>Qualcosa che proprio non mangi (facoltativo)</span><input type="text" id="qz-nonmangia" value="' + esc(d.nonMangia) + '"></label>';
+    h += '<label class="field"><span>Qualcosa che proprio non mangi, per gusto (facoltativo)</span><input type="text" id="qz-nonmangia" value="' + esc(d.nonMangia) + '"></label>';
+    }
   } else {
     var s;
     try { s = generaScheda(d); } catch (e) { s = null; h += '<div class="hint warm">Errore del motore: ' + esc(e.message) + '</div>'; }
@@ -28135,6 +28259,14 @@ function vQuestionario() {
     }
   }
 
+  if (z.solo) {
+    if (z.anteprima) h += '<div class="card qz-anteprima"><b>Cosa cambia</b>' + z.anteprima + '</div>';
+    h += '<div class="qz-nav"><button class="ghost" id="qz-annulla">Annulla</button>' +
+      (z.anteprima ? '<button class="primary" id="qz-conferma">Conferma</button>'
+                   : '<button class="primary" id="qz-prova">Vedi cosa cambia</button>') +
+      '</div><p class="dim" id="qz-err"></p>';
+    return h + '</main>';
+  }
   h += '<div class="qz-nav">' +
     (p > 0 ? '<button class="ghost" id="qz-indietro">Indietro</button>' : '') +
     (p < QZ_PASSI.length - 1 ? '<button class="primary" id="qz-avanti">Avanti</button>'
@@ -28167,6 +28299,10 @@ function leggiCampiQz() {
     }
   }
   if (v('qz-nonmangia') !== null) d.nonMangia = v('qz-nonmangia');
+  if (v('qz-allergie-testo') !== null) {
+    d.allergieTesto = v('qz-allergie-testo').trim();
+    if (d.allergieTesto) d.nessunaAllergia = false;
+  }
   document.querySelectorAll('[data-terapia]').forEach(function (n) {
     if (d.condizioni[n.dataset.terapia]) d.condizioni[n.dataset.terapia].terapia = n.value;
   });
@@ -28212,21 +28348,30 @@ function collegaQuestionario() {
         } else {
           var i = d[gruppo].indexOf(val);
           if (i >= 0) d[gruppo].splice(i, 1); else d[gruppo].push(val);
+          if (gruppo === 'allergie') d.nessunaAllergia = false;
         }
+        QZ.anteprima = null;
         render();
       };
     });
   });
   document.querySelectorAll('[data-ob]').forEach(function (b) {
-    b.onclick = function () { d.obiettivo = b.dataset.ob; render(); };
+    b.onclick = function () { d.obiettivo = b.dataset.ob; QZ.anteprima = null; render(); };
   });
+  var na = document.getElementById('qz-nessuna-all');
+  if (na) na.onclick = function () {
+    leggiCampiQz();
+    d.nessunaAllergia = !d.nessunaAllergia;
+    if (d.nessunaAllergia) { d.allergie = []; d.allergieTesto = ''; }
+    QZ.anteprima = null; render();
+  };
   var t = document.getElementById('qz-tutto');
-  if (t) t.onclick = function () { d.attrezzi = tuttiGliAttrezzi(); render(); };
+  if (t) t.onclick = function () { d.attrezzi = tuttiGliAttrezzi(); QZ.anteprima = null; render(); };
   /* il campo «Altro» si rilegge appena lo lasci, così compare subito che cosa ho capito */
   var altro = document.getElementById('qz-altro');
   if (altro) altro.onchange = function () { leggiCampiQz(); render(); };
   var n = document.getElementById('qz-niente');
-  if (n) n.onclick = function () { d.attrezzi = []; render(); };
+  if (n) n.onclick = function () { d.attrezzi = []; QZ.anteprima = null; render(); };
   var ind = document.getElementById('qz-indietro');
   if (ind) ind.onclick = function () { leggiCampiQz(); QZ.passo--; render(); window.scrollTo(0, 0); };
   var av = document.getElementById('qz-avanti');
@@ -28238,21 +28383,97 @@ function collegaQuestionario() {
   };
   var fine = document.getElementById('qz-fine');
   if (fine) fine.onclick = function () {
-    var eraSuMisura = suMisura() || (S.questionario && S.questionario.eraSuMisura);
-    S.questionario = JSON.parse(JSON.stringify(d));
-    S.questionario.compilato = oggi();
-    if (eraSuMisura) S.questionario.eraSuMisura = true;
-    /* v21: lo storico dei dolori segue le risposte (quelli spenti sono passati) */
-    doloriDaQuestionario(d);
-    /* il profilo delle calorie si allinea alle risposte */
-    S.profilo.nascita = d.nascita; S.profilo.peso = d.peso; S.profilo.altezza = d.altezza;
-    S.profilo.sesso = d.sesso; S.profilo.obiettivo = d.obiettivo; S.profilo.impostato = true;
-    QZ = null;
-    applicaScheda();
-    save();
+    salvaQuestionario(d);
     toast('La tua scheda è pronta');
     vaiSezione('home');
   };
+  /* v28: una voce del profilo */
+  var ann = document.getElementById('qz-annulla');
+  if (ann) ann.onclick = function () { QZ = null; vai('impostazioni', {}); };
+  var prova = document.getElementById('qz-prova');
+  if (prova) prova.onclick = function () {
+    leggiCampiQz();
+    var err = erroreQz();
+    if (err) { document.getElementById('qz-err').textContent = err; return; }
+    QZ.anteprima = anteprimaProfilo(d);
+    render();
+  };
+  var conf = document.getElementById('qz-conferma');
+  if (conf) conf.onclick = function () {
+    leggiCampiQz();
+    var luogo = QZ.luogo;
+    if (QZ.passo === 1 && luogo) luogoDi(luogo).attrezzi = d.attrezzi.slice();
+    if (suMisura()) {
+      ['allergie', 'allergieTesto', 'nessunaAllergia'].forEach(function (k) { S.questionario[k] = d[k]; });
+      applicaScheda(); save();
+    } else if (!luogo || luogo === luoghi().attivo) salvaQuestionario(d, true);
+    else save();
+    QZ = null;
+    toast('Profilo aggiornato');
+    vai('impostazioni', {});
+  };
+}
+
+/* Le risposte del questionario diventano quelle in uso. */
+function salvaQuestionario(d, voce) {
+  var eraSuMisura = suMisura() || (S.questionario && S.questionario.eraSuMisura);
+  var compilato = S.questionario && S.questionario.compilato;
+  S.questionario = JSON.parse(JSON.stringify(d));
+  /* una voce del profilo non è un questionario nuovo: la data resta */
+  S.questionario.compilato = voce && compilato ? compilato : oggi();
+  if (eraSuMisura) S.questionario.eraSuMisura = true;
+  /* v28: gli attrezzi scelti sono quelli del luogo attivo */
+  luogoAttivo().attrezzi = d.attrezzi.slice();
+  /* v21: lo storico dei dolori segue le risposte (quelli spenti sono passati) */
+  doloriDaQuestionario(d);
+  /* il profilo delle calorie si allinea alle risposte */
+  S.profilo.nascita = d.nascita; S.profilo.peso = d.peso; S.profilo.altezza = d.altezza;
+  S.profilo.sesso = d.sesso; S.profilo.obiettivo = d.obiettivo; S.profilo.impostato = true;
+  QZ = null;
+  applicaScheda();
+  save();
+}
+
+/* ---------- v28: il profilo voce per voce ---------- */
+var VOCI_PROFILO = ['Chi sei, giorni e tempo', 'Attrezzi', 'Obiettivo', 'Salute', 'Alimentazione'];
+function apriVoceProfilo(passo, luogo) {
+  QZ = null;
+  bozzaQuestionario();
+  QZ.passo = passo; QZ.solo = true; QZ.luogo = luogo || null; QZ.anteprima = null;
+  if (passo === 1) QZ.d.attrezzi = (luogo ? luogoDi(luogo) : luogoAttivo()).attrezzi.slice();
+  vai('questionario', {});
+}
+
+/* Gli esercizi di ogni seduta del blocco in corso, per il confronto. */
+function sedutePer(s) {
+  var b = s.blocchi[Math.min(statoCiclo().indice, s.blocchi.length - 1)];
+  return b.giorni.map(function (g) { return { nome: g.nome, ex: g.esercizi.map(function (e) { return e.ex; }) }; });
+}
+function nomeEx(id) { return (ESERCIZI[id] || { nome: id }).nome; }
+/* Che cosa cambierebbe nella scheda con le risposte nuove: si mostra prima di salvare. */
+function anteprimaProfilo(d) {
+  var luogo = QZ.luogo, altro = luogo && luogo !== luoghi().attivo;
+  if (altro) return '<p class="dim">«' + esc(luogoDi(luogo).nome) + '» non è il luogo attivo: la scheda di oggi non cambia. ' +
+    'Gli attrezzi si useranno quando lo sceglierai.</p>';
+  var prima = sedutePer(SCHEDA), dopo;
+  try {
+    if (suMisura()) {
+      var vecchi = luogoAttivo().attrezzi;
+      luogoAttivo().attrezzi = d.attrezzi;
+      try { dopo = sedutePer(adattaAttrezzi(SCHEDA_SU_MISURA)); } finally { luogoAttivo().attrezzi = vecchi; }
+    } else dopo = sedutePer(applicaScambi(generaScheda(qConRientri(d))));
+  } catch (e) { return '<p class="dim">Non riesco a calcolare la scheda nuova (' + esc(e.message) + ').</p>'; }
+  var righe = [];
+  if (prima.length !== dopo.length) righe.push('Sedute a settimana: <b>' + prima.length + ' → ' + dopo.length + '</b>.');
+  dopo.forEach(function (g, i) {
+    var v = prima[i] ? prima[i].ex : [];
+    var via = v.filter(function (x) { return g.ex.indexOf(x) < 0; }), su = g.ex.filter(function (x) { return v.indexOf(x) < 0; });
+    if (via.length || su.length) righe.push('<b>' + esc(g.nome) + '</b>: ' +
+      (su.length ? 'entra ' + su.map(nomeEx).map(esc).join(', ') : '') + (su.length && via.length ? '; ' : '') +
+      (via.length ? 'esce ' + via.map(nomeEx).map(esc).join(', ') : '') + '.');
+  });
+  if (!righe.length) righe.push('La scheda resta uguale' + (QZ.passo === 4 ? ': cambiano le ricette che vedi.' : '.'));
+  return '<p>' + righe.join('</p><p>') + '</p><p class="dim">Lo storico degli allenamenti resta com\'è.</p>';
 }
 
 /* Impostazioni: che scheda sto usando, e come cambiarla. */
@@ -28266,6 +28487,13 @@ function sezioneSchedaImpostazioni() {
       esc(S.questionario.compilato || '') + '.</p>';
     if (SCHEDA_ERRORE) h += '<div class="hint warm">Il motore ha dato un errore (' + esc(SCHEDA_ERRORE) + '): è in uso la scheda di riserva.</div>';
   }
+  /* v28: si cambia una voce alla volta, con l'anteprima di cosa cambia */
+  if (S.questionario) {
+    var voci = suMisura() ? [4] : [0, 2, 3, 4];
+    h += '<p class="dim">Cambia una voce sola, senza rifare tutto:</p><div class="qz-voci">' + voci.map(function (i) {
+      return '<button class="pill" data-voce="' + i + '">' + (suMisura() && i === 4 ? 'Allergie' : VOCI_PROFILO[i]) + '</button>';
+    }).join('') + '</div><p class="dim">Gli attrezzi si cambiano in «Dove ti alleni», qui sotto.</p>';
+  }
   h += '<button class="ghost" id="qz-rifai">' + (S.questionario ? 'Rifai il questionario' : 'Compila il questionario') + '</button>';
   if (S.questionario && S.questionario.eraSuMisura && !suMisura()) {
     h += '<button class="ghost" id="qz-sumisura">Torna alla scheda su misura</button>';
@@ -28277,6 +28505,9 @@ function sezioneSchedaImpostazioni() {
 function collegaSchedaImpostazioni() {
   var r = document.getElementById('qz-rifai');
   if (r) r.onclick = function () { QZ = null; bozzaQuestionario(); vai('questionario', {}); };
+  document.querySelectorAll('[data-voce]').forEach(function (b) {
+    b.onclick = function () { apriVoceProfilo(+b.dataset.voce); };
+  });
   var m = document.getElementById('qz-sumisura');
   if (m) m.onclick = function () {
     if (!m.dataset.sure) { m.dataset.sure = '1'; m.textContent = 'Sicuro? Tocca di nuovo'; return; }
@@ -28360,7 +28591,9 @@ function testoIngredienti(v) {
 /* Le chiavi che escludono una ricetta per le risposte date. */
 function vincoliAlimentari() {
   var q = S.questionario;
-  if (!q || q.preset) return [];
+  if (!q) return [];
+  /* v28: la scheda su misura ha le sue regole sul cibo, ma le allergie valgono per tutti */
+  if (q.preset) return (q.allergie || []).slice();
   var k = [];
   (q.intolleranze || []).forEach(function (x) { k.push(x); });
   (q.allergie || []).forEach(function (x) { k.push(x); });
@@ -28381,17 +28614,43 @@ function ricettaAdatta(v) {
   }
   /* kosher: niente carne e latticini nello stesso piatto */
   if (q && q.dieta === 'kosher' && ESCLUDI_INGREDIENTI.carne.test(t) && ESCLUDI_INGREDIENTI.latticini.test(t)) return false;
+  /* v28: le allergie scritte a mano, severe: la parola e le sue forme */
+  if (allergieScritte().some(function (a) { return pezzi.some(function (x) { return a.re.test(x); }); })) return false;
   /* quello che la persona ha scritto di non mangiare, parola per parola */
-  if (q && q.nonMangia) {
+  if (q && !q.preset && q.nonMangia) {
     var parole = q.nonMangia.toLowerCase().split(/[,;]+|\be\b/).map(function (p) { return p.trim(); }).filter(function (p) { return p.length > 2; });
     for (var j = 0; j < parole.length; j++) if (t.indexOf(parole[j].replace(/[aeio]$/, '')) >= 0) return false;
   }
   return true;
 }
 
+/* v28: «kiwi, sedano, senape» → una regola per parola. Le parole che sono già
+   allergie note (pesce, uova, frutta secca…) usano la loro regola completa, le
+   altre prendono la radice con le sue forme (sedano, sedani, sedano rapa). */
+var ALLERGIE_NOTE = [[/pesc[ei]\b/, 'pesce'], [/^uov|uova/, 'uova'], [/^latt(e|icin)|formagg/, 'latticini'],
+  [/lattosio/, 'lattosio'], [/glutine|celiac|frumento|grano/, 'glutine'], [/frutta (secca|a guscio)|^noc[ei]|nocciol|mandorl|pistacch|anacard/, 'frutta-secca'],
+  [/arachid|noccioline/, 'arachidi'], [/crostace|gamber|scamp|aragost/, 'crostacei'], [/mollusc|cozz|vongol|calamar|polp/, 'molluschi'],
+  [/^soia|soya/, 'soia'], [/sesamo/, 'sesamo']];
+var ALLERGIE_CACHE = { t: null, v: [] };   /* ricettaAdatta la chiama per migliaia di ricette */
+function allergieScritte() {
+  var q = S.questionario;
+  if (!q || !q.allergieTesto || q.nessunaAllergia) return [];
+  if (ALLERGIE_CACHE.t === q.allergieTesto) return ALLERGIE_CACHE.v;
+  ALLERGIE_CACHE.t = q.allergieTesto;
+  return (ALLERGIE_CACHE.v = String(q.allergieTesto).toLowerCase().split(/[,;\n]+|\be\b/).map(function (p) { return p.trim(); })
+    .filter(function (p) { return p.length > 1; }).map(function (p) {
+      for (var i = 0; i < ALLERGIE_NOTE.length; i++) {
+        var k = ALLERGIE_NOTE[i][1];
+        if (ALLERGIE_NOTE[i][0].test(p) && ESCLUDI_INGREDIENTI[k]) return { nome: p, re: ESCLUDI_INGREDIENTI[k] };
+      }
+      var radice = p.length > 4 ? p.replace(/[aeiou]$/, '') : p;
+      return { nome: p, re: new RegExp('\\b' + radice.replace(/[.*+?^${}()|[\]\\]/g, '\\/*__JS__*/') + '\\w{0,3}\\b') };
+    }));
+}
+
 function avvisoFiltroAlimentare() {
-  var k = vincoliAlimentari();
-  if (!k.length && !(S.questionario && S.questionario.nonMangia)) return '';
+  var k = vincoliAlimentari().concat(allergieScritte().map(function (a) { return a.nome; }));
+  if (!k.length && !(S.questionario && !S.questionario.preset && S.questionario.nonMangia)) return '';
   return '<div class="note">Le ricette sono filtrate in base alle tue risposte (' +
     esc(k.filter(function (x, i) { return k.indexOf(x) === i; }).join(', ').replace(/-/g, ' ')) +
     '). Il filtro legge i nomi degli ingredienti, <b>non le tracce né le contaminazioni</b>: con ' +
@@ -29095,7 +29354,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw0wvdkk';
+var BUILD = 'vmw0yxxdv';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -29125,6 +29384,8 @@ var S = {
   scambi: {},     // v21: { 'panca-piana': {con, alt, zona, tipo, dal} } sostituzioni accettate
   riprese: {},    // v21: { 'panca-piana': 'AAAA-MM-GG' } rientro più leggero fino a quella data
   controlloBlocco: null, // v21: '<giro>-<blocco>' dell'ultimo controllo dei dolori
+  idLocale: null,   // v28: codice di questo profilo, solo sul telefono (idUtente)
+  luoghi: null,     // v28: { attivo, riga, elenco: [{ id, nome, attrezzi }] } dove ci si allena (questionario.js)
   prefEsercizi: {}, // v28: { 'panca-piana': { bil: 20 }, 'barchetta': { min: 1 } } bilanciere scelto, tempo in minuti
   vista: 'home', ctx: {}
 };
@@ -29205,12 +29466,14 @@ function datiDaSalvare() {
     controlloBlocco: S.controlloBlocco,
     checklist: S.checklist, // v24: le spunte di oggi della checklist prima della seduta
     menu: S.menu, // v26: seme della settimana e piatti cambiati del menù
-    prefEsercizi: S.prefEsercizi // v28: bilanciere scelto e minuti/secondi per esercizio
+    prefEsercizi: S.prefEsercizi, // v28: bilanciere scelto e minuti/secondi per esercizio
+    luoghi: S.luoghi, // v28: i luoghi e i loro attrezzi
+    idLocale: S.idLocale
   };
 }
 var CHIAVI_DATI = ['profilo', 'log', 'diario', 'ultimo', 'prodotti', 'exExtra',
                    'preferiti', 'cibiMiei', 'dispensa', 'questionario', 'dolori', 'scambi', 'riprese',
-                   'checklist', 'menu', 'prefEsercizi'];// v27: mancavano, il ripristino li perdeva (controlloBlocco è una stringa, a parte)
+                   'checklist', 'menu', 'prefEsercizi', 'luoghi'];// v27: mancavano, il ripristino li perdeva (controlloBlocco è una stringa, a parte)
 
 /* Se il salvataggio fallisce l'utente DEVE saperlo: prima la cosa passava in
    silenzio e ci si accorgeva dei dati persi solo alla riapertura. */
@@ -29284,6 +29547,16 @@ function cercaAggiornamento(quando) {
     });
   }).catch(function () { quando('errore'); });
 }
+
+/* v28: ogni profilo ha un codice. Senza account è uno a caso, solo su questo telefono;
+   con l'account vale quello dell'account (Supabase), che distingue le persone nel database. */
+function nuovoId() {
+  try { if (crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+  });
+}
+function idUtente() { return (typeof SESSIONE !== 'undefined' && SESSIONE && SESSIONE.id) || S.idLocale; }
 
 function oggi() {
   var d = new Date();
@@ -29468,6 +29741,7 @@ function render() {
   collega();
   collegaQuestionario();
   collegaSchedaImpostazioni();
+  collegaLuoghi();
   collegaDolori();
   collegaPassaggi();
   collegaCrono();
@@ -29946,8 +30220,14 @@ function descrizioneAttrezzo(exId) {
 }
 /* v28: i manubri della palestra salgono di 2 kg in 2 kg (11 e 13 non esistono) */
 function usaManubri(exId) { return /manubri|manubrio/.test(descrizioneAttrezzo(exId)); }
+/* v28: le pile dei cavi della palestra di Luigi salgono di 5 kg */
+function usaCavi(exId) {
+  if (usaManubri(exId)) return false;
+  var ex = esercizioDi(exId) || {}, c = CATALOGO[exId];
+  return !!ex.attrezzo || !!(c && c.a.indexOf('cavi') >= 0) || /\bcavo|\bcavi\b|pulley/.test(descrizioneAttrezzo(exId));
+}
 function passoCarico(exId) {
-  return usaManubri(exId) ? 2 : 2.5;
+  return usaManubri(exId) ? 2 : usaCavi(exId) ? 5 : 2.5;
 }
 
 /* Con il bilanciere c'e' un pavimento: il bilanciere olimpico pesa 20 kg da
@@ -29990,12 +30270,12 @@ function suggerimento(exId, rangeRip) {
   if (tutte) {
     var inc = kg >= 40 ? 5 : kg >= 20 ? 2.5 : 1;
     /* manubri: il paio successivo, sempre pari */
-    var nuovo = usaManubri(exId) ? Math.floor(kg / 2) * 2 + 2 : kg + inc;
-    /* ai cavi il salto della pila può essere troppo: la piastrina o un manubrio piccolo sopra la pila */
-    var cavi = !usaManubri(exId) && /\bcavo|\bcavi\b|pulley|castello/.test(descrizioneAttrezzo(exId));
+    /* ai cavi la piastra successiva, a 5 kg; il passo intermedio con la piastrina */
+    var cavi = usaCavi(exId);
+    var nuovo = usaManubri(exId) ? Math.floor(kg / 2) * 2 + 2 : cavi ? Math.floor(kg / 5) * 5 + 5 : kg + inc;
     return { tipo: 'sali', testo: 'Hai chiuso tutte le serie a ' + max + ' ripetizioni: sali a ' +
              nuovo + ' kg e riparti dal basso del range.' +
-             (cavi ? ' Se il salto della pila è troppo grande, aggancia una piastrina o appoggia un manubrio piccolo sopra la pila.' : ''),
+             (cavi ? ' Se 5 kg in più sono troppi, aggancia una piastrina o appoggia un manubrio piccolo sopra la pila per il passo di mezzo.' : ''),
              kg: nuovo };
   }
   var sotto = prec.some(function (s) { return s.rip < min; });
@@ -30080,7 +30360,7 @@ function vHome() {
   var prossimo = ultimoGiorno ? ordine[(ordine.indexOf(ultimoGiorno) + 1) % ordine.length] : ordine[0];
 
   var c = statoCiclo(), b = bloccoCorrente();
-  var h = testata(SCHEDA.nome, b.nome) + '<main>';
+  var h = testata(SCHEDA.nome, b.nome) + '<main>' + rigaLuogo();
   /* v21: a ogni cambio di blocco, due domande sui dolori */
   h += riquadroControlloDolori();
 
@@ -30445,7 +30725,7 @@ function vGiorno() {
   var g = giornoDi(S.ctx.giorno);
   var oggiLog = S.log[oggi()];
   var pieno = durataSeduta(g), massimo = durataMax(g), rapido = durataSeduta(g, true);
-  var h = testata(g.nome, g.focus + ' · ' + pieno + '-' + massimo + ' minuti', 'home') + '<main>';
+  var h = testata(g.nome, g.focus + ' · ' + pieno + '-' + massimo + ' minuti', 'home') + '<main>' + rigaLuogo();
   h += riquadroCrono(g);
   h += riquadroControlloDolori();
 
@@ -30960,6 +31240,15 @@ function vEsercizio() {
        'Tutto viene salvato sul telefono da solo: puoi uscire quando vuoi.</div>';
   /* v21: segnalare un fastidio e farsi proporre un'alternativa */
   h += pannelloFastidio(e, g);
+  /* v28: «qui non c'è»: l'attrezzo esce dal luogo attivo e la scheda si adatta */
+  var serve = (CATALOGO[e.ex] && !e.extra ? CATALOGO[e.ex].a : []).filter(function (x) { return attrezziAttivi().indexOf(x) >= 0; });
+  if (serve.length) {
+    h += '<details class="manca"><summary>Qui non c\'è questo attrezzo</summary><p class="dim">Tocca quello che manca in «' +
+      esc(luogoAttivo().nome) + '»: lo tolgo dai tuoi attrezzi e l\'esercizio passa all\'equivalente in tutte le sedute. ' +
+      'Lo rimetti da Impostazioni → Dove ti alleni.</p><div class="qz-pills">' + serve.map(function (x) {
+        return '<button class="pill" data-manca="' + esc(x) + '">' + esc(NOME_ATTREZZO[x] || x) + '</button>';
+      }).join('') + '</div></details>';
+  }
 
   if (ex.setup) {
     var righeSetup = ex.setup.filter(function (r) { return ha('reflusso') || !/reflusso/i.test(r[0] + ' ' + r[1]); });
@@ -31028,6 +31317,17 @@ function collegaEsercizio() {
   var g = giornoDi(S.ctx.giorno);
   var e = eserciziDiOggi(g).filter(function (x) { return x.ex === S.ctx.ex; })[0];
   var ex = esercizioDi(e.ex);
+
+  document.querySelectorAll('[data-manca]').forEach(function (b) {
+    b.onclick = function () {
+      if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Tocca ancora per togliere ' + b.textContent; return; }
+      var l = luogoAttivo(), a = b.dataset.manca;
+      l.attrezzi = l.attrezzi.filter(function (x) { return x !== a; });
+      allineaLuogo(); save();
+      toast('Tolto ' + (NOME_ATTREZZO[a] || a).toLowerCase() + ' da «' + l.nome + '»: la scheda usa altri esercizi');
+      vai('giorno', { giorno: S.ctx.giorno });
+    };
+  });
 
   /* riepilogo sempre visibile di quante serie risultano registrate oggi */
   function aggiornaContatore() {
@@ -34292,10 +34592,75 @@ function applicaBackup(testo) {
   return null;
 }
 
+/* ---------- v28: dove ti alleni ----------
+   I luoghi (Palestra, Casa…) con i loro attrezzi: il luogo attivo decide la scheda. */
+function sezioneLuoghi() {
+  var L = luoghi();
+  var h = '<h2>Dove ti alleni</h2><div class="card">';
+  h += '<p class="dim">Ognuno ha i suoi attrezzi: la scheda usa solo quelli del luogo attivo.</p>';
+  L.elenco.forEach(function (l) {
+    var on = l.id === L.attivo;
+    h += '<div class="luogo' + (on ? ' on' : '') + '"><button class="pill' + (on ? ' on' : '') + '" data-luogo-attivo="' + esc(l.id) + '">' +
+      (on ? '● ' : '') + esc(l.nome) + '</button><span class="dim">' + l.attrezzi.length + ' attrezzi' +
+      (l.attrezzi.length ? '' : ' · corpo libero') + '</span>' +
+      '<button class="link" data-luogo-mod="' + esc(l.id) + '">attrezzi</button>' +
+      (L.elenco.length > 1 ? '<button class="link" data-luogo-via="' + esc(l.id) + '">togli</button>' : '') + '</div>';
+  });
+  h += '<div class="luogo-nuovo"><input id="luogo-nome" placeholder="Nuovo luogo, es. Casa" maxlength="30">' +
+    '<button class="ghost" id="luogo-agg">Aggiungi</button></div>';
+  h += '<label class="check"><input type="checkbox" id="luogo-riga"' + (L.riga ? ' checked' : '') +
+    '> Mostra «Oggi sei in…» in cima alla Home e alla seduta</label>';
+  return h + '</div>';
+}
+function collegaLuoghi() {
+  document.querySelectorAll('[data-luogo-attivo]').forEach(function (b) {
+    b.onclick = function () {
+      if (luoghi().attivo === b.dataset.luogoAttivo) return;
+      luoghi().attivo = b.dataset.luogoAttivo;
+      allineaLuogo(); save();
+      toast('Ora sei in «' + luogoAttivo().nome + '»: la scheda usa i suoi attrezzi');
+      render();
+    };
+  });
+  document.querySelectorAll('[data-luogo-mod]').forEach(function (b) {
+    b.onclick = function () { apriVoceProfilo(1, b.dataset.luogoMod); };
+  });
+  document.querySelectorAll('[data-luogo-via]').forEach(function (b) {
+    b.onclick = function () {
+      if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'sicuro?'; return; }
+      var L = luoghi();
+      L.elenco = L.elenco.filter(function (l) { return l.id !== b.dataset.luogoVia; });
+      if (!luogoDi(L.attivo)) { L.attivo = L.elenco[0].id; allineaLuogo(); }
+      save(); render();
+    };
+  });
+  var agg = document.getElementById('luogo-agg');
+  if (agg) agg.onclick = function () {
+    var nome = (document.getElementById('luogo-nome').value || '').trim().slice(0, 30);
+    if (!nome) { toast('Scrivi il nome del luogo'); return; }
+    var L = luoghi(), id = 'l' + Date.now().toString(36);
+    /* si parte dal corpo libero: a casa di solito c'è poco, si accende quello che c'è */
+    L.elenco.push({ id: id, nome: nome, attrezzi: [] });
+    save();
+    apriVoceProfilo(1, id);
+  };
+  var riga = document.getElementById('luogo-riga');
+  if (riga) riga.onchange = function () { luoghi().riga = riga.checked; save(); };
+}
+
+/* La riga facoltativa «Oggi sei in: Palestra» (Home e seduta). */
+function rigaLuogo() {
+  var L = luoghi();
+  if (!L.riga) return '';
+  return '<div class="riga-luogo">Oggi sei in: <b>' + esc(luogoAttivo().nome) + '</b> · ' +
+    '<a href="#" data-go="impostazioni">cambia</a></div>';
+}
+
 /* ---------- impostazioni ---------- */
 function vImpostazioni() {
   var h = testata('Impostazioni', 'installazione, ciclo e backup', 'home') + '<main>';
   h += sezioneSchedaImpostazioni();
+  h += sezioneLuoghi();
   h += sezioneDoloriImpostazioni();
 
   /* ---------- profilo ----------
@@ -34309,7 +34674,9 @@ function vImpostazioni() {
          'riepilogo del Diario restano in attesa.</div>';
   }
   h += '<div class="card">';
-  h += '<label class="field"><span>Data di nascita</span>' +
+  /* v28: con il questionario la data di nascita cambia la scheda (l'età conta):
+     si cambia dalla voce «Chi sei», con l'anteprima. Qui solo per la scheda su misura. */
+  if (!S.questionario || S.questionario.preset) h += '<label class="field"><span>Data di nascita</span>' +
        '<input type="date" id="p-nascita" value="' + esc(pr.nascita || '') + '"></label>';
   h += '<div class="np-griglia" style="margin:0 0 10px">' +
        '<label class="np-l"><span>Peso (kg)</span>' +
@@ -34436,6 +34803,8 @@ function vImpostazioni() {
   h += '</div></div>';
   /* ---------- i dati e quanto durano ---------- */
   h += '<h2>I tuoi dati</h2>';
+  h += '<p class="dim">Codice del profilo: <code>' + esc(idUtente() || '') + '</code>' +
+    (typeof SESSIONE !== 'undefined' && SESSIONE ? ' (quello del tuo account)' : ' (solo su questo telefono)') + '</p>';
 
   if (SALVATAGGIO.rotto) {
     h += '<div class="hint danger-h"><b>Il salvataggio non sta funzionando.</b> Il telefono sta ' +
@@ -34642,7 +35011,8 @@ function collegaImpostazioni() {
   });
   var ps = document.getElementById('p-salva');
   if (ps) ps.onclick = function () {
-    var nascita = document.getElementById('p-nascita').value;
+    var pn = document.getElementById('p-nascita');
+    var nascita = pn ? pn.value : S.profilo.nascita;
     var peso = parseFloat(document.getElementById('p-peso').value);
     var altezza = parseFloat(document.getElementById('p-altezza').value);
     if (!nascita) { toast('Manca la data di nascita'); return; }
@@ -34655,6 +35025,8 @@ function collegaImpostazioni() {
     S.profilo.altezza = altezza;
     if (!S.profilo.attivita) S.profilo.attivita = 1.55;
     S.profilo.impostato = true;
+    /* peso e altezza contano solo per le calorie: il questionario li segue senza toccare la scheda */
+    if (S.questionario && !S.questionario.preset) { S.questionario.peso = peso; S.questionario.altezza = altezza; }
     save();
     toast('Profilo salvato');
     render();
@@ -34785,6 +35157,7 @@ function collegaImpostazioni() {
 
 /* avvio: l'ancora nell'URL permette di aprire direttamente una sezione */
 load();
+if (!S.idLocale) S.idLocale = nuovoId();   /* v28: si salva col primo save() */
 /* v18: chi aveva già la scheda su misura la tiene senza vedere il questionario;
    poi si decide quale scheda è SCHEDA. Fuori da load(), che al primo avvio
    assoluto esce subito perché non c'è niente da leggere. */
