@@ -28750,7 +28750,7 @@ function inviaCloud() {
   if (!SESSIONE) return Promise.resolve();
   clearTimeout(CLOUD_STATO.timer);
   return tokenValido().then(function (t) {
-    return cloudFetch('POST', '/rest/v1/dati_utente', { id: SESSIONE.id, dati: datiDaSalvare() }, t,
+    return cloudFetch('POST', '/rest/v1/dati_utente', { id: SESSIONE.id, dati: datiDaSalvare(), scheda: SCHEDA, build: BUILD }, t,
       { Prefer: 'resolution=merge-duplicates,return=representation' });
   }).then(function (r) {
     if ((r.s !== 200 && r.s !== 201) || !r.j || !r.j[0]) return Promise.reject(r);
@@ -28957,7 +28957,8 @@ var LEGALE = {
         '<p><b>Quali dati:</b> username; data di nascita, sesso, peso, altezza; esperienza e obiettivi di ' +
         'allenamento; <b>dati sulla salute</b> che scegli di indicare (condizioni, dolori, terapie, diario dei ' +
         'sintomi e del bagno); intolleranze, allergie e scelte alimentari, che possono rivelare convinzioni ' +
-        'religiose (per esempio halal o kosher); allenamenti, diario dei pasti, prodotti e dispensa.</p>' +
+        'religiose (per esempio halal o kosher); allenamenti, diario dei pasti, prodotti e dispensa; la scheda di allenamento costruita per te e la ' +
+        'versione dell\'app che l\'ha costruita.</p>' +
         '<p><b>Perché e su quale base:</b> per costruire la scheda e conservare i tuoi dati fra un dispositivo ' +
         'e l\'altro (servizio che chiedi, art. 6.1.b GDPR). I dati sulla salute e quelli che possono rivelare ' +
         'convinzioni religiose solo con il tuo <b>consenso esplicito</b> (art. 9.2.a), dato alla registrazione e ' +
@@ -29063,7 +29064,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw0qpk9k';
+var BUILD = 'vmw0rtzwh';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
