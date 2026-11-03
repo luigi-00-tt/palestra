@@ -1537,6 +1537,12 @@ button { font-family: inherit; }
 .riga-luogo { font-size: 13px; color: var(--text-dim); margin: 0 0 10px; }
 details.manca { margin: 10px 0; }
 details.manca summary { cursor: pointer; color: var(--text-dim); font-size: 13.5px; padding: 6px 0; }
+
+/* v28 (R21): disegni dello stretching, nel colore del tema */
+.disegno-str { display: block; width: 100%; max-width: 260px; height: auto; margin: 0 auto 8px;
+  fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.disegno-str circle { fill: var(--accent); stroke: none; }
+.disegno-str .d-att { stroke: var(--text-faint); stroke-width: 4; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -29705,7 +29711,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw12tb2o';
+var BUILD = 'vmw1335ij';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -31771,6 +31777,25 @@ function vEsercizio() {
 }
 
 /* ---------- addominali e stretching ---------- */
+/* v28 (R21): i disegni dello stretching. Su Wikimedia non c'erano foto libere
+   adatte (l'unica dei femorali mostra la schiena curva e la testa bassa, il
+   contrario di quello che chiede il testo): sono disegni nostri, a linee, che
+   prendono il colore del tema. Terreno e attrezzi in grigio, la persona in colore. */
+var DISEGNI_STRETCHING = {
+  'Pettorali sullo stipite': '<rect x="28" y="6" width="10" height="108" rx="2" class="d-att"/><path d="M8 114h144" class="d-att"/>' +
+    '<circle cx="96" cy="22" r="9"/><path d="M96 31v44M96 75l-9 37M96 75l13 37M96 38H42V10M96 38l5 32"/>',
+  "Flessori dell'anca in affondo": '<path d="M8 114h144" class="d-att"/><circle cx="80" cy="20" r="9"/>' +
+    '<path d="M79 29l-3 43M76 72l-16 40H30M76 72l36 6v34M78 40l10 22"/>',
+  'Femorali da seduto': '<path d="M8 114h144" class="d-att"/><circle cx="88" cy="40" r="9"/>' +
+    '<path d="M80 50L42 104M42 104h100v-14M78 54l40 40"/>',
+  'Dorsali appeso alla sbarra': '<path d="M30 10h100" class="d-att"/><circle cx="80" cy="36" r="9"/>' +
+    '<path d="M64 10l6 34M96 10l-6 34M70 44h20M80 46v40M80 86l-5 30M80 86l5 30"/>'
+};
+function disegnoStretching(nome) {
+  var d = DISEGNI_STRETCHING[nome];
+  return d ? '<svg class="disegno-str" viewBox="0 0 160 120" role="img" aria-label="' + esc(nome) + '">' + d + '</svg>' : '';
+}
+
 function vExtra() {
   var e = SCHEDA.extra[+(S.ctx.extra || 0)];
   var h = testata(e.titolo, e.quando, 'home') + '<main>';
@@ -31778,7 +31803,7 @@ function vExtra() {
   h += '<div class="hint warm">' + e.avvertenza + '</div>';
   h += '<h2>Esercizi</h2>';
   e.esercizi.forEach(function (x) {
-    h += '<div class="card"><b style="font-size:14.5px">' + esc(x[0]) + '</b>' +
+    h += '<div class="card">' + disegnoStretching(x[0]) + '<b style="font-size:14.5px">' + esc(x[0]) + '</b>' +
       '<div class="dim" style="font-variant-numeric:tabular-nums;margin:2px 0 6px">' + esc(x[1]) + '</div>' +
       '<div style="font-size:13.5px">' + esc(x[2]) + '</div></div>';
   });
