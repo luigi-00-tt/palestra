@@ -1501,6 +1501,18 @@ button { font-family: inherit; }
 .m-cambia { font-size: 12px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--text-dim); }
 .m-nota { margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; }
 .menu > p.dim { font-size: 13px; line-height: 1.5; }
+
+/* v28: scelta del bilanciere e unità del tempo nelle serie */
+.bil-scelta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; }
+.bil-scelta > span { font-size: 11.5px; color: var(--text-dim); margin-right: 2px; }
+.bil-altro { font-size: 12px; color: var(--text-dim); display: inline-flex; align-items: center; gap: 4px; }
+.bil-altro input {
+  width: 62px; background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
+  border-radius: 8px; padding: 6px; font: inherit; font-size: 14px;
+}
+.unita-t, #pe-unita { margin: 0 0 10px; }
+#pe-unita button { height: 36px; font-size: 13px; }
+#tot-bil { margin: 4px 0 8px; font-size: 12.5px; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -4328,6 +4340,7 @@ ESERCIZI['alzate-cavo'] = variante('alzate-laterali', {
 
 ESERCIZI['plank'] = {
   nome: 'Plank',
+  tempo_s: 30,
   target: 'addome', gruppo: 'Core',
   props: ['floor'],
   setup: [
@@ -5077,8 +5090,30 @@ ESERCIZI['dead-bug'] = {
   alternativa: 'Plank'
 };
 
+/* v28: richiesta di Luigi. Non è nel catalogo del motore (nessuna regola nuova):
+   si aggiunge alla giornata da «Aggiungi un esercizio», a tempo. */
+ESERCIZI['barchetta'] = {
+  nome: 'Barchetta (hollow body hold)',
+  en: 'hollow body hold',
+  target: 'addome', gruppo: 'Core',
+  tempo_s: 30,
+  setup: [
+    ['Attrezzo', 'Tappetino'],
+    ['Posizione', 'Supino, braccia lungo i fianchi o tese dietro la testa, gambe unite e tese'],
+  ],
+  tecnica: [
+    'Schiaccia la zona lombare contro il pavimento: è la cosa che conta di più.',
+    'Stacca spalle e gambe da terra di pochi centimetri: il corpo fa una barca leggermente curva.',
+    'Tieni la posizione respirando normalmente, senza trattenere il fiato.',
+    'Più facile: ginocchia piegate o braccia lungo i fianchi. Più difficile: braccia tese dietro la testa.'
+  ],
+  errori: ['Lombare che si stacca dal pavimento', 'Gambe troppo alte (il lavoro scappa)', 'Fiato trattenuto'],
+  alternativa: 'Dead bug'
+};
+
 ESERCIZI['side-plank'] = {
   nome: 'Plank laterale',
+  tempo_s: 30,
   target: 'obliqui', gruppo: 'Core',
   setup: [
     ['Attrezzo', 'Tappetino'],
@@ -5939,6 +5974,9 @@ var SCHEDA_SU_MISURA = {
        e le braccia restano nella fascia 12-18 [J18, I01];
      - recuperi: 2 minuti sui multiarticolari, 75 secondi sugli isolamenti
        [A11, A12: gli isolamenti risentono meno di recuperi più corti];
+       v28 (3/11/2026): sulle braccia Luigi non teneva le ripetizioni fra una serie e
+       l'altra: 2 minuti su curl ed estensioni con pesi liberi, 90 secondi ai cavi
+       (rassegna 03, punto 6: 90 s-2 min con pesi liberi, 60-90 s ai cavi [A10, A11, A12, D03]);
      - una serie di avvicinamento in meno;
      - pec deck e croci lasciano il posto al face pull (cifosi: il rinforzo del
        dorso alto funziona, lo stretching no [D19, J01, J02]);
@@ -5972,10 +6010,10 @@ var SCHEDA_SU_MISURA = {
               nota: 'Ferma la discesa prima che il bacino si stacchi: oltre quel punto comprimi l\'addome e favorisci il reflusso. La pressa resta comunque preferibile allo squat pesante: 161 mmHg di pressione addominale di picco contro 219. Recupero di 2 minuti e non 3 per stare nell\'ora: con i recuperi più lunghi si cresce un po\' di più, ma la differenza è piccola.' },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '0-1', rec: '60 sec',
               nota: 'Non ti alzi nemmeno: è la stessa macchina di sopra. Scarichi il peso, porti solo gli avampiedi sul bordo della pedana, gambe quasi tese, e spingi di caviglia. Il calf da seduto è uscito dalla scheda perché in palestra quella macchina non c\'è — e ci hai guadagnato: a ginocchio teso lavora il gastrocnemio, quello che si vede da fuori, che da seduto non lavorava.' },
-            { ex: 'incline-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec',
+            { ex: 'incline-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '2 min',
               tecnica_speciale: 'capo lungo in allungamento',
               nota: 'Il bicipite lavora con la spalla estesa, quindi più allungato. Onestà sui dati: l\'idea che questo faccia crescere di più la parte alta del bicipite poggia su uno studio su donne non allenate con differenze di un decimo di centimetro (Kassiano 2025), e lo studio più controllato, del 2026, non trova nessuna differenza fra spalla estesa e neutra (Larsen 2026). Resta un ottimo curl, non l\'esercizio decisivo: carichi leggeri, posizione perfetta.' },
-            { ex: 'overhead-extension', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '1', rec: '75 sec',
+            { ex: 'overhead-extension', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '1', rec: '2 min',
               tecnica_speciale: 'capo lungo del tricipite', superset: 'in superserie con il curl, se vuoi finire prima',
               nota: 'Nell\'unico confronto diretto il tricipite è cresciuto del 19,9% con il braccio sopra la testa contro il 13,9% con il pushdown, su 21 persone non allenate (Maeo 2023): è il dato più forte a favore del lavoro in allungamento. Ultima serie: 3-4 ripetizioni parziali in basso quando non chiudi più il movimento completo.' }
           ]
@@ -5996,10 +6034,10 @@ var SCHEDA_SU_MISURA = {
             { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1', rec: '75 sec' },
             { ex: 'hip-thrust', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1', rec: '2 min', indiretti: ['Femorali'],
               nota: 'Accorpato al leg curl per non tornare due volte nella zona gambe. Tre serie e non due: glutei e femorali stanno sulla soglia minima efficace, 4 serie frazionarie a settimana (Pelland 2025); con la terza la superano entrambi.' },
-            { ex: 'preacher-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec',
+            { ex: 'preacher-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '2 min',
               tecnica_speciale: 'brachiale e porzione distale',
               nota: 'Complementare all\'incline curl: qui il picco di carico è nella parte bassa e colpisce il brachiale, il muscolo che spinge in fuori il bicipite.' },
-            { ex: 'pushdown', blocco: 'Braccia', serie: 3, rip: '12-15', rir: '0-1', rec: '1 min',
+            { ex: 'pushdown', blocco: 'Braccia', serie: 3, rip: '12-15', rir: '0-1', rec: '90 sec',
               superset: 'in superserie con il preacher, se vuoi finire prima' }
           ]
         },
@@ -6012,12 +6050,12 @@ var SCHEDA_SU_MISURA = {
             { ex: 'pulley-basso', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'] },
             { ex: 'leg-extension', blocco: 'Gambe', serie: 3, rip: '10-15', rir: '1', rec: '75 sec' },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '0-1', rec: '60 sec' },
-            { ex: 'curl-cavo-basso', blocco: 'Braccia', serie: 3, rip: '10-15', rir: '0-1', rec: '75 sec',
+            { ex: 'curl-cavo-basso', blocco: 'Braccia', serie: 3, rip: '10-15', rir: '0-1', rec: '90 sec',
               tecnica_speciale: 'tensione costante',
               nota: 'Il cavo tiene tensione anche in basso, dove il manubrio la perde. Ultima serie: 3-4 parziali nella parte bassa quando non chiudi più.' },
-            { ex: 'hammer-curl', blocco: 'Braccia', serie: 2, rip: '10-12', rir: '0-1', rec: '75 sec',
+            { ex: 'hammer-curl', blocco: 'Braccia', serie: 2, rip: '10-12', rir: '0-1', rec: '2 min',
               nota: 'Presa neutra per brachiale e brachioradiale: sono loro a dare la larghezza del braccio vista di lato. Di fila al curl ai cavi: stesso muscolo, si cambia solo attrezzo.' },
-            { ex: 'french-press', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec',
+            { ex: 'french-press', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '2 min',
               superset: 'in superserie con l\'hammer curl, se vuoi finire prima' },
             { ex: 'face-pull', blocco: 'Spalle', serie: 2, rip: '12-15', rir: '1', rec: '1 min' }
           ]
@@ -6043,10 +6081,10 @@ var SCHEDA_SU_MISURA = {
               nota: 'Le ripetizioni sono per gamba. Se la stabilità è precaria, tienile più alte e il carico più basso.' },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '0-1', rec: '60 sec',
               nota: 'Oggi le gambe le hai fatte con gli affondi, quindi alla pressa ci vai solo per questo: carico basso, avampiedi sul bordo della pedana, talloni nel vuoto. Se è occupata, in piedi su un rialzo con un manubrio in mano.' },
-            { ex: 'curl-concentrato', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec', unilaterale: true,
+            { ex: 'curl-concentrato', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '2 min', unilaterale: true,
               tecnica_speciale: 'isolamento totale',
               nota: 'Nessuno slancio possibile: è il suo pregio. Carichi bassi, esecuzione lenta; un braccio dopo l\'altro senza pausa.' },
-            { ex: 'french-press-manubrio', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '1', rec: '75 sec',
+            { ex: 'french-press-manubrio', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '1', rec: '2 min',
               tecnica_speciale: 'capo lungo del tricipite',
               superset: 'in superserie con il curl concentrato, se vuoi finire prima' }
           ]
@@ -6063,9 +6101,9 @@ var SCHEDA_SU_MISURA = {
               nota: 'Torna il rematore con il petto appoggiato del primo blocco, con ripetizioni più alte: il rematore a un braccio costava il doppio del tempo, e cambiare esercizio a ogni blocco non fa crescere di più.' },
             { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '10-15', rir: '1', rec: '75 sec' },
             { ex: 'hip-thrust', blocco: 'Gambe', serie: 3, rip: '8-12', rir: '1', rec: '2 min', indiretti: ['Femorali'] },
-            { ex: 'incline-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '75 sec',
+            { ex: 'incline-curl', blocco: 'Braccia', serie: 3, rip: '8-12', rir: '1', rec: '2 min',
               tecnica_speciale: 'capo lungo in allungamento' },
-            { ex: 'pushdown', blocco: 'Braccia', serie: 3, rip: '12-15', rir: '0-1', rec: '1 min',
+            { ex: 'pushdown', blocco: 'Braccia', serie: 3, rip: '12-15', rir: '0-1', rec: '90 sec',
               superset: 'in superserie con l\'incline curl, se vuoi finire prima' }
           ]
         },
@@ -6076,11 +6114,11 @@ var SCHEDA_SU_MISURA = {
             { ex: 'pulley-basso', blocco: 'Dorso', serie: 3, rip: '8-10', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'] },
             { ex: 'leg-extension', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '75 sec' },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '8-12', rir: '0-1', rec: '60 sec' },
-            { ex: 'hammer-curl', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '0-1', rec: '75 sec',
+            { ex: 'hammer-curl', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '0-1', rec: '2 min',
               nota: 'Presa neutra per brachiale e brachioradiale: sono loro a dare la larghezza del braccio vista di lato.' },
-            { ex: 'curl-inverso', blocco: 'Braccia', serie: 2, rip: '10-12', rir: '0-1', rec: '75 sec',
+            { ex: 'curl-inverso', blocco: 'Braccia', serie: 2, rip: '10-12', rir: '0-1', rec: '2 min',
               nota: 'Userai molto meno carico: è normale. Serve alla parte del braccio che di solito resta indietro. Di fila all\'hammer curl: stessa presa, stesso attrezzo.' },
-            { ex: 'overhead-extension', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '1', rec: '75 sec',
+            { ex: 'overhead-extension', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '1', rec: '2 min',
               superset: 'in superserie con il curl inverso, se vuoi finire prima' },
             { ex: 'face-pull', blocco: 'Spalle', serie: 2, rip: '12-15', rir: '1', rec: '1 min' }
           ]
@@ -6103,10 +6141,10 @@ var SCHEDA_SU_MISURA = {
               nota: 'Se non arrivi a 5 ripetizioni pulite usa la lat machine assistita e torna a provarle ogni settimana.' },
             { avvicinamento: 1, ex: 'leg-press', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '2 min', indiretti: ['Glutei'] },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '0-1', rec: '60 sec' },
-            { ex: 'incline-curl', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '0-1', rec: '75 sec',
+            { ex: 'incline-curl', blocco: 'Braccia', serie: 4, rip: '8-12', rir: '0-1', rec: '2 min',
               tecnica_speciale: 'capo lungo + parziali finali',
               nota: 'Quattro serie: è il blocco in cui il bicipite riceve più volume di tutto il ciclo. Ultima serie con parziali in allungamento.' },
-            { ex: 'overhead-extension', blocco: 'Braccia', serie: 4, rip: '10-14', rir: '0-1', rec: '75 sec',
+            { ex: 'overhead-extension', blocco: 'Braccia', serie: 4, rip: '10-14', rir: '0-1', rec: '2 min',
               tecnica_speciale: 'capo lungo + parziali finali',
               superset: 'in superserie con l\'incline curl, se vuoi finire prima' }
           ]
@@ -6120,8 +6158,8 @@ var SCHEDA_SU_MISURA = {
             { ex: 'chest-supported-row', blocco: 'Dorso', serie: 3, rip: '10-12', rir: '1-2', rec: '2 min', indiretti: ['Bicipiti'] },
             { ex: 'leg-curl-seduto', blocco: 'Gambe', serie: 3, rip: '12-15', rir: '1', rec: '75 sec' },
             { ex: 'hip-thrust', blocco: 'Gambe', serie: 3, rip: '10-15', rir: '1', rec: '2 min', indiretti: ['Femorali'] },
-            { ex: 'preacher-curl', blocco: 'Braccia', serie: 3, rip: '10-14', rir: '0-1', rec: '75 sec' },
-            { ex: 'french-press', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '1', rec: '75 sec',
+            { ex: 'preacher-curl', blocco: 'Braccia', serie: 3, rip: '10-14', rir: '0-1', rec: '2 min' },
+            { ex: 'french-press', blocco: 'Braccia', serie: 3, rip: '10-12', rir: '1', rec: '2 min',
               superset: 'in superserie con il preacher, se vuoi finire prima' }
           ]
         },
@@ -6133,10 +6171,10 @@ var SCHEDA_SU_MISURA = {
             { avvicinamento: 1, ex: 'affondi', blocco: 'Gambe', serie: 2, rip: '10-15', rir: '1', rec: '2 min', indiretti: ['Glutei'], unilaterale: true },
             { ex: 'calf-pressa', blocco: 'Gambe', serie: 2, rip: '12-15', rir: '0-1', rec: '60 sec',
               nota: 'Oggi le gambe le hai fatte con gli affondi, quindi alla pressa ci vai solo per questo: carico basso, avampiedi sul bordo della pedana, talloni nel vuoto. Se è occupata, in piedi su un rialzo con un manubrio in mano.' },
-            { ex: 'curl-cavo-basso', blocco: 'Braccia', serie: 3, rip: '12-20', rir: '0-1', rec: '75 sec',
+            { ex: 'curl-cavo-basso', blocco: 'Braccia', serie: 3, rip: '12-20', rir: '0-1', rec: '90 sec',
               tecnica_speciale: 'alte ripetizioni' },
-            { ex: 'hammer-curl', blocco: 'Braccia', serie: 3, rip: '12-15', rir: '0-1', rec: '75 sec' },
-            { ex: 'pushdown', blocco: 'Braccia', serie: 3, rip: '12-20', rir: '0-1', rec: '75 sec',
+            { ex: 'hammer-curl', blocco: 'Braccia', serie: 3, rip: '12-15', rir: '0-1', rec: '2 min' },
+            { ex: 'pushdown', blocco: 'Braccia', serie: 3, rip: '12-20', rir: '0-1', rec: '90 sec',
               superset: 'in superserie con l\'hammer curl, se vuoi finire prima' },
             { ex: 'face-pull', blocco: 'Spalle', serie: 2, rip: '15-20', rir: '1', rec: '1 min' }
           ]
@@ -6152,8 +6190,9 @@ var SCHEDA_SU_MISURA = {
   tempo: {
     titolo: 'Come stare nell\'ora',
     intro: 'La seduta ideale dura un\'ora, e va bene fino a un\'ora e mezza. Da ottobre 2026 la scheda ha ' +
-      'recuperi di 2 minuti sui multiarticolari e di 75 secondi sugli isolamenti e una serie di avvicinamento ' +
-      'in meno: sulla carta ogni seduta sta fra 55 e 61 minuti, 70-75 con le pause normali. Se una seduta ' +
+      'recuperi di 2 minuti sui multiarticolari, 2 minuti anche su curl ed estensioni (90 secondi ai cavi), ' +
+      '60-75 secondi sugli altri isolamenti e una serie di avvicinamento ' +
+      'in meno: sulla carta ogni seduta sta fra 58 e 63 minuti, 73-79 con le pause normali. Se una seduta ' +
       'supera l\'ora e mezza, il tempo non è nelle serie: è nei minuti in cui non ti alleni.',
     voci: [
       ['Carica la pressa una volta sola', 'Metti subito il peso delle tre serie e non toccarlo più. ' +
@@ -6365,7 +6404,7 @@ var SCHEDA_SU_MISURA = {
       d: 'Quando su una serie non completi più il movimento intero, invece di fermarti fai altre 3-4 ripetizioni <b>parziali nella metà bassa</b>, dove il muscolo è allungato. Le trovi indicate su curl e overhead extension, sull\'ultima serie.<br><br>È una tecnica di intensificazione: usala dove è scritto, non ovunque.' },
 
     { t: 'Recupero fra le serie',
-      d: '2 minuti sui multiarticolari (3 solo sulla panca pesante del terzo blocco), 60-75 secondi sugli isolamenti. È indicato per ogni esercizio e il timer parte da solo quando spunti una serie.<br><br>Recuperare troppo poco sui pesanti fa perdere ripetizioni nelle serie dopo, e quelle ripetizioni sono lo stimolo che cerchi.' },
+      d: '2 minuti sui multiarticolari (3 solo sulla panca pesante del terzo blocco) e sulle braccia con pesi liberi, 90 secondi sulle braccia ai cavi, 60-75 secondi sugli altri isolamenti. È indicato per ogni esercizio e il timer parte da solo quando spunti una serie.<br><br>Recuperare troppo poco sui pesanti fa perdere ripetizioni nelle serie dopo, e quelle ripetizioni sono lo stimolo che cerchi.' },
 
     { t: 'Superserie e jumpset',
       d: 'Due esercizi di fila senza recupero in mezzo. Nella tua scheda è segnata come <b>facoltativa</b> in un punto solo, dentro il blocco braccia, fra <b>bicipite e tricipite</b>: mentre lavora uno l\'altro recupera per davvero, quindi arrivi alla serie successiva senza perdere ripetizioni e togli 3-5 minuti alla seduta.<br><br>Da settembre 2026 c\'è anche la misura: una meta-analisi di 19 studi (Zhang 2025) trova stesse ripetizioni e stesso volume delle serie tradizionali, seduta più corta e adattamenti cronici simili, al prezzo di più fatica percepita e lattato. Resta facoltativa perché è più dura, non perché sia meno efficace.<br><br>Non farla mai fra due esercizi che usano lo stesso muscolo, né fra due multiarticolari pesanti.' },
@@ -6477,7 +6516,7 @@ var SCHEDA_SU_MISURA = {
          'dell\'esercizio che per te conta di più.' },
 
     { t: 'Perché i recuperi sono diversi da esercizio a esercizio',
-      d: 'La stima è di <b>55-61 minuti</b> a seduta (68-76 con le pause normali), riscaldamento e ' +
+      d: 'La stima è di <b>58-63 minuti</b> a seduta (73-79 con le pause normali), riscaldamento e ' +
          'avvicinamento compresi, addominali esclusi. Ci si arriva soprattutto sistemando i recuperi ' +
          'dove servono davvero.<br><br>Il recupero lungo non è ' +
          'uguale per tutti gli esercizi. Nel confronto sperimentale fra 3 minuti e 1 minuto ' +
@@ -6487,9 +6526,12 @@ var SCHEDA_SU_MISURA = {
          'oltre un anno di esperienza) confermano la stessa direzione: recuperi sopra i 60-90 ' +
          'secondi aiutano, ma l\'effetto è <b>più debole sugli isolamenti</b> che sui ' +
          'multiarticolari.<br><br>Perciò: 3 minuti pieni solo sulla panca a ripetizioni basse del ' +
-         'terzo blocco, 2 minuti sugli altri multiarticolari, 60-75 secondi su curl, estensioni, ' +
-         'alzate e polpacci. Sugli isolamenti accorciare il recupero costa quasi nulla in crescita ' +
-         'e toglie diversi minuti alla seduta.<br><br>Lo studio di Schoenfeld ' +
+         'terzo blocco, 2 minuti sugli altri multiarticolari, 60-75 secondi su ' +
+         'alzate, leg extension, leg curl e polpacci. Sugli isolamenti accorciare il recupero costa poco in crescita ' +
+         'e toglie diversi minuti alla seduta.<br><br><b>Le braccia fanno eccezione dal novembre 2026</b>: con 75 ' +
+         'secondi non tenevi le stesse ripetizioni dalla prima all\'ultima serie, e le ripetizioni perse sono stimolo perso. ' +
+         'Ora 2 minuti su curl ed estensioni con pesi liberi e 90 secondi ai cavi: la seduta si allunga di 3-4 minuti. ' +
+         'Se vuoi recuperarli, c\'è la superserie bicipite-tricipite.<br><br>Lo studio di Schoenfeld ' +
          'è anche il più vicino a te: uomini allenati, tre sedute total body a settimana, 3 × 8-12 ' +
          'su sette esercizi.' },
 
@@ -29064,7 +29106,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw0rtzwh';
+var BUILD = 'vmw0ujagb';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -29094,6 +29136,7 @@ var S = {
   scambi: {},     // v21: { 'panca-piana': {con, alt, zona, tipo, dal} } sostituzioni accettate
   riprese: {},    // v21: { 'panca-piana': 'AAAA-MM-GG' } rientro più leggero fino a quella data
   controlloBlocco: null, // v21: '<giro>-<blocco>' dell'ultimo controllo dei dolori
+  prefEsercizi: {}, // v28: { 'panca-piana': { bil: 20 }, 'barchetta': { min: 1 } } bilanciere scelto, tempo in minuti
   vista: 'home', ctx: {}
 };
 
@@ -29172,12 +29215,13 @@ function datiDaSalvare() {
     riprese: S.riprese,
     controlloBlocco: S.controlloBlocco,
     checklist: S.checklist, // v24: le spunte di oggi della checklist prima della seduta
-    menu: S.menu // v26: seme della settimana e piatti cambiati del menù
+    menu: S.menu, // v26: seme della settimana e piatti cambiati del menù
+    prefEsercizi: S.prefEsercizi // v28: bilanciere scelto e minuti/secondi per esercizio
   };
 }
 var CHIAVI_DATI = ['profilo', 'log', 'diario', 'ultimo', 'prodotti', 'exExtra',
                    'preferiti', 'cibiMiei', 'dispensa', 'questionario', 'dolori', 'scambi', 'riprese',
-                   'checklist', 'menu']; // v27: mancavano, il ripristino li perdeva (controlloBlocco è una stringa, a parte)
+                   'checklist', 'menu', 'prefEsercizi'];// v27: mancavano, il ripristino li perdeva (controlloBlocco è una stringa, a parte)
 
 /* Se il salvataggio fallisce l'utente DEVE saperlo: prima la cosa passava in
    silenzio e ci si accorgeva dei dati persi solo alla riapertura. */
@@ -29547,26 +29591,43 @@ function rampa(kgLavoro, n, passo) {
   });
 }
 
-/* Il passo di arrotondamento dipende dall'attrezzo: i manubri esistono di
-   chilo in chilo, i dischi del bilanciere no. */
+/* Il passo di arrotondamento dipende dall'attrezzo. v28: solo la riga «Attrezzo»
+   e il nome, non le frasi di spiegazione («dove il manubrio non ne ha») che
+   facevano passare un curl al cavo per un esercizio coi manubri. */
 function descrizioneAttrezzo(exId) {
   var ex = esercizioDi(exId) || {};
-  return ((ex.setup || []).map(function (r) { return r[1]; }).join(' ') + ' ' +
+  return ((ex.setup || []).filter(function (r) { return r[0] === 'Attrezzo'; }).map(function (r) { return r[1]; }).join(' ') + ' ' +
           (ex.attrezzo || '') + ' ' + (ex.nome || '')).toLowerCase();
 }
+/* v28: i manubri della palestra salgono di 2 kg in 2 kg (11 e 13 non esistono) */
+function usaManubri(exId) { return /manubri|manubrio/.test(descrizioneAttrezzo(exId)); }
 function passoCarico(exId) {
-  return /manubri|manubrio/.test(descrizioneAttrezzo(exId)) ? 1 : 2.5;
+  return usaManubri(exId) ? 2 : 2.5;
 }
 
 /* Con il bilanciere c'e' un pavimento: il bilanciere olimpico pesa 20 kg da
    solo, quindi «15 kg» sulla rampa e' un numero che non esiste. Sotto quella
    soglia si dice semplicemente di partire a vuoto. */
 function pesoMinimo(exId) {
-  var t = descrizioneAttrezzo(exId);
-  if (/bilanciere olimpico/.test(t)) return 20;
-  if (/bilanciere ez|ez\b/.test(t)) return 10;
-  return 0;
+  return usaBilanciere(exId) ? pesoBilanciere(exId) : 0;
 }
+
+/* v28: il bilanciere si sceglie una volta per esercizio; nelle serie si scrivono
+   solo i dischi e il totale (quello che si salva) lo somma l'app. Il multipower
+   resta fuori: il suo bilanciere guidato pesa diverso da palestra a palestra. */
+var BILANCIERI = [[20, 'olimpico 20'], [15, '15'], [10, '10'], [9, 'EZ 9']];
+function usaBilanciere(exId) {
+  var t = descrizioneAttrezzo(exId);
+  return /bilanciere/.test(t) && !/multipower|guidat|smith/.test(t);
+}
+function prefEx(exId) { return S.prefEsercizi[exId] || (S.prefEsercizi[exId] = {}); }
+function pesoBilanciere(exId) {
+  var p = S.prefEsercizi && S.prefEsercizi[exId];
+  if (p && typeof p.bil === 'number') return p.bil;
+  return /\bez\b/.test(descrizioneAttrezzo(exId)) ? 9 : 20;
+}
+/* v28: esercizi a tempo (plank, barchetta): le «ripetizioni» sono secondi */
+function aTempo(e) { return /sec|min/.test(String(e.rip)); }
 
 /* ---------- suggerimento di progressione ---------- */
 /* Doppia progressione: se nell'ultima seduta tutte le serie hanno raggiunto
@@ -29583,8 +29644,14 @@ function suggerimento(exId, rangeRip) {
     'rendilo più difficile (discesa più lenta, una pausa in basso, la variante più dura o uno zaino carico) e riparti dal basso del range.', kg: 0 };
   if (tutte) {
     var inc = kg >= 40 ? 5 : kg >= 20 ? 2.5 : 1;
+    /* manubri: il paio successivo, sempre pari */
+    var nuovo = usaManubri(exId) ? Math.floor(kg / 2) * 2 + 2 : kg + inc;
+    /* ai cavi il salto della pila può essere troppo: la piastrina o un manubrio piccolo sopra la pila */
+    var cavi = !usaManubri(exId) && /\bcavo|\bcavi\b|pulley|castello/.test(descrizioneAttrezzo(exId));
     return { tipo: 'sali', testo: 'Hai chiuso tutte le serie a ' + max + ' ripetizioni: sali a ' +
-             (kg + inc) + ' kg e riparti dal basso del range.', kg: kg + inc };
+             nuovo + ' kg e riparti dal basso del range.' +
+             (cavi ? ' Se il salto della pila è troppo grande, aggancia una piastrina o appoggia un manubrio piccolo sopra la pila.' : ''),
+             kg: nuovo };
   }
   var sotto = prec.some(function (s) { return s.rip < min; });
   if (sotto) return { tipo: 'tieni', testo: 'La volta scorsa sei sceso sotto le ' + min +
@@ -29699,6 +29766,8 @@ function movimentoRidotto() {
    di anima(). */
 function applica(v, ctx, dir) {
   var vecchia = S.vista, vecchioCtx = S.ctx || {};
+  /* v28: il punto dell'elenco a cui eri, per ritrovarlo tornando indietro */
+  vecchioCtx._y = window.scrollY;
   /* lo stato cambia subito, sincrono: chi chiama vai() e poi ritocca S.ctx
      (succede) non deve vedersi sovrascrivere il ritocco dal ridisegno */
   chiudiLente();
@@ -29710,7 +29779,7 @@ function applica(v, ctx, dir) {
     render();
     /* tornando dalla ricetta, la foto rientra nella sua scheda */
     if (vecchia === 'ricetta' && vecchioCtx.ricetta) nomeFotoVT(vecchioCtx.ricetta);
-    window.scrollTo(0, 0);
+    window.scrollTo(0, dir === 'indietro' ? (S.ctx._y || 0) : 0);
   };
   if (!document.startViewTransition || movimentoRidotto() || !vecchia) {
     fai();
@@ -30451,6 +30520,21 @@ function togliExtra(id) {
   save();
 }
 
+/* v28: gli esercizi dell'app nella ricerca di «Aggiungi un esercizio». `tempo` è la
+   durata proposta per le tenute (barchetta, plank): si registrano in secondi. */
+function eserciziAppCerca(q) {
+  var par = String(q || '').toLowerCase().split(/\s+/).filter(Boolean);
+  return Object.keys(ESERCIZI).map(function (id) {
+    var x = ESERCIZI[id];
+    var att = (x.setup || []).filter(function (r) { return r[0] === 'Attrezzo'; })[0];
+    return { id: id, media: null, nome: x.nome, en: x.en || '', attrezzo: att ? att[1] : '',
+             muscolo: x.target || x.gruppo || '', tempo: x.tempo_s ? x.tempo_s + ' sec' : '' };
+  }).filter(function (v) {
+    var t = (v.nome + ' ' + v.en + ' ' + v.muscolo + ' ' + v.id).toLowerCase();
+    return par.every(function (p) { return t.indexOf(p) >= 0; });
+  }).slice(0, par.length ? 12 : 1e4);
+}
+
 /* ---------- vista libreria ---------- */
 function vLibreria() {
   var q = S.ctx.q || '';
@@ -30475,7 +30559,17 @@ function vLibreria() {
     h += '<p class="dim">Ancora una lettera…</p>';
   } else {
     var ris = libCerca(q, filtro, 40);
-    if (!ris.length) {
+    /* v28: prima gli esercizi dell'app (con foto e spiegazione), es. la barchetta */
+    var app = !filtro && q.length >= 2 ? eserciziAppCerca(q) : [];
+    if (app.length) {
+      h += '<div class="lib-ris">' + app.map(function (v) {
+        return '<button class="lib-r" data-libapp="' + esc(v.id) + '"><b>' + esc(v.nome) + '</b>' +
+          '<span class="tagrow">' + (v.attrezzo ? '<span class="tag">' + esc(v.attrezzo) + '</span>' : '') +
+          '<span class="tag hi">' + esc(v.muscolo) + '</span>' + (v.tempo ? '<span class="tag">a tempo</span>' : '') +
+          '</span></button>';
+      }).join('') + '</div>';
+    }
+    if (!ris.length && !app.length) {
       h += '<p class="dim">Niente con queste parole. Prova con il nome inglese ' +
            '(«incline curl»), oppure aggiungilo a mano qui sotto.</p>';
     }
@@ -30524,6 +30618,12 @@ function collegaLibreria() {
       pannelloExtra(v);
     };
   });
+  document.querySelectorAll('[data-libapp]').forEach(function (b) {
+    b.onclick = function () {
+      var v = eserciziAppCerca('').filter(function (x) { return x.id === b.dataset.libapp; })[0];
+      if (v) pannelloExtra(v);
+    };
+  });
   var mio = document.getElementById('lib-mio-ok');
   if (mio) mio.onclick = function () {
     var n = (document.getElementById('lib-mio').value || '').trim();
@@ -30546,18 +30646,35 @@ function pannelloExtra(v) {
     '<p class="dim">' + esc(v.en) + ' · ' + esc(v.attrezzo) + '</p>' +
     '<div class="pan-riga">' +
       '<label>Serie<input type="number" id="pe-serie" value="3" min="1" max="10"></label>' +
-      '<label>Ripetizioni<input id="pe-rip" value="8-12"></label>' +
+      '<label>Quante<input id="pe-rip" value="' + (v.tempo ? v.tempo : '8-12') + '"></label>' +
       '<label>Recupero<input id="pe-rec" value="90 sec"></label>' +
     '</div>' +
+    /* v28: le tenute (barchetta, plank) si contano in secondi o in minuti */
+    '<div class="seg" id="pe-unita">' + [['rip', 'ripetizioni'], ['sec', 'secondi'], ['min', 'minuti']].map(function (u) {
+      return '<button data-u="' + u[0] + '" class="' + ((v.tempo ? 'sec' : 'rip') === u[0] ? 'on' : '') + '">' + u[1] + '</button>';
+    }).join('') + '</div>' +
     '<button class="primary" id="pe-ok">Aggiungi alla giornata di oggi</button>' +
     '<button class="link" id="pe-no">Annulla</button>' +
     '</div></div>');
   document.body.appendChild(n);
   document.getElementById('pe-no').onclick = function () { n.remove(); };
+  var unita = v.tempo ? 'sec' : 'rip';
+  n.querySelectorAll('[data-u]').forEach(function (b) {
+    b.onclick = function () {
+      unita = b.dataset.u;
+      n.querySelectorAll('[data-u]').forEach(function (x) { x.classList.toggle('on', x === b); });
+    };
+  });
   document.getElementById('pe-ok').onclick = function () {
+    /* «1» in minuti diventa «60 sec», «1-2» diventa «60-120 sec»: in serie si scrive poi in minuti */
+    var rip = (document.getElementById('pe-rip').value || '8-12').replace(/\s*(sec|s|min)\s*$/i, '');
+    if (unita === 'min') {
+      rip = rip.split('-').map(function (x) { return Math.round(parseFloat(String(x).replace(',', '.')) * 60) || 60; }).join('-') + ' sec';
+      prefEx(v.id).min = 1;
+    } else if (unita === 'sec') rip += ' sec';
     aggiungiExtra(v,
       parseInt(document.getElementById('pe-serie').value, 10) || 3,
-      document.getElementById('pe-rip').value || '8-12',
+      rip,
       document.getElementById('pe-rec').value || '90 sec');
     n.remove();
     toast(v.nome + ' aggiunto a oggi');
@@ -30653,7 +30770,8 @@ function vEsercizio() {
 
   /* i salti non si progrediscono in chili: conta la qualità di ogni salto */
   var sug = e.fisso && e.blocco === 'Potenza' ? null : suggerimento(e.ex, e.rip);
-  if (sug) h += '<div class="hint ' + (sug.tipo === 'sali' ? 'good' : '') + '">' + esc(sug.testo) + '</div>';
+  if (sug) h += '<div class="hint ' + (sug.tipo === 'sali' ? 'good' : '') + '">' + esc(sug.testo) +
+    (usaBilanciere(e.ex) && sug.kg ? ' I chili sono il totale, bilanciere compreso.' : '') + '</div>';
 
   /* serie */
   var prec = S.ultimo[e.ex] || [];
@@ -30695,7 +30813,23 @@ function vEsercizio() {
   }
 
   h += '<h2>Serie di oggi</h2>';
-  h += '<div class="serie-head"><span></span><span>kg</span><span>ripetizioni</span><span></span></div>';
+  /* v28: col bilanciere si scrivono i dischi, il totale lo somma l'app (si salva il totale) */
+  var bil = usaBilanciere(e.ex) ? pesoBilanciere(e.ex) : 0;
+  var tempo = aTempo(e), inMin = tempo && !!(S.prefEsercizi[e.ex] || {}).min;
+  if (bil) {
+    var mio = !BILANCIERI.some(function (b) { return b[0] === bil; });
+    h += '<div class="bil-scelta"><span>Bilanciere</span>' + BILANCIERI.map(function (b) {
+      return '<button class="pill' + (b[0] === bil ? ' on' : '') + '" data-bil="' + b[0] + '">' + b[1] + ' kg</button>';
+    }).join('') + '<label class="bil-altro">altro <input type="number" inputmode="decimal" step="0.5" min="0" max="50" id="bil-altro" value="' +
+      (mio ? bil : '') + '"> kg</label></div>';
+  }
+  if (tempo) {
+    h += '<div class="seg unita-t"><button data-unita="s" class="' + (inMin ? '' : 'on') + '">secondi</button>' +
+         '<button data-unita="min" class="' + (inMin ? 'on' : '') + '">minuti</button></div>';
+  }
+  var aVista = function (sec) { return sec === undefined ? '' : inMin ? Math.round(sec / 60 * 100) / 100 : sec; };
+  h += '<div class="serie-head"><span></span><span>' + (bil ? 'dischi kg' : 'kg') + '</span><span>' +
+       (tempo ? (inMin ? 'minuti' : 'secondi') : 'ripetizioni') + '</span><span></span></div>';
   var oggiLog = S.log[oggi()];
   var salvate = (oggiLog && oggiLog.serie && oggiLog.serie[e.ex]) || [];
   for (var i = 0; i < nSerie; i++) {
@@ -30704,12 +30838,13 @@ function vEsercizio() {
     h += '<div class="serie" data-i="' + i + '">' +
       '<span class="n">' + (i + 1) + '</span>' +
       '<input type="number" inputmode="decimal" step="0.5" class="kg' + (s.kg ? ' filled' : '') +
-        '" value="' + (s.kg !== undefined ? s.kg : '') + '" placeholder="' + (ph.kg !== undefined ? ph.kg : '–') + '">' +
-      '<input type="number" inputmode="numeric" class="rip' + (s.rip ? ' filled' : '') +
-        '" value="' + (s.rip !== undefined ? s.rip : '') + '" placeholder="' + (ph.rip !== undefined ? ph.rip : e.rip) + '">' +
+        '" value="' + (s.kg !== undefined ? s.kg - bil : '') + '" placeholder="' + (ph.kg !== undefined ? Math.max(0, ph.kg - bil) : '–') + '">' +
+      '<input type="number" inputmode="' + (inMin ? 'decimal" step="0.25' : 'numeric') + '" class="rip' + (s.rip ? ' filled' : '') +
+        '" value="' + aVista(s.rip) + '" placeholder="' + (ph.rip !== undefined ? aVista(ph.rip) : e.rip) + '">' +
       '<button class="ok' + (s.fatto ? ' on' : '') + '">✓</button>' +
       '</div>';
   }
+  if (bil) h += '<p class="dim" id="tot-bil"></p>';
   h += '<div class="salvate" id="contatore"></div>';
   h += '<div class="note">I numeri in grigio sono la tua ultima prestazione su questo esercizio. ' +
        'Il segno di spunta salva la serie e fa partire il timer di recupero. ' +
@@ -30809,6 +30944,7 @@ function applicaBackup(testo) {
   if (!S.prodotti) S.prodotti = {};
   /* stessa ragione per i campi nati con la v11 e con la v12 */
   if (!S.preferiti) S.preferiti = {};
+  if (!S.prefEsercizi) S.prefEsercizi = {};
   if (!S.cibiMiei) S.cibiMiei = {};
   if (!S.dispensa) S.dispensa = {};
   /* un backup della v9 arriva col diario vecchio: va migrato qui come
@@ -31705,18 +31841,30 @@ function vNumeri(f) {
 
 /* Cerca fra ricette (nome e ingredienti) e alimenti del diario. */
 function risultatiRicerca(q) {
-  var h = '', ric = [];
+  /* v28: anche cercando si sceglie il pasto e la portata (prima arrivava tutto mescolato) */
+  var h = '', ric = [], pq = S.ctx.pastoQ || 'tutte', gruppi = schedaPasto(pq).gruppi;
+  /* dall'inizio di una parola: «pollo» non deve trovare i «cipollotti» */
+  var reQ = new RegExp('(^|[^a-z0-9à-ÿ])' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\/*__JS__*/'));
   PASTI.gruppi.forEach(function (g, gi) {
+    if (gruppi.indexOf(gi) < 0) return;
     g.voci.forEach(function (v, vi) {
       var testo = (v.nome + ' ' + v.ing.map(function (r) { return r[0]; }).join(' ')).toLowerCase();
-      if (testo.indexOf(q) >= 0 && ricettaAdatta(v)) ric.push({ g: g, v: v, id: gi + '-' + vi });
+      if (reQ.test(testo) && ricettaAdatta(v) && nelleScelte(v)) ric.push({ v: v, gi: gi, vi: vi });
     });
   });
+  h += '<div class="seg tabs cinque">' + SCHEDE_PASTO.map(function (t) {
+    return '<button data-pastoQ="' + t.id + '" class="' + (pq === t.id ? 'on' : '') + '">' + t.nome + '</button>';
+  }).join('') + '</div>';
+  h += '<div class="scelte" id="filtri-ricette"><label class="scelta"><span>Portata</span><select data-sceltaR="Portata">' +
+    '<option value="">tutte</option>' + PORTATE.map(function (o) {
+      return '<option value="' + o[0] + '"' + (S.ctx.porR === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+    }).join('') + '</select></label></div>';
 
   var ali = ALIMENTI.filter(function (a) { return a.n.toLowerCase().indexOf(q) >= 0; });
 
   if (!ric.length && !ali.length) {
-    return '<div class="hint">Nessun risultato per &laquo;' + esc(q) + '&raquo;. Prova con il nome ' +
+    return h + '<div class="hint">Nessun risultato per &laquo;' + esc(q) + '&raquo;' +
+           (pq !== 'tutte' || S.ctx.porR ? ' con il pasto e la portata scelti' : '') + '. Prova con il nome ' +
            'di un ingrediente: pollo, riso, yogurt, tonno.</div>';
   }
 
@@ -31724,14 +31872,8 @@ function risultatiRicerca(q) {
     /* con 880 ricette una parola comune come «pomodoro» ne tira su duecento:
        se ne mostrano 40, come si fa gia' con gli alimenti */
     h += '<h2>Ricette (' + ric.length + ')</h2><div class="griglia-pasti">';
-    ric.slice(0, 40).forEach(function (r) {
-      var liv = semRicetta(r.v);
-      h += '<div role="button" tabindex="0" class="pasto sem-' + liv + '" data-ricetta="' + r.id + '">' +
-        immaginePiatto(r.v) +
-        '<div class="pasto-t"><b>' + esc(r.v.nome) + '</b>' +
-        '<span>' + rigaMacro(r.v) + ' &middot; ' + esc(r.g.titolo) + '</span>' +
-        pastigliaSem(liv) + '</div></div>';
-    });
+    /* la stessa scheda dell'elenco: con la stella dei preferiti */
+    ric.slice(0, 40).forEach(function (r) { h += schedaRicetta(r.v, r.gi, r.vi); });
     h += '</div>';
     if (ric.length > 40) {
       h += '<p class="dim">Mostrate le prime 40 di ' + ric.length + ': restringi la ricerca.</p>';
@@ -33896,6 +34038,37 @@ function collegaEsercizio() {
   }
   aggiornaContatore();
 
+  /* v28: bilanciere e unità del tempo */
+  var bil = usaBilanciere(e.ex) ? pesoBilanciere(e.ex) : 0;
+  var inMin = aTempo(e) && !!(S.prefEsercizi[e.ex] || {}).min;
+  function totaliBil() {
+    var n = document.getElementById('tot-bil');
+    if (!n) return;
+    var d = S.log[oggi()], ss = (d && d.serie && d.serie[e.ex]) || [];
+    var t = ss.map(function (x, k) { return x && x.kg !== undefined ? (k + 1) + 'ª ' + x.kg + ' kg' : ''; }).filter(Boolean);
+    n.textContent = 'Totale con il bilanciere da ' + bil + ' kg' + (t.length ? ': ' + t.join(' · ') : ': scrivi i dischi, la somma la faccio io.');
+  }
+  totaliBil();
+  /* cambiando bilanciere i dischi già scritti oggi restano quelli: cambia il totale */
+  function nuovoBil(n) {
+    if (!(n >= 0 && n <= 50) || n === bil) return;
+    var d = S.log[oggi()], ss = (d && d.serie && d.serie[e.ex]) || [];
+    ss.forEach(function (x) { if (x && x.kg !== undefined) x.kg = x.kg - bil + n; });
+    prefEx(e.ex).bil = n;
+    save(); render();
+  }
+  document.querySelectorAll('[data-bil]').forEach(function (b) {
+    b.onclick = function () { nuovoBil(+b.dataset.bil); };
+  });
+  var altro = document.getElementById('bil-altro');
+  if (altro) altro.onchange = function () { if (altro.value !== '') nuovoBil(parseFloat(altro.value)); };
+  document.querySelectorAll('[data-unita]').forEach(function (b) {
+    b.onclick = function () {
+      if (b.dataset.unita === 'min') prefEx(e.ex).min = 1; else delete prefEx(e.ex).min;
+      save(); render();
+    };
+  });
+
   document.querySelectorAll('.serie').forEach(function (row) {
     var i = +row.dataset.i;
     var kg = row.querySelector('.kg'), rip = row.querySelector('.rip'), ok = row.querySelector('.ok');
@@ -33910,8 +34083,9 @@ function collegaEsercizio() {
       if (!S.log[d].serie[e.ex]) S.log[d].serie[e.ex] = [];
       var vecchia = S.log[d].serie[e.ex][i] || {};
       S.log[d].serie[e.ex][i] = {
-        kg: kg.value === '' ? undefined : parseFloat(kg.value),
-        rip: rip.value === '' ? undefined : parseInt(rip.value, 10),
+        kg: kg.value === '' ? undefined : parseFloat(kg.value) + bil,
+        /* a tempo si salva sempre in secondi */
+        rip: rip.value === '' ? undefined : inMin ? Math.round(parseFloat(rip.value) * 60) : parseInt(rip.value, 10),
         fatto: fatto === undefined ? !!vecchia.fatto : fatto,
         /* ora in cui la serie e' stata spuntata: da qui l'app ricava la durata
            reale della seduta invece di limitarsi a stimarla */
@@ -33927,14 +34101,17 @@ function collegaEsercizio() {
       var compl = S.log[d].serie[e.ex].filter(function (s) { return s && s.fatto && s.kg; });
       if (compl.length) S.ultimo[e.ex] = compl.map(function (s) { return { kg: s.kg, rip: s.rip }; });
       save();
+      totaliBil();
     }
+    var kgTot = function () { return kg.value === '' ? '?' : parseFloat(kg.value) + bil; };
+    var ripTesto = function () { return (rip.value || '?') + (aTempo(e) ? (inMin ? ' min' : ' s') : ''); };
     kg.oninput = function () { kg.classList.toggle('filled', !!kg.value); scrivi(); };
     rip.oninput = function () { rip.classList.toggle('filled', !!rip.value); scrivi(); };
     ok.onclick = function () {
       var on = !ok.classList.contains('on');
       ok.classList.toggle('on', on);
       if (on && !kg.value && kg.placeholder !== '–') kg.value = kg.placeholder;
-      if (on && !rip.value && /^\d+$/.test(rip.placeholder)) rip.value = rip.placeholder;
+      if (on && !rip.value && /^\d+(\.\d+)?$/.test(rip.placeholder)) rip.value = rip.placeholder;
       kg.classList.toggle('filled', !!kg.value); rip.classList.toggle('filled', !!rip.value);
       scrivi(on);
       if (on) {
@@ -33950,8 +34127,8 @@ function collegaEsercizio() {
           if (mc) mc.textContent = 'Allenamento finito: ' + fmtMinuti(lg.fine - lg.inizio);
           toast('Ultima serie: allenamento finito in ' + fmtMinuti(lg.fine - lg.inizio));
         } else toast(ultima
-          ? 'Esercizio completato: ' + (kg.value || '?') + ' kg × ' + (rip.value || '?')
-          : 'Serie ' + (i + 1) + ' salvata: ' + (kg.value || '?') + ' kg × ' + (rip.value || '?'));
+          ? 'Esercizio completato: ' + kgTot() + ' kg × ' + ripTesto()
+          : 'Serie ' + (i + 1) + ' salvata: ' + kgTot() + ' kg × ' + ripTesto());
       } else {
         /* togliendo la spunta il recupero non ha piu' motivo di andare avanti */
         fermaTimer();
@@ -33976,6 +34153,9 @@ function collegaNutrizione() {
   /* schede colazione / pranzo / merenda / cena */
   document.querySelectorAll('[data-pasto]').forEach(function (b) {
     b.onclick = function () { S.ctx.pasto = b.dataset.pasto; S.ctx.nsez = 'pasti'; rifaiElenco(); };
+  });
+  document.querySelectorAll('[data-pastoQ]').forEach(function (b) {
+    b.onclick = function () { S.ctx.pastoQ = b.dataset.pastoq; render(); };
   });
   /* passaggio fra i pasti e la parte con numeri e regole */
   /* Arrivando dal diario («i fermenti servono?») si apre la sezione giusta e
