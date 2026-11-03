@@ -2,16 +2,13 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0e13">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Full body 3× — priorità braccia</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1216'/%3E%3Cg stroke='%234da3ff' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M8 16h16'/%3E%3Cpath d='M7 11v10M25 11v10'/%3E%3C/g%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap">
 <style>/* ============================================================
    Interfaccia — mobile first, tema scuro (palestra = luce forte,
    schermo scuro e contrasti alti si leggono meglio a colpo d'occhio)
@@ -30,7 +27,7 @@
   --line-soft: #1e2733;
   --text: #f0f4f9;
   --text-dim: #8c99ab;
-  --text-faint: #5d6a7c;
+  --text-faint: #828fa1; /* v27: era #5d6a7c (3,1:1); ora ≥ 4,5:1 su bg, surface e surface-2 (WCAG AA) */
 
   --accent: #35d0e8;
   --accent-2: #4d8dff;
@@ -47,7 +44,7 @@
   --radius-s: 11px;
   --tap: 48px;
 
-  --font: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
 }
 
@@ -664,6 +661,7 @@ i.facolt {
   font-size: 16px; font-family: var(--font); height: 100%;
 }
 .cerca input:focus { outline: none; }
+.cerca:focus-within { border-color: var(--accent); } /* v27: il contorno passa al riquadro, non sparisce */
 .cerca input::-webkit-search-cancel-button { display: none; }
 .cerca button {
   background: none; border: 0; color: var(--text-dim); font-size: 22px;
@@ -26503,7 +26501,7 @@ function scansionaAvvia(quando) {
          sistema, che il permesso ce l'ha gia' */
       '<label class="scan-foto" id="scan-foto-l">' +
         '<input type="file" accept="image/*" capture="environment" id="scan-foto">' +
-        '<svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4' +
+        '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4' +
         'a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>' +
         '<span><b>Scatta una foto del codice</b>' +
         '<i>usa la fotocamera del telefono, senza permessi da dare</i></span></label>' +
@@ -27986,7 +27984,9 @@ function vQuestionario() {
   if (p === 0) {
     h += '<p>Ti faccio qualche domanda, una sezione alla volta. Dalle risposte l\'app costruisce ' +
       'la <b>tua</b> scheda: struttura, esercizi, serie e calorie, ognuno con il perché e la fonte ' +
-      'scientifica. Le risposte restano <b>soltanto su questo telefono</b>.</p>';
+      'scientifica. Le risposte restano <b>soltanto su questo telefono</b>, a meno che tu non crei un account.</p>' +
+      '<p class="dim">Hai già un account o un file di backup? <a href="#" data-go="impostazioni">Recupera i tuoi dati</a>' +
+      ' · <a href="#" data-legale="privacy">Privacy</a></p>';
     h += '<div class="card">';
     h += '<label class="field"><span>Data di nascita</span><input type="date" id="qz-nascita" value="' + esc(d.nascita) + '"></label>';
     h += '<div class="field"><span>Sesso</span>' + pillole('sesso', [['m', 'Uomo'], ['f', 'Donna']], d.sesso, true) + '</div>';
@@ -28662,6 +28662,385 @@ function collegaMenu() {
 if (false) module.exports = { generaMenu: generaMenu, menuCandidati: menuCandidati };
 
 
+/* ===== cloud.js ===== */
+/* v27: account facoltativo e copia dei dati nel cloud (Supabase), con semplici fetch.
+   La copia di lavoro resta il localStorage: senza rete o senza account l'app va come prima.
+   Il database (sito/supabase/migrations/) fa vedere a ognuno solo la propria riga. */
+var CLOUD = {
+  url: 'https://rohltzoghuvzexyvqpwm.supabase.co',
+  chiave: 'sb_publishable_sxruj-i-eWNYrRhZDeANlg_EP1W2KiR', // pubblica per costruzione: proteggono le regole RLS
+  // shortcut: email finte (Supabase vuole un'email, questo dominio non riceve posta), quindi niente recupero password; con utenti veri chiedere un'email
+  dominio: 'utenti.luigi-00-tt.github.io',
+  registrazioneAperta: false, // R1: si apre quando l'informativa ha il contatto del titolare (LEGALE_CONTATTO)
+  versioneConsenso: '2026-11-03'
+};
+var KEY_SESSIONE = 'palestra_sessione';
+var SESSIONE = null;  // { at, rt, scade, id, username, ultimoInvio, daInviare }
+var CLOUD_STATO = { occupato: false, msg: '', conflitto: null, timer: null, applicando: false };
+
+try { SESSIONE = JSON.parse(localStorage.getItem(KEY_SESSIONE) || 'null'); } catch (e) { SESSIONE = null; }
+
+function scriviSessione() {
+  try {
+    if (SESSIONE) localStorage.setItem(KEY_SESSIONE, JSON.stringify(SESSIONE));
+    else localStorage.removeItem(KEY_SESSIONE);
+  } catch (e) { /* senza memoria la sessione dura fino alla chiusura */ }
+}
+
+function cloudFetch(metodo, via, corpo, token, extra) {
+  var h = { apikey: CLOUD.chiave, 'Content-Type': 'application/json', Authorization: 'Bearer ' + (token || CLOUD.chiave) };
+  for (var k in (extra || {})) h[k] = extra[k];
+  return fetch(CLOUD.url + via, { method: metodo, headers: h, body: corpo === undefined ? undefined : JSON.stringify(corpo) })
+    .then(function (r) {
+      return r.text().then(function (t) {
+        var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
+        return { s: r.status, j: j };
+      });
+    });
+}
+
+/* messaggi di Supabase -> frasi per chi usa l'app */
+function erroreCloud(r) {
+  if (!r || !r.s) return 'Nessuna connessione: riprova quando sei online.';
+  if (r.scaduta) return 'Sessione scaduta: accedi di nuovo. I dati sul telefono sono al sicuro.';
+  var m = String((r.j && (r.j.msg || r.j.error_description || r.j.message || r.j.error)) || '');
+  if (/invalid login credentials/i.test(m)) return 'Username o password sbagliati.';
+  if (/already registered|already exists/i.test(m)) return 'Questo username è già preso.';
+  if (/password/i.test(m)) return 'La password non va bene: almeno 8 caratteri.';
+  if (/rate limit/i.test(m) || r.s === 429) return 'Troppi tentativi: aspetta qualche minuto.';
+  if (/database error/i.test(m) || r.s === 500) return 'Registrazione rifiutata: controlla username, età e consenso.';
+  return 'Non è andata (' + r.s + '). Riprova più tardi.';
+}
+
+function usernameValido(u) { return /^[a-z0-9_.]{3,30}$/.test(u); }
+function emailDi(u) { return u + '@' + CLOUD.dominio; }
+
+function apriSessione(j, username) {
+  SESSIONE = { at: j.access_token, rt: j.refresh_token, scade: Date.now() + (j.expires_in || 3600) * 1000,
+               id: j.user && j.user.id, username: username, ultimoInvio: null, daInviare: false };
+  scriviSessione();
+}
+
+/* restituisce un token valido; se il rinnovo è rifiutato la sessione si chiude (i dati locali restano) */
+function tokenValido() {
+  if (!SESSIONE) return Promise.reject(null);
+  if (Date.now() < SESSIONE.scade - 60000) return Promise.resolve(SESSIONE.at);
+  return cloudFetch('POST', '/auth/v1/token?grant_type=refresh_token', { refresh_token: SESSIONE.rt }).then(function (r) {
+    if (r.s !== 200 || !r.j || !r.j.access_token) {
+      if (r.s === 400 || r.s === 401) { SESSIONE = null; scriviSessione(); return Promise.reject({ s: r.s, scaduta: true }); }
+      return Promise.reject(r);
+    }
+    SESSIONE.at = r.j.access_token; SESSIONE.rt = r.j.refresh_token;
+    SESSIONE.scade = Date.now() + (r.j.expires_in || 3600) * 1000;
+    scriviSessione();
+    return SESSIONE.at;
+  });
+}
+
+function scaricaCloud() {
+  return tokenValido().then(function (t) {
+    return cloudFetch('GET', '/rest/v1/dati_utente?select=dati,aggiornato_il', undefined, t);
+  }).then(function (r) {
+    if (r.s !== 200 || !Array.isArray(r.j)) return Promise.reject(r);
+    return r.j[0] || null;
+  });
+}
+
+function inviaCloud() {
+  if (!SESSIONE) return Promise.resolve();
+  clearTimeout(CLOUD_STATO.timer);
+  return tokenValido().then(function (t) {
+    return cloudFetch('POST', '/rest/v1/dati_utente', { id: SESSIONE.id, dati: datiDaSalvare() }, t,
+      { Prefer: 'resolution=merge-duplicates,return=representation' });
+  }).then(function (r) {
+    if ((r.s !== 200 && r.s !== 201) || !r.j || !r.j[0]) return Promise.reject(r);
+    SESSIONE.ultimoInvio = r.j[0].aggiornato_il; SESSIONE.daInviare = false;
+    scriviSessione();
+  });
+}
+
+/* chiamata da save(): l'invio parte 3 s dopo l'ultima modifica, se c'è rete */
+function programmaInvio() {
+  if (!SESSIONE || CLOUD_STATO.applicando) return;
+  if (!SESSIONE.daInviare) { SESSIONE.daInviare = true; scriviSessione(); }
+  clearTimeout(CLOUD_STATO.timer);
+  if (navigator.onLine === false) return;
+  CLOUD_STATO.timer = setTimeout(function () { inviaCloud().catch(function () { /* riprova al prossimo save o al ritorno online */ }); }, 3000);
+}
+
+function applicaCloud(riga) {
+  CLOUD_STATO.applicando = true;
+  var err = applicaBackup(JSON.stringify(riga.dati));
+  CLOUD_STATO.applicando = false;
+  if (err) return err;
+  SESSIONE.ultimoInvio = riga.aggiornato_il; SESSIONE.daInviare = false;
+  scriviSessione();
+  return null;
+}
+
+function haDatiLocali() {
+  var c = contaDati();
+  return !!(c.sedute || c.diario || c.prodotti || S.questionario);
+}
+
+/* subito dopo accesso o registrazione: mai sovrascrivere in silenzio */
+function dopoAccesso() {
+  return scaricaCloud().then(function (riga) {
+    if (!riga) return inviaCloud().then(function () { CLOUD_STATO.msg = 'Fatto: i dati di questo telefono sono nel cloud.'; });
+    if (!haDatiLocali()) {
+      var e = applicaCloud(riga);
+      CLOUD_STATO.msg = e || 'Fatto: ho caricato i tuoi dati dal cloud.';
+      return;
+    }
+    CLOUD_STATO.conflitto = riga; // decide l'utente, con i due pulsanti in Impostazioni
+  });
+}
+
+/* all'avvio: se un altro dispositivo ha scritto dopo di noi, vince il cloud; se qui c'è roba da inviare, si invia */
+function sincronizzaAvvio() {
+  if (!SESSIONE || navigator.onLine === false) return;
+  // shortcut: se entrambi i dispositivi hanno modifiche non inviate vince l'ultimo che invia; per uso contemporaneo servirebbe unire i dati
+  if (SESSIONE.daInviare) { inviaCloud().catch(function () {}); return; }
+  var prima = SESSIONE.ultimoInvio;
+  scaricaCloud().then(function (riga) {
+    /* se nel frattempo qui si è modificato o inviato qualcosa, la riga scaricata è già vecchia */
+    if (!SESSIONE || SESSIONE.daInviare || SESSIONE.ultimoInvio !== prima) return;
+    if (riga && riga.aggiornato_il !== prima) { if (!applicaCloud(riga)) render(); }
+  }).catch(function () {});
+}
+window.addEventListener('online', function () { if (SESSIONE && SESSIONE.daInviare) inviaCloud().catch(function () {}); });
+
+function cloudAccedi(username, password) {
+  return cloudFetch('POST', '/auth/v1/token?grant_type=password', { email: emailDi(username), password: password })
+    .then(function (r) {
+      if (r.s !== 200 || !r.j || !r.j.access_token) return Promise.reject(r);
+      apriSessione(r.j, username);
+      return dopoAccesso();
+    });
+}
+
+function cloudRegistra(username, password) {
+  return cloudFetch('POST', '/auth/v1/signup', { email: emailDi(username), password: password, data: {
+    username: username, consenso_salute: true, almeno_14_anni: true, consenso_versione: CLOUD.versioneConsenso } })
+    .then(function (r) {
+      if (r.s !== 200 || !r.j || !r.j.access_token) return Promise.reject(r);
+      apriSessione(r.j, username);
+      return dopoAccesso();
+    });
+}
+
+function cloudEsci() {
+  clearTimeout(CLOUD_STATO.timer);
+  SESSIONE = null; CLOUD_STATO.conflitto = null; scriviSessione();
+}
+
+function cloudElimina() {
+  return tokenValido().then(function (t) { return cloudFetch('POST', '/rest/v1/rpc/elimina_account', {}, t); })
+    .then(function (r) { if (r.s !== 204 && r.s !== 200) return Promise.reject(r); cloudEsci(); });
+}
+
+/* ---------- la sezione in Impostazioni ---------- */
+function sezioneAccount() {
+  var h = '<h2>Account</h2>';
+  var msg = '<div id="ac-msg" class="note" role="status" aria-live="polite">' + esc(CLOUD_STATO.msg || '') + '</div>';
+  if (SESSIONE) {
+    h += '<div class="card"><p>Connesso come <b>' + esc(SESSIONE.username) + '</b>.</p><p class="dim">' +
+      (SESSIONE.daInviare ? 'Ci sono modifiche da inviare: partono appena c\'è rete.'
+        : SESSIONE.ultimoInvio ? 'Copia nel cloud aggiornata al ' + esc(new Date(SESSIONE.ultimoInvio).toLocaleString('it-IT')) + '.'
+        : 'Nessuna copia ancora inviata.') + '</p></div>';
+    if (CLOUD_STATO.conflitto) {
+      h += '<div class="hint warm"><b>Nel cloud ci sono già dati</b> (del ' +
+        esc(new Date(CLOUD_STATO.conflitto.aggiornato_il).toLocaleString('it-IT')) + '), e anche su questo telefono. ' +
+        'Quali tieni? Gli altri vengono sostituiti.' +
+        '<div class="row" style="margin-top:10px"><button class="primary" id="ac-tieni-cloud">Quelli del cloud</button>' +
+        '<button class="ghost" id="ac-tieni-tel">Quelli di questo telefono</button></div></div>';
+    }
+    h += '<button class="ghost" id="ac-invia">Invia adesso</button>' +
+      '<button class="ghost" id="ac-esci">Esci (i dati restano sul telefono)</button>' +
+      '<button class="ghost danger" id="ac-elimina">Elimina account e copia nel cloud</button>' + msg;
+    return h;
+  }
+  h += '<p class="dim">Facoltativo. Con un account i tuoi dati hanno una copia nel cloud e li ritrovi su un altro ' +
+    'telefono. Senza, restano solo qui.</p>';
+  h += '<div class="card"><label class="field"><span>Username</span><input id="ac-user" autocomplete="username" ' +
+    'autocapitalize="none" spellcheck="false" maxlength="30"></label>' +
+    '<label class="field"><span>Password</span><input id="ac-pass" type="password" autocomplete="current-password"></label>' +
+    '<button class="primary" id="ac-accedi"' + (CLOUD_STATO.occupato ? ' disabled' : '') + '>Accedi</button></div>';
+  if (CLOUD.registrazioneAperta) {
+    h += '<details><summary>Non hai un account? Crealo</summary><div>' +
+      '<label class="field"><span>Username (3-30: lettere minuscole, numeri, punto, trattino basso)</span>' +
+      '<input id="ac-nuovo-user" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30"></label>' +
+      '<label class="field"><span>Password (almeno 8 caratteri)</span><input id="ac-nuovo-pass" type="password" ' +
+      'autocomplete="new-password" minlength="8"></label>' +
+      '<label class="check"><input type="checkbox" id="ac-eta"> Ho almeno 14 anni.</label>' +
+      '<label class="check"><input type="checkbox" id="ac-consenso"> Acconsento a salvare nel cloud i miei dati, ' +
+      'compresi quelli sulla salute e sull\'alimentazione, come spiegato nell\'' +
+      '<a href="#" data-legale="privacy">informativa</a>. Posso ritirare il consenso eliminando l\'account.</label>' +
+      '<p class="dim">Non c\'è recupero via email: se dimentichi la password perdi la copia nel cloud.</p>' +
+      '<button class="primary" id="ac-registra">Crea l\'account</button></div></details>';
+  } else {
+    h += '<p class="dim">La creazione di nuovi account non è ancora aperta.</p>';
+  }
+  return h + msg;
+}
+
+function collegaAccount() {
+  if (S.vista !== 'impostazioni') return;
+  var $ = function (id) { return document.getElementById(id); };
+  var dire = function (t) { CLOUD_STATO.msg = t; var m = $('ac-msg'); if (m) m.textContent = t; };
+  var fatto = function () { CLOUD_STATO.occupato = false; render(); };
+  var errore = function (r) { CLOUD_STATO.occupato = false; CLOUD_STATO.msg = erroreCloud(r); render(); };
+  var lavora = function (p) { CLOUD_STATO.occupato = true; dire('Un momento…'); p.then(fatto, errore); };
+
+  if ($('ac-accedi')) $('ac-accedi').onclick = function () {
+    var u = $('ac-user').value.trim().toLowerCase(), p = $('ac-pass').value;
+    if (!usernameValido(u) || !p) return dire('Scrivi username e password.');
+    lavora(cloudAccedi(u, p));
+  };
+  if ($('ac-registra')) $('ac-registra').onclick = function () {
+    var u = $('ac-nuovo-user').value.trim().toLowerCase(), p = $('ac-nuovo-pass').value;
+    if (!usernameValido(u)) return dire('Username: da 3 a 30 caratteri fra lettere minuscole, numeri, punto e trattino basso.');
+    if (p.length < 8) return dire('La password deve avere almeno 8 caratteri.');
+    if (!$('ac-eta').checked) return dire('Serve la conferma di avere almeno 14 anni.');
+    if (!$('ac-consenso').checked) return dire('Senza il consenso l\'account non si può creare: puoi usare l\'app senza.');
+    lavora(cloudRegistra(u, p));
+  };
+  if ($('ac-invia')) $('ac-invia').onclick = function () {
+    lavora(inviaCloud().then(function () { CLOUD_STATO.msg = 'Inviato.'; }));
+  };
+  if ($('ac-tieni-cloud')) $('ac-tieni-cloud').onclick = function () {
+    var e = applicaCloud(CLOUD_STATO.conflitto);
+    CLOUD_STATO.conflitto = null; CLOUD_STATO.msg = e || 'Fatto: ora hai i dati del cloud.';
+    render();
+  };
+  if ($('ac-tieni-tel')) $('ac-tieni-tel').onclick = function () {
+    CLOUD_STATO.conflitto = null;
+    lavora(inviaCloud().then(function () { CLOUD_STATO.msg = 'Fatto: nel cloud ora ci sono i dati di questo telefono.'; }));
+  };
+  if ($('ac-esci')) $('ac-esci').onclick = function () { cloudEsci(); CLOUD_STATO.msg = 'Sei uscito.'; render(); };
+  var el_ = $('ac-elimina');
+  if (el_) el_.onclick = function () {
+    if (!el_.dataset.sure) { el_.dataset.sure = '1'; el_.textContent = 'Sicuro? Tocca di nuovo: account e copia nel cloud spariscono'; return; }
+    lavora(cloudElimina().then(function () { CLOUD_STATO.msg = 'Account eliminato. I dati sul telefono restano: per toglierli usa «Cancella tutti i dati».'; }));
+  };
+}
+
+
+/* ===== legale.js ===== */
+/* v27: informativa privacy (GDPR art. 13), termini d'uso, cookie e archiviazione.
+   Testi brevi e veri per l'app di oggi: gratuita, in prova, account facoltativo.
+   shortcut: niente rimborsi, condizioni di vendita né dati aziendali finché l'app è gratuita;
+   con i pagamenti vanno aggiunti e fatti rivedere da un legale. */
+var LEGALE_AGGIORNATO = '3 novembre 2026';
+var LEGALE_TITOLARE = 'Luigi, che sviluppa e gestisce l\'app come persona privata';
+var LEGALE_CONTATTO = ''; // R1: da indicare prima di aprire la registrazione (CLOUD.registrazioneAperta)
+
+var LEGALE = {
+  privacy: {
+    titolo: 'Informativa sulla privacy',
+    testo: function () {
+      return '<p class="dim">Aggiornata al ' + LEGALE_AGGIORNATO + '.</p>' +
+        '<h2>Chi tratta i dati</h2><p>Titolare del trattamento: ' + esc(LEGALE_TITOLARE) +
+        (LEGALE_CONTATTO ? '. Contatto: <b>' + esc(LEGALE_CONTATTO) + '</b>.' :
+          '. <b>Il contatto non è ancora indicato</b>: finché manca, la registrazione degli account resta chiusa.') + '</p>' +
+
+        '<h2>Senza account: i dati restano sul telefono</h2>' +
+        '<p>Tutto quello che inserisci (questionario, allenamenti, diario, dispensa) viene salvato ' +
+        '<b>solo nella memoria di questo browser</b>. Nessuno lo riceve: né il gestore dell\'app, né terzi. ' +
+        'Lo cancelli con «Cancella tutti i dati» in Impostazioni o cancellando i dati del sito dal browser.</p>' +
+
+        '<h2>Con un account: una copia nel cloud</h2>' +
+        '<p>L\'account è <b>facoltativo</b>. Se lo crei, una copia degli stessi dati viene salvata su ' +
+        '<b>Supabase</b> (server nell\'Unione Europea, Irlanda), che agisce come responsabile del trattamento. ' +
+        'Servono username e password; la password è conservata da Supabase in forma cifrata e il gestore ' +
+        'non può leggerla.</p>' +
+        '<p><b>Quali dati:</b> username; data di nascita, sesso, peso, altezza; esperienza e obiettivi di ' +
+        'allenamento; <b>dati sulla salute</b> che scegli di indicare (condizioni, dolori, terapie, diario dei ' +
+        'sintomi e del bagno); intolleranze, allergie e scelte alimentari, che possono rivelare convinzioni ' +
+        'religiose (per esempio halal o kosher); allenamenti, diario dei pasti, prodotti e dispensa.</p>' +
+        '<p><b>Perché e su quale base:</b> per costruire la scheda e conservare i tuoi dati fra un dispositivo ' +
+        'e l\'altro (servizio che chiedi, art. 6.1.b GDPR). I dati sulla salute e quelli che possono rivelare ' +
+        'convinzioni religiose solo con il tuo <b>consenso esplicito</b> (art. 9.2.a), dato alla registrazione e ' +
+        'revocabile in ogni momento eliminando l\'account.</p>' +
+        '<p><b>Chi li vede:</b> solo tu, con la tua password: le regole del database impediscono a ogni altro ' +
+        'utente di leggerli. I dati <b>non sono cifrati con la tua password</b>: il gestore, dal pannello di ' +
+        'Supabase, ha accesso tecnico al database e non lo usa se non per la manutenzione del servizio. ' +
+        'Nessuna vendita, nessuna pubblicità, nessuna profilazione.</p>' +
+        '<p><b>Per quanto:</b> finché tieni l\'account. «Elimina account» cancella subito l\'account e la ' +
+        'copia nel cloud; restano solo i dati sul telefono, che cancelli a parte.</p>' +
+
+        '<h2>Servizi esterni, solo quando li usi tu</h2>' +
+        '<p><b>Open Food Facts</b>: quando cerchi un codice a barre, il codice viene inviato a ' +
+        'openfoodfacts.org, che vede il tuo indirizzo IP. <b>jsDelivr</b>: quando apri un esercizio della ' +
+        'libreria, la sua animazione si scarica da cdn.jsdelivr.net, che vede il tuo indirizzo IP. ' +
+        'I link a siti esterni (ricette, video) si aprono solo se li tocchi. L\'app non usa analisi del ' +
+        'traffico, pubblicità né caratteri tipografici scaricati da terzi.</p>' +
+
+        '<h2>I tuoi diritti</h2>' +
+        '<p>Puoi in ogni momento: <b>accedere</b> ai tuoi dati e portarli altrove (Impostazioni → «Scarica il ' +
+        'file di backup»); <b>correggerli</b> nell\'app; <b>cancellarli</b> («Elimina account» e «Cancella tutti ' +
+        'i dati»); <b>revocare il consenso</b> (eliminando l\'account, senza conseguenze sui dati sul telefono). ' +
+        'Puoi anche proporre reclamo al Garante per la protezione dei dati personali (garanteprivacy.it).</p>' +
+
+        '<h2>Età</h2><p>Per creare un account servono almeno <b>14 anni</b> (art. 2-quinquies del Codice ' +
+        'privacy): lo confermi alla registrazione.</p>';
+    }
+  },
+  termini: {
+    titolo: 'Termini d\'uso',
+    testo: function () {
+      return '<p class="dim">Aggiornati al ' + LEGALE_AGGIORNATO + '.</p>' +
+        '<p><b>L\'app è gratuita e in prova.</b> Può cambiare, avere errori o smettere di funzionare; ' +
+        'il servizio dell\'account può essere sospeso. Tieni un file di backup.</p>' +
+        '<p><b>Non è un consiglio medico.</b> Schede, calorie e indicazioni su alimentazione e salute ' +
+        'sono informative, tratte dalla letteratura scientifica citata nell\'app, e <b>non sostituiscono</b> ' +
+        'il parere di un medico, di un gastroenterologo, di un nutrizionista o di un fisioterapista. ' +
+        'L\'app non fa diagnosi. Con una condizione di salute, un dolore o un dubbio, chiedi prima a un ' +
+        'professionista; se un esercizio fa male, fermati.</p>' +
+        '<p><b>Ti alleni sotto la tua responsabilità</b>: carichi, tecnica e sicurezza dipendono da te e ' +
+        'dalla palestra.</p>' +
+        '<p><b>Il tuo account</b>: tieni per te la password. Non c\'è un recupero via email: se la ' +
+        'dimentichi, la copia nel cloud non è più raggiungibile (i dati sul telefono restano).</p>' +
+        '<p><b>Contenuti di terzi</b>: le foto e le ricette di altri autori restano loro; fonti e licenze ' +
+        'sono in Impostazioni → «Da dove vengono le immagini» e «Da dove vengono le ricette».</p>' +
+        '<p>Per la privacy vale l\'<a href="#" data-legale="privacy">informativa</a>.</p>';
+    }
+  },
+  cookie: {
+    titolo: 'Cookie e archiviazione',
+    testo: function () {
+      return '<p class="dim">Aggiornata al ' + LEGALE_AGGIORNATO + '.</p>' +
+        '<p>L\'app <b>non usa cookie</b>, né propri né di terzi, e non traccia la navigazione.</p>' +
+        '<p>Usa solo strumenti <b>tecnici</b>, necessari a funzionare: la memoria del browser ' +
+        '(<code>localStorage</code>) per i tuoi dati e, se accedi, per la sessione dell\'account; la cache ' +
+        'del service worker per funzionare senza rete. Per questi strumenti non serve un consenso ' +
+        '(Garante privacy, linee guida sui cookie del 10 giugno 2021, e art. 122 del Codice privacy), ' +
+        'per questo l\'app non mostra un banner.</p>' +
+        '<p>Li cancelli con «Cancella tutti i dati» in Impostazioni o dalle impostazioni del browser.</p>';
+    }
+  }
+};
+
+function vLegale() {
+  var d = LEGALE[S.ctx.doc] || LEGALE.privacy;
+  return testata(d.titolo, 'Palestra', 'impostazioni') + '<main class="legale">' + d.testo() +
+    linkLegali() + '</main>';
+}
+
+/* i link [data-legale] possono stare in qualunque vista */
+function collegaLegale() {
+  document.querySelectorAll('[data-legale]').forEach(function (n) {
+    n.onclick = function (ev) { ev.preventDefault(); vai('legale', { doc: n.dataset.legale }); };
+  });
+}
+
+function linkLegali() {
+  return '<p class="dim">' + Object.keys(LEGALE).map(function (k) {
+    return '<a href="#" data-legale="' + k + '">' + esc(LEGALE[k].titolo) + '</a>';
+  }).join(' · ') + '</p>';
+}
+
+
 /* ===== app.js ===== */
 /* ============================================================
    LOGICA APPLICAZIONE
@@ -28684,7 +29063,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw0j73lt';
+var BUILD = 'vmw0kkuuv';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -28801,12 +29180,16 @@ var CHIAVI_DATI = ['profilo', 'log', 'diario', 'ultimo', 'prodotti', 'exExtra',
 
 /* Se il salvataggio fallisce l'utente DEVE saperlo: prima la cosa passava in
    silenzio e ci si accorgeva dei dati persi solo alla riapertura. */
-var SALVATAGGIO = { rotto: false, avvisato: false };
+var SALVATAGGIO = { rotto: false, avvisato: false, ultimo: null };
 
 function save() {
   try {
-    localStorage.setItem(KEY, JSON.stringify(datiDaSalvare()));
+    var testo = JSON.stringify(datiDaSalvare());
+    localStorage.setItem(KEY, testo);
     SALVATAGGIO.rotto = false;
+    /* v27: al cloud va solo un cambiamento vero; il primo save (quello dell'avvio) fa da riferimento */
+    if (SALVATAGGIO.ultimo !== null && testo !== SALVATAGGIO.ultimo) programmaInvio();
+    SALVATAGGIO.ultimo = testo;
     return true;
   } catch (e) {
     SALVATAGGIO.rotto = true;
@@ -29375,6 +29758,15 @@ window.addEventListener('popstate', function () {
   }
 });
 
+/* v27: da tastiera Invio e Spazio aprono anche le schede che non sono <button> (role="button") */
+document.addEventListener('keydown', function (e) {
+  var t = e.target;
+  if ((e.key === 'Enter' || e.key === ' ') && t.getAttribute && t.getAttribute('role') === 'button' && t.tagName !== 'BUTTON') {
+    e.preventDefault();
+    t.click();
+  }
+});
+
 function render() {
   var app = document.getElementById('app');
   var v = S.vista;
@@ -29388,7 +29780,7 @@ function render() {
     if (v === 'esercizio' && !eserciziDiOggi(giornoDi(S.ctx.giorno)).some(function (x) { return x.ex === S.ctx.ex; })) S.vista = v = 'giorno';
 
     /* v18: chi non ha ancora una scheda comincia dal questionario */
-    if (!S.questionario && v !== 'impostazioni') v = 'questionario';
+    if (!S.questionario && v !== 'impostazioni' && v !== 'legale') v = 'questionario';
 
     if (v === 'questionario') h = vQuestionario();
     else if (v === 'home') h = vHome();
@@ -29402,6 +29794,7 @@ function render() {
     else if (v === 'dispensa') h = vDispensa();
     else if (v === 'progressi') h = vProgressi();
     else if (v === 'impostazioni') h = vImpostazioni();
+    else if (v === 'legale') h = vLegale();
     else h = vHome();
   } catch (err) {
     /* nessun errore deve poter bloccare la navigazione */
@@ -29418,6 +29811,8 @@ function render() {
   collegaDolori();
   collegaPassaggi();
   collegaCrono();
+  collegaAccount();
+  collegaLegale();
   avviaCronoVista();
 }
 
@@ -29458,7 +29853,7 @@ function navBar() {
   return '<nav class="cinque">' + tab.map(function (t) {
     var on = (v === t[0] || (t[0] === 'home' && (v === 'giorno' || v === 'esercizio'))) ? ' on' : '';
     return '<button class="' + on.trim() + '" data-nav="' + t[0] + '">' +
-           '<svg viewBox="0 0 24 24">' + t[2] + '</svg>' + t[1] + '</button>';
+           '<svg aria-hidden="true" viewBox="0 0 24 24">' + t[2] + '</svg>' + t[1] + '</button>';
   }).join('') + '</nav>';
 }
 
@@ -29544,7 +29939,7 @@ function vHome() {
   giorniCorrenti().forEach(function (g) {
     var nSerie = g.esercizi.reduce(function (a, e) { return a + serieDi(e); }, 0);
     var fattaOggi = fatti[g.id] === oggi();
-    h += '<div class="day' + (fattaOggi ? ' done' : '') + '" data-giorno="' + g.id + '">' +
+    h += '<div role="button" tabindex="0" class="day' + (fattaOggi ? ' done' : '') + '" data-giorno="' + g.id + '">' +
       '<div class="badge">' + g.id + '</div><div class="t"><b>' + esc(g.nome) + '</b>' +
       '<span>' + esc(g.focus) + ' &middot; ' + g.esercizi.length + ' esercizi &middot; ' + nSerie + ' serie</span>' +
       '</div>' + (fattaOggi ? '<div class="oggi">oggi</div>' : '<div class="chev">›</div>') + '</div>';
@@ -30216,10 +30611,10 @@ function vEsercizio() {
      prima di mettere le mani sul bilanciere. Richiede la rete, il resto no. */
   if (MW[e.ex]) {
     h += '<a class="mw" href="' + linkMW(e.ex) + '" target="_blank" rel="noopener noreferrer">' +
-      '<svg viewBox="0 0 24 24"><polygon points="10,8 16,12 10,16"/><rect x="3" y="4" width="18" height="16" rx="3"/></svg>' +
+      '<svg aria-hidden="true" viewBox="0 0 24 24"><polygon points="10,8 16,12 10,16"/><rect x="3" y="4" width="18" height="16" rx="3"/></svg>' +
       '<span><b>Guarda il video su MuscleWiki</b>' +
       '<i>' + esc(MW[e.ex][1]) + '</i></span>' +
-      '<svg class="fre" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></a>';
+      '<svg aria-hidden="true" class="fre" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></a>';
   }
 
   /* Dove la fotografia non ritrae esattamente il tuo attrezzo, lo si dice qui
@@ -30781,7 +31176,7 @@ var ELENCO_RICETTE = {};
 
 function schedaRicetta(v, gi, vi) {
   var liv = semRicetta(v);
-  return '<div class="pasto' + (semaforoAttivo() ? ' sem-' + liv : '') + '" data-ricetta="' + gi + '-' + vi + '">' +
+  return '<div role="button" tabindex="0" class="pasto' + (semaforoAttivo() ? ' sem-' + liv : '') + '" data-ricetta="' + gi + '-' + vi + '">' +
     immaginePiatto(v) +
     '<button class="stella' + (preferita(v) ? ' on' : '') +
       '" data-pref="' + gi + '-' + vi + '" title="Mettila fra i preferiti" aria-label="Preferita">&#9733;</button>' +
@@ -30985,7 +31380,7 @@ function immaginePiatto(v, grande) {
     return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="' + urlFoto(cat) +
            '" alt="' + esc(v.nome) + '" loading="lazy" decoding="async">';
   }
-  return '<svg viewBox="' + (grande ? '14 14 72 60' : '16 16 68 56') + '" class="cibo' +
+  return '<svg aria-hidden="true" viewBox="' + (grande ? '14 14 72 60' : '16 16 68 56') + '" class="cibo' +
          (grande ? ' grande' : '') + '">' + CIBO[v.img] + '</svg>';
 }
 
@@ -31034,7 +31429,7 @@ function vNutrizione() {
     'altezza e sulla tua età.') + '</main>';
 
   /* barra di ricerca: cerca fra ricette, ingredienti e alimenti */
-  h += '<div class="cerca"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/>' +
+  h += '<div class="cerca"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/>' +
        '<path d="M20 20l-4-4"/></svg>' +
        '<input type="search" id="q" placeholder="Cerca un piatto o un ingrediente" value="' +
        esc(S.ctx.cerca || '') + '">' +
@@ -31330,7 +31725,7 @@ function risultatiRicerca(q) {
     h += '<h2>Ricette (' + ric.length + ')</h2><div class="griglia-pasti">';
     ric.slice(0, 40).forEach(function (r) {
       var liv = semRicetta(r.v);
-      h += '<div class="pasto sem-' + liv + '" data-ricetta="' + r.id + '">' +
+      h += '<div role="button" tabindex="0" class="pasto sem-' + liv + '" data-ricetta="' + r.id + '">' +
         immaginePiatto(r.v) +
         '<div class="pasto-t"><b>' + esc(r.v.nome) + '</b>' +
         '<span>' + rigaMacro(r.v) + ' &middot; ' + esc(r.g.titolo) + '</span>' +
@@ -31968,7 +32363,7 @@ function vDispensa() {
     h += '<div class="griglia-pasti">';
     idee.forEach(function (r) {
       var liv = semRicetta(r.v);
-      h += '<div class="pasto sem-' + liv + '" data-ricetta="' + r.id + '">' +
+      h += '<div role="button" tabindex="0" class="pasto sem-' + liv + '" data-ricetta="' + r.id + '">' +
         immaginePiatto(r.v) +
         '<div class="pasto-t"><b>' + esc(r.v.nome) + '</b>' +
         '<span>hai ' + r.hai.length + ' ingredienti su ' + (r.hai.length + r.mancano.length) +
@@ -32333,7 +32728,7 @@ function vCibi() {
   h += '<div class="hint ' + (lista === 'verde' ? 'good' : lista === 'rosso' ? 'danger-h' : 'warm') +
     '">' + esc(lista === 'verde' ? testoSemaforoVerde() : lista === 'rosso' ? testoSemaforoRosso() : scelta[2]) + '</div>';
 
-  h += '<div class="cerca"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/>' +
+  h += '<div class="cerca"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/>' +
     '<path d="M20 20l-4-4"/></svg>' +
     '<input type="search" id="q-cibi" placeholder="Cerca un alimento..." value="' +
     esc(S.ctx.qcibi || '') + '">' +
@@ -32484,7 +32879,7 @@ function vDiario() {
     h += '<div class="bicchieri">';
     for (var b = 1; b <= 10; b++) {
       h += '<button class="bicchiere' + (b <= g.acqua ? ' pieno' : '') + '" data-acqua="' + b + '">' +
-           '<svg viewBox="0 0 24 30"><path d="M4 3h16l-2 24a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/></svg></button>';
+           '<svg aria-hidden="true" viewBox="0 0 24 30"><path d="M4 3h16l-2 24a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/></svg></button>';
     }
     h += '</div><div class="dim" style="margin-top:8px">' +
       (g.acqua * 0.25).toFixed(2).replace('.', ',') + ' litri su circa 2,5 consigliati. ' +
@@ -32534,7 +32929,7 @@ function vDiario() {
     /* Codice a barre: e' la via veloce per i confezionati. Per il pane, la
        pasta, la verdura non serve — sono gia' nell'elenco qui sotto. */
     h += '<button class="scan-b" id="scan-go">' +
-      '<svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2' +
+      '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2' +
       'M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>' +
       '<path d="M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>' +
       '<span><b>Scansiona un prodotto</b><i>codice a barre della confezione</i></span></button>';
@@ -32544,7 +32939,7 @@ function vDiario() {
     var dc = diagnosiFotocamera();
     if (dc.inCornice && dc.permessaDalFrame === false) {
       h += '<div class="hint warm">In questa copia dell\'app la fotocamera <b>non è ' +
-        'disponibile</b>: la pagina gira dentro Claude, che non concede il permesso. ' +
+        'disponibile</b>: la pagina gira dentro un\'altra pagina, che non concede il permesso. ' +
         'Il pulsante funziona lo stesso, ma ti chiederà di digitare il codice.<br><br>' +
         'Per scansionare davvero apri <a href="' + SITO_URL + '" target="_blank" ' +
         'rel="noopener">la tua app sul sito</a> e aggiungila alla schermata Home.</div>';
@@ -32553,7 +32948,7 @@ function vDiario() {
     /* esito della scansione: prodotto sconosciuto da compilare a mano */
     if (S.ctx.nuovoEan) h += pannelloNuovoProdotto(S.ctx.nuovoEan, S.ctx.nuovoMotivo || '');
 
-    h += '<div class="cerca"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/>' +
+    h += '<div class="cerca"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/>' +
          '<path d="M20 20l-4-4"/></svg>' +
          '<input type="search" id="q-cibo" placeholder="Cerca: pomodori, mozzarella, pasta..." value="' +
          esc(S.ctx.qcibo || '') + '">' +
@@ -33082,8 +33477,8 @@ function vImpostazioni() {
     '</table></div>';
 
   if (dc.inCornice && dc.permessaDalFrame === false) {
-    h += '<div class="hint warm"><b>Qui la fotocamera non può funzionare.</b> Stai usando la copia ' +
-      'dell\'app che gira dentro Claude: la pagina è ospitata in una cornice che non concede il ' +
+    h += '<div class="hint warm"><b>Qui la fotocamera non può funzionare.</b> Stai usando una copia ' +
+      'dell\'app ospitata dentro un\'altra pagina, in una cornice che non concede il ' +
       'permesso, e non è una cosa che io possa sbloccare dal codice.<br><br>' +
       'Apri <a href="' + SITO_URL + '" target="_blank" rel="noopener">' + SITO_URL + '</a> ' +
       'con Chrome e aggiungilo alla schermata Home: è la stessa app, ma lì la scansione funziona.</div>';
@@ -33204,8 +33599,9 @@ function vImpostazioni() {
 
   h += '<div class="hint">Quello che resta fuori dalla portata dell\'app: se <b>cancelli i dati ' +
        'del sito</b> dalle impostazioni di Chrome, se <b>disinstalli</b> l\'app, o se cambi ' +
-       'telefono, i dati se ne vanno. Contro questo c\'è una sola difesa, ed è il file qui sotto.</div>';
+       'telefono, i dati se ne vanno. Le difese sono due: l\'account, che tiene una copia nel cloud, e il file qui sotto.</div>';
 
+  h += sezioneAccount();
   h += '<h2>Copia di sicurezza</h2>';
   var ub = S.profilo.ultimoBackup;
   if (cont.serie > 0) {
@@ -33221,8 +33617,7 @@ function vImpostazioni() {
        'Mettilo dove vuoi: Drive, email a te stesso, un\'altra cartella. Contiene allenamenti, ' +
        'diario, prodotti e profilo.</div>';
   h += '<details><summary>Oppure copia e incolla il testo</summary><div>' +
-       '<p class="dim">Serve dove il download è bloccato — per esempio nella versione dell\'app ' +
-       'che gira dentro Claude.</p>' +
+       '<p class="dim">Serve dove il download è bloccato.</p>' +
        '<label class="field"><span>Seleziona tutto il testo e copialo</span>' +
        '<textarea id="dump" style="height:130px;font-size:11px">' +
        esc(JSON.stringify(datiDaSalvare())) + '</textarea></label>' +
@@ -33284,32 +33679,21 @@ function vImpostazioni() {
   if (typeof FOTO_RICETTE_CREDITI !== 'undefined') {
     var ck = Object.keys(FOTO_RICETTE_CREDITI);
     h += '<p class="dim">Le <b>' + ck.length + ' fotografie dei piatti</b> vengono da Wikimedia ' +
-         'Commons, solo con licenze che ne permettono la ridistribuzione. Autore e licenza di ognuna:</p>';
-    h += '<table class="hist">' + ck.map(function (k) {
-      var c = FOTO_RICETTE_CREDITI[k];
-      return '<tr><td>' + esc(k.replace(/-/g, ' ')) + '<div class="dim">' + esc(c[0]) +
-             '</div></td><td class="num">' + esc(c[1]) + '</td></tr>';
-    }).join('') + '</table>';
+         'Commons, solo con licenze che ne permettono la ridistribuzione. Autore (con il link alla foto) e licenza di ognuna:</p>';
+    h += tabellaCrediti(FOTO_RICETTE_CREDITI);
   }
   if (typeof FOTO_PIATTI !== 'undefined' && Object.keys(FOTO_PIATTI).length) {
-    var kp = Object.keys(FOTO_PIATTI);
-    h += '<p class="dim">Altre <b>' + kp.length + ' fotografie di piatti</b>, dall\'immagine principale della ' +
+    h += '<p class="dim">Altre <b>' + Object.keys(FOTO_PIATTI).length + ' fotografie di piatti</b>, dall\'immagine principale della ' +
          'voce di Wikipedia sul piatto (Wikimedia Commons, licenze libere):</p>';
-    h += '<table class="hist">' + kp.map(function (k) {
-      var c = FOTO_PIATTI[k];
-      return '<tr><td>' + esc(k.replace(/-/g, ' ')) + '<div class="dim">' + esc(c[0]) +
-             '</div></td><td class="num">' + esc(c[1]) + '</td></tr>';
-    }).join('') + '</table>';
+    h += tabellaCrediti(FOTO_PIATTI);
   }
   if (typeof PASSAGGI_CREDITI !== 'undefined' && Object.keys(PASSAGGI_CREDITI).length) {
-    var kc = Object.keys(PASSAGGI_CREDITI);
-    h += '<p class="dim">Le <b>' + kc.length + ' fotografie dei passaggi</b> («Come deve venire») vengono da ' +
-         'Wikimedia Commons:</p><table class="hist">' + kc.map(function (k) {
-      var c = PASSAGGI_CREDITI[k];
-      return '<tr><td>' + esc(k.replace(/-(\d)$/, ' (fase $1)').replace(/-/g, ' ')) + '<div class="dim">' + esc(c[0]) +
-             '</div></td><td class="num">' + esc(c[1]) + '</td></tr>';
-    }).join('') + '</table>';
+    h += '<p class="dim">Le <b>' + Object.keys(PASSAGGI_CREDITI).length + ' fotografie dei passaggi</b> («Come deve venire») vengono da ' +
+         'Wikimedia Commons:</p>' + tabellaCrediti(PASSAGGI_CREDITI, function (k) { return k.replace(/-(\d)$/, ' (fase $1)'); });
   }
+  h += '<p class="dim">I valori dei prodotti trovati col codice a barre vengono da ' +
+       '<a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>, ' +
+       'banca dati libera con licenza <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL</a>.</p>';
   h += '</div></details>';
 
   /* Da dove vengono le ricette, detto per intero: e' una questione di
@@ -33321,20 +33705,40 @@ function vImpostazioni() {
     'piatto, ingredienti, <b>procedimento</b> (' + quantiProcedimenti() + ' ricette) e il link ' +
     'alla pagina originale su ognuna.</p>' +
     '<p class="dim">Il testo del procedimento è loro ed è riprodotto qui per <b>uso personale</b>, ' +
-    'con il rimando alla fonte: questa app è tua e l\'indirizzo è fuori dai motori di ricerca. ' +
+    'con il rimando alla fonte: l\'app è gratuita, in prova fra pochi amici, e l\'indirizzo è fuori dai motori di ricerca. ' +
     'La classificazione col semaforo, i motivi, i rimedi e i valori nutrizionali sono invece ' +
     'calcolati e scritti qui, con le tabelle CREA e la rassegna di letteratura del progetto.</p>' +
     '<p class="dim">Le altre ricette, quelle con le grammature esatte e il «perché questa», ' +
     'sono scritte per te: le riconosci dal filtro <b>scritte per me</b>.</p></div>';
 
   h += '<h2>Azzeramento</h2>';
-  h += '<button class="ghost danger" id="azzera">Cancella tutti i dati</button>';
+  h += '<button class="ghost danger" id="azzera">Cancella tutti i dati da questo telefono</button>';
+  h += '<div class="note">Toglie profilo, questionario, allenamenti, diario, prodotti e dispensa da questo telefono, ' +
+       'ed esce dall\'account.' + (SESSIONE ? ' La copia nel cloud resta: per toglierla usa «Elimina account» qui sopra.' : '') + '</div>';
+  h += '<h2>Privacy e condizioni</h2>' + linkLegali();
   h += '<div class="note">Versione ' + SCHEDA.versione + ' — scheda e contenuti nutrizionali generati dalla rassegna ' +
        'di letteratura in <code>letteratura/</code>. Le indicazioni ' +
        (haStomaco() ? 'cliniche ' : 'su salute e alimentazione ') +
        'sono informative e non sostituiscono il parere di un medico.</div>';
   h += '</main>';
   return h;
+}
+
+/* v27: crediti {chiave: [autore, licenza, pagina della foto]}; le CC BY e BY-SA chiedono il link a fonte e licenza */
+function urlLicenza(l) {
+  var m = /^CC (BY(?:-SA)?) (\d\.\d)/i.exec(l || '');
+  if (m) return 'https://creativecommons.org/licenses/' + m[1].toLowerCase() + '/' + m[2] + '/';
+  if (/^CC0/i.test(l)) return 'https://creativecommons.org/publicdomain/zero/1.0/';
+  if (/GFDL/i.test(l)) return 'https://www.gnu.org/licenses/fdl-1.3.html';
+  return null;
+}
+function tabellaCrediti(crediti, nome) {
+  var link = function (u, t) { return u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(t) + '</a>' : esc(t); };
+  return '<table class="hist">' + Object.keys(crediti).map(function (k) {
+    var c = crediti[k];
+    return '<tr><td>' + esc((nome ? nome(k) : k).replace(/-/g, ' ')) + '<div class="dim">' + link(c[2], c[0]) +
+           '</div></td><td class="num">' + link(urlLicenza(c[1]), c[1]) + '</td></tr>';
+  }).join('') + '</table>';
 }
 
 /* ============================================================
@@ -33356,7 +33760,7 @@ function collega() {
   });
   osservaRicette();
   document.querySelectorAll('[data-go]').forEach(function (n) {
-    n.onclick = function () { vai(n.dataset.go, {}); };
+    n.onclick = function (ev) { ev.preventDefault(); vai(n.dataset.go, {}); }; // un <a href="#"> non deve cambiare l'indirizzo
   });
   document.querySelectorAll('[data-giorno]:not([data-ex])').forEach(function (n) {
     n.onclick = function () { vai('giorno', { giorno: n.dataset.giorno }); };
@@ -33761,9 +34165,8 @@ function collegaDiario() {
           S.ctx.alim = undefined;
           S.ctx.nuovoEan = r.ean;
           S.ctx.nuovoMotivo = r.fonte === 'offline'
-            ? 'Non sono riuscito a raggiungere la banca dati: o non c\'è rete, oppure stai usando ' +
-              'la versione dell\'app che gira dentro Claude, dove le chiamate a internet sono ' +
-              'bloccate. Scrivi i valori dell\'etichetta: li chiedo una volta sola.'
+            ? 'Non sono riuscito a raggiungere la banca dati: probabilmente non c\'è rete. ' +
+              'Scrivi i valori dell\'etichetta: li chiedo una volta sola.'
             : 'Questo prodotto non è nella banca dati Open Food Facts. Capita, soprattutto con le ' +
               'marche del supermercato. Scrivi i valori dell\'etichetta: li chiedo una volta sola.';
         }
@@ -34168,8 +34571,11 @@ function collegaImpostazioni() {
   var a = document.getElementById('azzera');
   if (a) a.onclick = function () {
     if (a.dataset.sure) {
-      S.log = {}; S.diario = {}; S.ultimo = {};
-      save(); vai('home');
+      /* v27: prima azzerava solo allenamenti e diario; ora tutto quello che sta sul telefono.
+         La cache del service worker resta: contiene solo i file dell'app, e senza l'app non si riapre offline. */
+      cloudEsci();
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      location.reload();
     } else { a.dataset.sure = '1'; a.textContent = 'Sicuro? Tocca di nuovo per cancellare'; }
   };
 }
@@ -34196,6 +34602,8 @@ chiediPersistenza(function () { if (S.vista === 'impostazioni') render(); });
    scrivere subito, cosi' l'avviso compare all'avvio e non dopo un'ora di
    palestra con i dati che non si stanno registrando. */
 save();
+/* v27: con un account, si guarda se un altro dispositivo ha scritto dati più nuovi */
+sincronizzaAvvio();
 </script>
 <script>
 /* Il service worker tiene la pagina in cache: dopo la prima apertura l'app
