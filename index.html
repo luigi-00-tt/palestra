@@ -7491,6 +7491,33 @@ function riscaldamentoPer(q) {
   return R;
 }
 
+/* v28 (R16): il riscaldamento di ogni seduta. Le voci sono quelle di sempre,
+   scelte per la seduta: le braccia se ci sono spinte e tirate, squat e affondo
+   se ci sono le gambe; il cardio con quello che c'è; niente squat e affondo con
+   il ginocchio o la schiena che fanno male; con poco tempo si accorcia. */
+var CARDIO_RISC = ['cyclette', 'tapis', 'ellittica'];
+function riscaldamentoGiorno(R, g, q) {
+  var gruppi = g.esercizi.map(function (e) { return ESERCIZI[e.ex] && ESERCIZI[e.ex].gruppo; });
+  var alto = gruppi.some(function (x) { return ['Petto', 'Dorso', 'Spalle', 'Bicipiti', 'Tricipiti'].indexOf(x) >= 0; });
+  var basso = gruppi.some(function (x) { return ['Quadricipiti', 'Femorali', 'Glutei', 'Polpacci'].indexOf(x) >= 0; });
+  var dol = q.dolori || [], att = q.attrezzi || [];
+  var macchina = CARDIO_RISC.some(function (a) { return att.indexOf(a) >= 0; }), corto = (q.minuti || 60) <= 45;
+  var voci = R.generale.voci.filter(function (v) {
+    if (v[0] === 'Squat a corpo libero') return basso && dol.indexOf('ginocchio') < 0;
+    if (v[0] === 'Affondo con rotazione') return basso && dol.indexOf('ginocchio') < 0 && dol.indexOf('schiena') < 0 && !corto;
+    if (/^\d minuti di cardio/.test(v[0])) return true;
+    return alto;
+  });
+  /* resta solo il cardio (gambe con il ginocchio che fa male): qualche minuto in più */
+  var soloCardio = voci.length === 1;
+  return voci.map(function (v) {
+    if (!/^\d minuti di cardio/.test(v[0])) return v;
+    var min = soloCardio ? 5 : corto ? 2 : v[0].charAt(0);
+    return macchina ? [min + ' minuti di cardio leggero'].concat(v.slice(1))
+      : [min + ' minuti di cardio leggero', 'Senza macchine: camminata veloce, corsa leggera sul posto o jumping jack. Il ritmo giusto è quello in cui riusciresti ancora a parlare: devi scaldarti, non stancarti. Se sei arrivato a piedi o in bici, questa parte l’hai già fatta.', v[2]];
+  });
+}
+
 function tempoGenerico() {
   var T = JSON.parse(JSON.stringify(SCHEDA_BASE.tempo));
   T.titolo = 'Come stare nei tuoi minuti';
@@ -7897,6 +7924,8 @@ function generaScheda(q) {
     };
   });
 
+  var risc = riscaldamentoPer(q);
+  blocchi.forEach(function (b) { b.giorni.forEach(function (g) { g.riscaldamento = riscaldamentoGiorno(risc, g, q); }); });
   /* il cardio prende il tempo che avanza dopo i pesi, mai il contrario: in
      deficit sono i pesi a conservare il muscolo. Se non ci sta, va nei giorni
      liberi. */
@@ -7935,7 +7964,7 @@ function generaScheda(q) {
     perche: perche,
     core: coreGenerato(q, esclusi),
     tempo: tempoGenerico(),
-    riscaldamento: riscaldamentoPer(q),
+    riscaldamento: risc,
     extra: SCHEDA_BASE.extra.filter(function (e) { return e.id === 'stretching'; }),
     glossario: SCHEDA_BASE.glossario,
     primaVolta: SCHEDA_BASE.primaVolta.filter(function (p) { return !/reflusso|braccia|lean bulk/i.test(p.t + ' ' + (p.d || '')); }),
@@ -29565,7 +29594,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw109qdh';
+var BUILD = 'vmw10j6og';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -30947,7 +30976,8 @@ function vGiorno() {
   /* Versione 10: ogni movimento del riscaldamento ha la sua animazione, come
      gli esercizi. Prima erano quattro righe di testo con una foto ferma, e
      restava il solo pezzo della seduta senza il movimento. */
-  h += '<div class="risc-voci">' + R.generale.voci.map(function (v) {
+  /* v28 (R16): le schede del motore hanno il riscaldamento di ogni seduta */
+  h += '<div class="risc-voci">' + (g.riscaldamento || R.generale.voci).map(function (v) {
     var g = v[2] ? immagineDi(v[2]) : null;
     var nb = v[2] ? ((typeof FOTO_VARIANTE !== 'undefined' && FOTO_VARIANTE[v[2]]) ||
                      (typeof GIF_NOTA !== 'undefined' && GIF_NOTA[v[2]])) : null;
