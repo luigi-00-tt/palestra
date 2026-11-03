@@ -29898,6 +29898,111 @@ function linkLegali() {
 }
 
 
+/* ===== assistente-dati.js ===== */
+/* assistente-dati.js — GENERATO da conoscenza/genera_dataset.py --esporta: non toccarlo a mano.
+   [domanda, risposta, fonti, documento] */
+var ASSISTENTE = [];
+
+
+/* ===== assistente.js ===== */
+/* assistente.js — v28 (R32-R33): «Fai una domanda».
+   Offline: cerca fra le coppie domanda-risposta di assistente-dati.js (generate da
+   conoscenza/genera_dataset.py, ognuna con le sue fonti) con un punteggio BM25 sulle
+   parole, senza rete e senza modelli. Online, facoltativo e solo con l'account: la
+   domanda e le risposte trovate vanno alla funzione Supabase `assistente`, che chiede
+   a un modello gratuito di OpenRouter (la chiave sta nei secret di Supabase, mai qui).
+   Massimo 20 domande online al giorno a testa. */
+
+var PAROLE_VUOTE_ASS = ('il lo la i gli le un uno una di a da in con su per tra fra e o ma se che chi cosa come ' +
+  'quando quanto quanti quante dove perche non piu meno mi ti si ci vi ne del dello della dei degli delle al allo ' +
+  'alla ai agli alle dal dallo dalla dai dagli dalle nel nello nella nei negli nelle sul sullo sulla sui sugli sulle ' +
+  'e è ho hai ha abbiamo avete hanno sono sei siamo siete devo posso faccio fare essere avere mio mia miei mie').split(' ');
+
+/* parole senza accenti, senza quelle vuote, con la desinenza tolta («serie», «seria» → «seri») */
+function radiciDi(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').split(/[^a-z0-9]+/)
+    .filter(function (w) { return w.length > 1 && PAROLE_VUOTE_ASS.indexOf(w) < 0; })
+    .map(function (w) { return w.length > 4 ? w.replace(/[aeiou]$/, '') : w; });
+}
+
+var INDICE_ASS = null;
+function indiceAssistente() {
+  if (INDICE_ASS) return INDICE_ASS;
+  var docs = (typeof ASSISTENTE !== 'undefined' ? ASSISTENTE : []).map(function (c) {
+    /* la domanda conta il doppio: è lì che sta il modo in cui la gente chiede */
+    var d = radiciDi(c[0]), r = radiciDi(c[1]);
+    return d.concat(d, r);
+  });
+  var df = {}, tot = 0;
+  docs.forEach(function (t) {
+    tot += t.length;
+    t.filter(function (w, i, a) { return a.indexOf(w) === i; }).forEach(function (w) { df[w] = (df[w] || 0) + 1; });
+  });
+  INDICE_ASS = { docs: docs, df: df, media: docs.length ? tot / docs.length : 1 };
+  return INDICE_ASS;
+}
+
+/* BM25: le parole rare pesano di più, le risposte lunghe non vincono solo perché lunghe */
+function cercaAssistente(domanda, quanti) {
+  var I = indiceAssistente(), q = radiciDi(domanda), N = I.docs.length, out = [];
+  if (!q.length || !N) return [];
+  I.docs.forEach(function (t, i) {
+    var s = 0;
+    q.forEach(function (w) {
+      var f = 0; for (var j = 0; j < t.length; j++) if (t[j] === w) f++;
+      if (!f) return;
+      var idf = Math.log(1 + (N - I.df[w] + 0.5) / (I.df[w] + 0.5));
+      s += idf * f * 2.2 / (f + 1.2 * (0.25 + 0.75 * t.length / I.media));
+    });
+    if (s > 0) out.push({ i: i, s: s });
+  });
+  return out.sort(function (a, b) { return b.s - a.s; }).slice(0, quanti || 3).map(function (x) {
+    var c = ASSISTENTE[x.i]; return { d: c[0], r: c[1], fonti: c[2], doc: c[3], punteggio: x.s };
+  });
+}
+
+function vAssistente() {
+  var q = S.ctx.domanda || '', ris = q ? cercaAssistente(q, 3) : [], n = typeof ASSISTENTE !== 'undefined' ? ASSISTENTE.length : 0;
+  var h = testata('Fai una domanda', n ? n + ' risposte con le fonti, anche senza rete' : 'risposte con le fonti', 'home') + '<main>';
+  if (!n) h += '<div class="hint">Le risposte non sono ancora state preparate: arriveranno con un prossimo aggiornamento.</div>';
+  h += '<div class="card"><label class="field"><span>La tua domanda</span><input type="search" id="ass-q" value="' + esc(q) +
+    '" placeholder="es. quante serie a settimana per crescere?" autocomplete="off"></label><button class="primary" id="ass-vai">Cerca</button></div>';
+  if (q && !ris.length && n) h += '<p class="dim">Non ho trovato niente di vicino. Prova con altre parole.</p>';
+  ris.forEach(function (x) {
+    h += '<div class="card ass-r"><b>' + esc(x.d) + '</b><p>' + esc(x.r) + (x.fonti && x.fonti.length ? fonti(x.fonti) : '') + '</p>' +
+      '<p class="dim">Da: ' + esc(x.doc) + '</p></div>';
+  });
+  /* online, facoltativo */
+  if (q && typeof SESSIONE !== 'undefined' && SESSIONE) {
+    var on = S.ctx.rispostaOnline;
+    h += on ? '<div class="card ass-r"><b>Risposta online</b><p>' + esc(on.risposta) + '</p><p class="dim">Scritta da un modello gratuito a partire ' +
+        'dalle risposte qui sopra: controlla le fonti. Te ne restano ' + on.restanti + ' oggi.</p></div>'
+      : '<button class="ghost" id="ass-online">Chiedi online (facoltativo, 20 domande al giorno)</button><div id="ass-msg" class="note" role="status" aria-live="polite"></div>';
+  } else if (q) h += '<p class="dim">Con l’account puoi anche chiedere online a un modello che parte da queste risposte.</p>';
+  h += '<div class="note">Sono informazioni prese dalla letteratura dell’app, non consigli medici: per un disturbo che dura il riferimento è il medico.</div>';
+  return h + '</main>';
+}
+
+function collegaAssistente() {
+  if (S.vista !== 'assistente') return;
+  var inp = document.getElementById('ass-q'), vai = function () { S.ctx.domanda = inp.value.trim(); S.ctx.rispostaOnline = null; render(); };
+  inp.onkeydown = function (e) { if (e.key === 'Enter') vai(); };
+  document.getElementById('ass-vai').onclick = vai;
+  var on = document.getElementById('ass-online');
+  if (on) on.onclick = function () {
+    var m = document.getElementById('ass-msg');
+    on.disabled = true; m.textContent = 'Un momento…';
+    var contesto = cercaAssistente(S.ctx.domanda, 5).map(function (x) { return { d: x.d, r: x.r, fonti: x.fonti }; });
+    tokenValido().then(function (t) {
+      return cloudFetch('POST', '/functions/v1/assistente', { domanda: S.ctx.domanda.slice(0, 500), contesto: contesto }, t);
+    }).then(function (r) {
+      if (r.s !== 200 || !r.j || !r.j.risposta) return Promise.reject(r);
+      S.ctx.rispostaOnline = r.j; render();
+    }).catch(function (r) { on.disabled = false; m.textContent = (r && r.j && r.j.errore) || erroreCloud(r); });
+  };
+}
+
+
 /* ===== base.js ===== */
 /* ============================================================
    BASE: stato, salvataggio, utilità, navigazione, fonti fra [ ].
@@ -29920,7 +30025,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw17yu0e';
+var BUILD = 'vmw18gxi5';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -30295,6 +30400,7 @@ function render() {
     else if (v === 'progressi') h = vProgressi();
     else if (v === 'impostazioni') h = vImpostazioni();
     else if (v === 'legale') h = vLegale();
+    else if (v === 'assistente') h = vAssistente();   /* v28 (R32) */
     else h = vHome();
   } catch (err) {
     /* nessun errore deve poter bloccare la navigazione */
@@ -30313,6 +30419,7 @@ function render() {
   collegaAltriSport();
   collegaCapisci();
   collegaSegnalazioni();
+  collegaAssistente();
   /* v28 (R29): gli avvisi in cima alla Home */
   document.querySelectorAll('[data-avviso]').forEach(function (a) {
     a.onclick = function (e) { e.preventDefault(); if (a.dataset.avviso === 'agenda') { vaiSezione('diario'); S.ctx.sez = 'agenda'; render(); } else vaiSezione('dispensa'); };
@@ -31095,6 +31202,7 @@ function vHome() {
     var d = testoPerTe(p.d);
     if (d && fraseAmmessa(p.t)) h += '<details><summary>' + esc(p.t) + '</summary><div>' + d + '</div></details>';
   });
+  h += '<button class="ghost" data-go="assistente">Fai una domanda</button>';   /* v28 (R32) */
   h += '<button class="ghost" data-go="impostazioni">Impostazioni e backup dei dati</button>';
   h += '</main>';
   return h;
