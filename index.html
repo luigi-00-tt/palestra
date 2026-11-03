@@ -5737,6 +5737,26 @@ ESERCIZI['equilibrio-una-gamba'] = {
   alternativa: 'Camminata su una linea, un piede davanti all\'altro'
 };
 
+/* v28 (R13): spalle senza attrezzi. Contreras (L18 p. 48-50): spingendo il corpo
+   indietro il piegamento diventa una spinta sopra la testa, passo intermedio
+   verso i piegamenti in verticale. */
+ESERCIZI['pike-push-up'] = {
+  nome: 'Piegamenti a V (pike push-up)',
+  target: 'deltoidi anteriori e tricipiti', gruppo: 'Spalle',
+  setup: [
+    ['Posizione', 'Mani a terra poco più larghe delle spalle, bacino alto: il corpo fa una V rovesciata'],
+    ['Difficoltà', 'Con i piedi su una sedia o un gradino è più difficile; più i piedi sono vicini alle mani, più lavorano le spalle'],
+  ],
+  tecnica: [
+    'Gambe tese o appena piegate, peso sulle mani.',
+    'Piega i gomiti e porta la testa verso il pavimento, davanti alle mani: disegni un triangolo con le mani.',
+    'Spingi il pavimento lontano finché le braccia sono tese.',
+    'Il bacino resta alto per tutta la ripetizione.'
+  ],
+  errori: ['Bacino che scende e diventa un piegamento normale', 'Gomiti che si aprono a 90 gradi'],
+  alternativa: 'Piegamenti con i piedi rialzati'
+};
+
 
 /* ===== catalogo.js ===== */
 /* ============================================================
@@ -5814,6 +5834,8 @@ var CATALOGO = {
   /* spinta verticale */
   'shoulder-press':             { s: 'spinta-v', ind: ['Tricipiti'], a: ['manubri', 'panca'], m: 1, liv: 1, f: ['sopratesta', 'spalla-ant'] },
   'shoulder-press-macchina':    { s: 'spinta-v', ind: ['Tricipiti'], a: ['shoulderm'], m: 1, liv: 1, f: ['sopratesta', 'spalla-ant'] },
+  /* v28 (R13): spalle a corpo libero, fra i piegamenti e la verticale (Contreras, L18 p. 48-50) */
+  'pike-push-up':               { s: 'spinta-v', ind: ['Tricipiti'], a: [], m: 1, liv: 2, f: ['sopratesta', 'spalla-ant', 'polso'] },
   'military-press':             { s: 'spinta-v', ind: ['Tricipiti'], a: ['bilanciere', 'rack'], m: 1, liv: 3, f: ['sopratesta', 'assiale', 'valsalva', 'spalla-ant', 'polso'] },
   /* spalle, isolamento */
   'alzate-laterali':            { s: 'iso-spalle', a: ['manubri'], m: 0, liv: 1, f: ['spalla-ant'] },
@@ -7863,7 +7885,19 @@ function staNelTempo(giorni, target, minuti, prio) {
 
 /* ---------- la scheda completa ---------- */
 
+/* v28 (R13): l'ambito decide gli attrezzi. Sala = quelli della palestra (del
+   luogo attivo); corpo libero = peso del corpo, sbarra e parallele; casa = quello
+   che si ha a casa. I luoghi restano per le palestre diverse. */
+var AMBITO_CORPO = ['sbarra', 'parallele'];
+function conAmbito(q) {
+  if (!q || (q.ambito !== 'corpo' && q.ambito !== 'casa')) return q;
+  var c = {}; for (var k in q) c[k] = q[k];
+  c.attrezzi = (q.ambito === 'corpo' ? AMBITO_CORPO : q.attrezziCasa || []).slice();
+  return c;
+}
+
 function generaScheda(q) {
+  q = conAmbito(q);
   var fam = famiglia(q.obiettivo);
   var str = struttura(q.giorni, q.esperienza | 0, q);
   var tv = targetVolume(q), target = tv.target;
@@ -27679,7 +27713,7 @@ function zoneAttive() {
 /* La persona per cui si cercano le alternative: le risposte del
    questionario, oppure la palestra e il reflusso della scheda su misura. */
 function personaApp() {
-  if (S.questionario && !S.questionario.preset) return S.questionario;
+  if (S.questionario && !S.questionario.preset) return conAmbito(S.questionario);
   return { attrezzi: attrezziAttivi(), esperienza: 3,   /* v28: gli attrezzi del luogo attivo */
            obiettivo: 'massa', condizioni: { reflusso: {} }, dolori: zoneAttive() };
 }
@@ -28103,6 +28137,7 @@ function bozzaQuestionario() {
       intolleranze: v.intolleranze || [], allergie: (al.allergie || []).slice(), dieta: v.dieta || 'onnivora',
       allergieTesto: al.allergieTesto || '', nessunaAllergia: !!al.nessunaAllergia,
       divisione: v.divisione || 'auto', ruota: v.ruota || 'si',
+      ambito: v.ambito || 'sala', attrezziCasa: (v.attrezziCasa || []).slice(),
       cedimento: v.cedimento || 'auto', ripetizioni: v.ripetizioni || 'auto', cardio: v.cardio || 'auto',
       preferiti: (v.preferiti || []).slice(), odiati: (v.odiati || []).slice(),
       pasti: v.pasti || 4, integratori: v.integratori || [], nonMangia: v.nonMangia || ''
@@ -28278,6 +28313,11 @@ function pillole(nome, voci, scelti, singola) {
    giorni, chiede se farle girare in sequenza. */
 var QZ_DIVISIONI = [['auto', 'Decidi tu'], ['full', 'Full body'], ['ul', 'Parte alta / parte bassa'],
   ['ppl', 'Spinta / tirata / gambe'], ['mono', 'Monofrequenza (un muscolo per seduta)']];
+/* v28 (R13): l'ambito della scheda e gli attrezzi di casa */
+var QZ_AMBITI = [['sala', 'Sala pesi'], ['corpo', 'Corpo libero'], ['casa', 'A casa']];
+var ATTREZZI_CASA = [['manubri', 'Manubri'], ['panca', 'Panca'], ['kettlebell', 'Kettlebell'], ['elastici', 'Elastici'],
+  ['sbarra', 'Sbarra per trazioni'], ['parallele', 'Parallele o due sedie robuste'], ['cyclette', 'Cyclette'], ['tapis', 'Tapis roulant']];
+
 /* v28 (R14): ogni domanda ha «decidi tu», nessuna è obbligatoria */
 function domandePreferenze(d) {
   var h = '<h2>Quanto vicino al cedimento vuoi arrivare</h2>' +
@@ -28367,13 +28407,21 @@ function vQuestionario() {
     h += domandeDivisione(d);
     h += '</div>';
   } else if (p === 1) {
-    h += '<p>Che cosa c\'è nella tua palestra? Togli quello che manca: la scheda userà solo ' +
-      'quello che resta acceso. Il corpo libero c\'è sempre.</p>';
-    h += '<div class="qz-rapide"><button class="ghost" id="qz-tutto">Palestra completa</button>' +
-         '<button class="ghost" id="qz-niente">Niente di tutto questo</button></div>';
-    ATTREZZI.forEach(function (g) {
-      h += '<h2>' + esc(g[0]) + '</h2>' + pillole('attrezzi', g[1], d.attrezzi);
-    });
+    /* v28 (R13): l'ambito della scheda; i luoghi (palestre diverse) restano per la sala */
+    h += '<h2>Dove ti alleni con questa scheda</h2>' + pillole('ambito', QZ_AMBITI, d.ambito, true);
+    if (d.ambito === 'corpo') h += '<p class="dim">Solo il peso del corpo, più una sbarra per le trazioni e le parallele per i dip ' +
+      '(ci sono in quasi tutti i parchi). Bicipiti e spalle si allenano meno che con i pesi: la scheda lo dice.</p>';
+    else if (d.ambito === 'casa') h += '<p>Che cosa hai a casa? Se non hai niente, lascia tutto spento: la scheda sarà a corpo libero.</p>' +
+      pillole('attrezziCasa', ATTREZZI_CASA, d.attrezziCasa);
+    else {
+      h += '<p>Che cosa c\'è nella tua palestra? Togli quello che manca: la scheda userà solo ' +
+        'quello che resta acceso. Il corpo libero c\'è sempre.</p>';
+      h += '<div class="qz-rapide"><button class="ghost" id="qz-tutto">Palestra completa</button>' +
+           '<button class="ghost" id="qz-niente">Niente di tutto questo</button></div>';
+      ATTREZZI.forEach(function (g) {
+        h += '<h2>' + esc(g[0]) + '</h2>' + pillole('attrezzi', g[1], d.attrezzi);
+      });
+    }
   } else if (p === 2) {
     h += '<h2>Il tuo obiettivo principale</h2><div class="qz-obiettivi">' + QZ_OBIETTIVI.map(function (o) {
       return '<button class="qz-ob' + (d.obiettivo === o[0] ? ' on' : '') + '" data-ob="' + o[0] + '"><b>' +
@@ -28675,7 +28723,7 @@ function salvaQuestionario(d, voce) {
 }
 
 /* ---------- v28: il profilo voce per voce ---------- */
-var VOCI_PROFILO = ['Chi sei, giorni e tempo', 'Attrezzi', 'Obiettivo', 'Salute', 'Alimentazione'];
+var VOCI_PROFILO = ['Chi sei, giorni e tempo', 'Sala, corpo libero o casa', 'Obiettivo', 'Salute', 'Alimentazione'];
 function apriVoceProfilo(passo, luogo) {
   QZ = null;
   bozzaQuestionario();
@@ -28729,10 +28777,10 @@ function sezioneSchedaImpostazioni() {
   }
   /* v28: si cambia una voce alla volta, con l'anteprima di cosa cambia */
   if (S.questionario) {
-    var voci = suMisura() ? [4] : [0, 2, 3, 4];
+    var voci = suMisura() ? [4] : [0, 1, 2, 3, 4];
     h += '<p class="dim">Cambia una voce sola, senza rifare tutto:</p><div class="qz-voci">' + voci.map(function (i) {
       return '<button class="pill" data-voce="' + i + '">' + (suMisura() && i === 4 ? 'Allergie' : VOCI_PROFILO[i]) + '</button>';
-    }).join('') + '</div><p class="dim">Gli attrezzi si cambiano in «Dove ti alleni», qui sotto.</p>';
+    }).join('') + '</div><p class="dim">Gli attrezzi di ogni palestra si cambiano in «Dove ti alleni», qui sotto.</p>';
   }
   h += '<button class="ghost" id="qz-rifai">' + (S.questionario ? 'Rifai il questionario' : 'Compila il questionario') + '</button>';
   if (S.questionario && S.questionario.eraSuMisura && !suMisura()) {
@@ -29594,7 +29642,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw10j6og';
+var BUILD = 'vmw1124zo';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -31482,7 +31530,9 @@ function vEsercizio() {
   /* v21: segnalare un fastidio e farsi proporre un'alternativa */
   h += pannelloFastidio(e, g);
   /* v28: «qui non c'è»: l'attrezzo esce dal luogo attivo e la scheda si adatta */
-  var serve = (CATALOGO[e.ex] && !e.extra ? CATALOGO[e.ex].a : []).filter(function (x) { return attrezziAttivi().indexOf(x) >= 0; });
+  /* v28 (R13): a corpo libero e a casa gli attrezzi non sono quelli della palestra: si cambiano dal profilo */
+  var fuoriSala = S.questionario && conAmbito(S.questionario) !== S.questionario;
+  var serve = (CATALOGO[e.ex] && !e.extra && !fuoriSala ? CATALOGO[e.ex].a : []).filter(function (x) { return attrezziAttivi().indexOf(x) >= 0; });
   if (serve.length) {
     h += '<details class="manca"><summary>Qui non c\'è questo attrezzo</summary><p class="dim">Tocca quello che manca in «' +
       esc(luogoAttivo().nome) + '»: lo tolgo dai tuoi attrezzi e l\'esercizio passa all\'equivalente in tutte le sedute. ' +
