@@ -29735,6 +29735,50 @@ function collegaAccount() {
   };
 }
 
+/* ---------- v28 (R30-R31): segnalazioni, solo con l'account ----------
+   Private: le legge chi gestisce l'app dalla dashboard di Supabase; niente forum.
+   La tabella e le regole sono in sito/supabase/migrations/20261103140000_segnalazioni.sql. */
+var MIE_SEGNALAZIONI = null;
+function sezioneSegnalazioni() {
+  var h = '<h2>Un\u2019idea o un problema</h2><div class="card">';
+  if (!SESSIONE) return h + '<p class="dim">Per mandare una segnalazione serve l\u2019account (qui sopra): cos\u00ec posso risponderti nella prossima versione e nessun altro la vede.</p></div>';
+  var t = S.ctx.segTipo || 'idea';
+  h += '<div class="seg" id="seg-tipo">' + [['idea', 'Un\u2019idea'], ['problema', 'Un problema']].map(function (x) {
+      return '<button data-seg="' + x[0] + '" class="' + (t === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+    '<label class="field"><span>' + (t === 'idea' ? 'Cosa si potrebbe migliorare' : 'Cosa non va, e dove') + '</span>' +
+    '<textarea id="seg-testo" maxlength="2000" placeholder="' + (t === 'idea' ? 'es. vorrei vedere le kcal anche nel men\u00f9' : 'es. nella dispensa il pulsante X non risponde') + '"></textarea></label>' +
+    '<p class="dim">La legge solo chi gestisce l\u2019app, insieme alla versione (' + esc(BUILD) + ').</p>' +
+    '<button class="primary" id="seg-invia">Invia</button><div id="seg-msg" class="note" role="status" aria-live="polite"></div>';
+  if (MIE_SEGNALAZIONI && MIE_SEGNALAZIONI.length) h += '<details><summary>Le tue segnalazioni (' + MIE_SEGNALAZIONI.length + ')</summary>' +
+    MIE_SEGNALAZIONI.map(function (x) {
+      return '<p><b>' + (x.tipo === 'idea' ? 'Idea' : 'Problema') + '</b> · ' + esc(new Date(x.creata_il).toLocaleDateString('it-IT')) + ' · ' +
+        esc({ nuova: 'da leggere', letta: 'letta', fatta: 'fatta', scartata: 'non la faremo' }[x.stato] || x.stato) + '<br>' + esc(x.testo) + '</p>';
+    }).join('') + '</details>';
+  return h + '</div>';
+}
+function collegaSegnalazioni() {
+  if (S.vista !== 'impostazioni' || !SESSIONE) return;
+  if (MIE_SEGNALAZIONI === null) {
+    MIE_SEGNALAZIONI = [];
+    tokenValido().then(function (t) { return cloudFetch('GET', '/rest/v1/segnalazioni?select=tipo,testo,stato,creata_il&order=creata_il.desc&limit=20', undefined, t); })
+      .then(function (r) { if (r.s === 200 && Array.isArray(r.j) && r.j.length) { MIE_SEGNALAZIONI = r.j; if (S.vista === 'impostazioni') render(); } }, function () {});
+  }
+  document.querySelectorAll('[data-seg]').forEach(function (b) { b.onclick = function () { S.ctx.segTipo = b.dataset.seg; render(); }; });
+  var inv = document.getElementById('seg-invia');
+  if (inv) inv.onclick = function () {
+    var testo = document.getElementById('seg-testo').value.trim(), m = document.getElementById('seg-msg');
+    if (testo.length < 5) { m.textContent = 'Scrivi almeno qualche parola.'; return; }
+    inv.disabled = true; m.textContent = 'Invio…';
+    tokenValido().then(function (t) {
+      return cloudFetch('POST', '/rest/v1/segnalazioni', { tipo: S.ctx.segTipo || 'idea', testo: testo, build: BUILD, pagina: 'impostazioni' }, t,
+        { Prefer: 'return=minimal' });
+    }).then(function (r) {
+      if (r.s !== 201 && r.s !== 204) return Promise.reject(r);
+      MIE_SEGNALAZIONI = null; toast('Inviata, grazie'); render();
+    }).catch(function (r) { inv.disabled = false; m.textContent = erroreCloud(r); });
+  };
+}
+
 
 /* ===== legale.js ===== */
 /* v27: informativa privacy (GDPR art. 13), termini d'uso, cookie e archiviazione.
@@ -29767,8 +29811,10 @@ var LEGALE = {
         '<p><b>Quali dati:</b> username; data di nascita, sesso, peso, altezza; esperienza e obiettivi di ' +
         'allenamento; <b>dati sulla salute</b> che scegli di indicare (condizioni, dolori, terapie, diario dei ' +
         'sintomi e del bagno); intolleranze, allergie e scelte alimentari, che possono rivelare convinzioni ' +
-        'religiose (per esempio halal o kosher); allenamenti, diario dei pasti, prodotti e dispensa; la scheda di allenamento costruita per te e la ' +
+        'religiose (per esempio halal o kosher); allenamenti, diario dei pasti, prodotti e dispensa; l\'agenda degli impegni; la scheda di allenamento costruita per te e la ' +
         'versione dell\'app che l\'ha costruita.</p>' +
+        '<p><b>Segnalazioni:</b> se mandi un\'idea o un problema dall\'app, il testo resta legato al tuo account insieme alla versione dell\'app e alla pagina da cui scrivi. ' +
+        'Le leggi solo tu e il gestore; spariscono con l\'account.</p>' +
         '<p><b>Perché e su quale base:</b> per costruire la scheda e conservare i tuoi dati fra un dispositivo ' +
         'e l\'altro (servizio che chiedi, art. 6.1.b GDPR). I dati sulla salute e quelli che possono rivelare ' +
         'convinzioni religiose solo con il tuo <b>consenso esplicito</b> (art. 9.2.a), dato alla registrazione e ' +
@@ -29874,7 +29920,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw17mxb6';
+var BUILD = 'vmw17yu0e';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -30266,6 +30312,7 @@ function render() {
   collegaDueSchede();
   collegaAltriSport();
   collegaCapisci();
+  collegaSegnalazioni();
   /* v28 (R29): gli avvisi in cima alla Home */
   document.querySelectorAll('[data-avviso]').forEach(function (a) {
     a.onclick = function (e) { e.preventDefault(); if (a.dataset.avviso === 'agenda') { vaiSezione('diario'); S.ctx.sez = 'agenda'; render(); } else vaiSezione('dispensa'); };
@@ -35846,6 +35893,7 @@ function vImpostazioni() {
        'telefono, i dati se ne vanno. Le difese sono due: l\'account, che tiene una copia nel cloud, e il file qui sotto.</div>';
 
   h += sezioneAccount();
+  h += sezioneSegnalazioni();   /* v28 (R30-R31) */
   h += '<h2>Copia di sicurezza</h2>';
   var ub = S.profilo.ultimoBackup;
   if (cont.serie > 0) {
