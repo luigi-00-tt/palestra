@@ -29807,7 +29807,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw15b54n';
+var BUILD = 'vmw15ob1f';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -33944,6 +33944,65 @@ function baseCentograni(c) {
            u: c.q, fodmap: 'ok', reflusso: 'ok' };
 }
 
+/* ---------- v28 (R24): i piatti composti, dalle ricette ----------
+   «100 g di pasta al sugo»: si sceglie la ricetta che combacia e si dice che cosa
+   si è pesato. La pasta (o il riso) cruda → la porzione si scala sui suoi grammi;
+   il piatto pronto → sul peso della porzione cotta, che è quello degli ingredienti
+   crudi più l'acqua che la pasta o il riso assorbono. La resa viene dalle stesse
+   tabelle CREA del diario: pasta 353 → 158 kcal per 100 g (× 2,23), riso 332 → 130. */
+var AMIDI = [[/past[ae]\b|spaghett|bucatin|penne|maccheron|rigaton|fusill|tagliatell|fettuccin|linguin|orecchiett|trofie|paccher|lasagn|tagliolin|vermicell|ditalin|farfall|pappardell|bavett|tortiglion|conchigli|mezze maniche|sedanin|strozzapret/i,
+  'la pasta', 'Pasta di semola (cruda)', 'Pasta di semola (cotta)'],
+  [/\briso\b|carnaroli|arborio|basmati|vialone/i, 'il riso', 'Riso bianco (crudo)', 'Riso bianco (cotto)']];
+function grammiIng(t) {
+  var m = String(t || '').replace(',', '.').match(/(\d+(?:\.\d+)?)\s*(kg|g|ml|l)\b/i);
+  if (!m) return 0;
+  var n = parseFloat(m[1]), u = m[2].toLowerCase();
+  return u === 'kg' || u === 'l' ? n * 1000 : n;
+}
+function piattoDa(v) {
+  var pers = v.persone || 1, righe = (v.ing || []).filter(function (r) { return !r[2]; });
+  var tot = 0, amido = null;
+  righe.forEach(function (r) {
+    var gr = grammiIng(r[1]); tot += gr;
+    if (!amido && gr) AMIDI.forEach(function (a) { if (!amido && a[0].test(r[0])) amido = { nome: a[1], g: gr / pers, crudo: a[2], cotto: a[3] }; });
+  });
+  if (amido) {
+    var k = function (n) { return (ALIMENTI.filter(function (x) { return x.n === n; })[0] || {}).k; };
+    amido.resa = k(amido.crudo) && k(amido.cotto) ? k(amido.crudo) / k(amido.cotto) : 1;
+  }
+  var porz = tot / pers;
+  return { v: v, pers: pers, righe: righe, porzCotta: porz + (amido ? amido.g * (amido.resa - 1) : 0), amido: amido };
+}
+function piattiTrovati(q) {
+  var reQ = new RegExp('(^|[^a-z0-9à-ÿ])' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\/*__JS__*/')), out = [];
+  PASTI.gruppi.forEach(function (gr, gi) {
+    gr.voci.forEach(function (v, vi) { if (v.kcal > 0 && reQ.test(v.nome.toLowerCase())) out.push({ v: v, id: gi + ':' + vi }); });
+  });
+  return out;
+}
+function pannelloPiatto(id) {
+  var x = id.split(':'), v = PASTI.gruppi[+x[0]].voci[+x[1]], P = piattoDa(v), pes = S.ctx.pesato, q = S.ctx.qta || 100;
+  var femm = P.amido && /^la /.test(P.amido.nome);
+  var h = '<div class="card calc"><div class="calc-top"><b>' + esc(v.nome) + '</b>' +
+    '<button class="chiudi" id="calc-x" aria-label="chiudi">&times;</button></div>' +
+    '<div class="dim">Una porzione: ' + v.kcal + ' kcal · ' + (v.prot || 0) + ' g di proteine' + (P.pers > 1 ? ' (ricetta per ' + P.pers + ')' : '') + '</div>' +
+    '<p><b>Che cosa hai pesato?</b></p><div class="seg" id="pesato">' +
+    (P.amido ? '<button data-pesato="crudo" class="' + (pes === 'crudo' ? 'on' : '') + '">' + esc(P.amido.nome.replace(/^(la|il) /, '')) + (femm ? ' cruda' : ' crudo') + '</button>' : '') +
+    '<button data-pesato="pronto" class="' + (pes === 'pronto' ? 'on' : '') + '">il piatto pronto</button></div>';
+  if (!pes) return h + '<p class="dim">Scegli una delle due: cambia il conto.</p></div>';
+  var base = pes === 'crudo' && P.amido ? P.amido.g : P.porzCotta, f = base ? q / base : 0;
+  var r = function (n) { return Math.round((n || 0) * f * 10) / 10; };
+  var val = { k: Math.round(v.kcal * f), pr: r(v.prot), c: r(v.carbo), f: r(v.grassi), fi: r(v.fibra) };
+  var ing = P.righe.filter(function (r0) { return grammiIng(r0[1]); }).map(function (r0) { return [r0[0], Math.round(grammiIng(r0[1]) / P.pers * f)]; });
+  S.ctx.piattoVal = { n: v.nome, q: q, k: val.k, pr: val.pr, c: val.c, f: val.f, fi: val.fi, pesato: pes, ing: ing };
+  return h + '<div class="calc-q"><button data-dq="-10">&minus;10</button><input type="number" inputmode="numeric" step="5" id="q-gr" value="' + q + '"><span>g</span>' +
+    '<button data-dq="10">+10</button></div>' + pastiglieMacro(val) +
+    '<p class="dim">Sono ' + String(Math.round(f * 100) / 100).replace('.', ',') + ' porzioni. Dentro: ' +
+    ing.map(function (i) { return esc(i[0].toLowerCase()) + ' ' + i[1] + ' g'; }).join(', ') + '.' +
+    (pes === 'pronto' ? ' Il peso del piatto cotto è stimato: ' + (P.amido ? esc(P.amido.nome) + ' cuocendo assorbe acqua (resa dalle tabelle CREA)' : 'quello degli ingredienti') + '.' : '') + '</p>' +
+    '<button class="primary" id="piatto-add">Aggiungi alla giornata</button></div>';
+}
+
 /* Pannello con cui si sceglie quanti grammi: il calcolo e' in proporzione,
    quindi 50 g di pomodori piu' 50 g di mozzarella danno la somma esatta.
    Con `mod` lo stesso pannello serve a correggere una voce gia' registrata:
@@ -34351,6 +34410,7 @@ function vDiario() {
     var sel = S.ctx.alim;
     var selVoce = (sel !== undefined && !g.cibo[S.ctx.modifica]) ? voceCatalogo(sel) : null;
     if (selVoce) h += pannelloQuantita(selVoce, sel);
+    if (S.ctx.piatto) h += pannelloPiatto(S.ctx.piatto);   /* v28 (R24) */
 
     var bottone = function (a, chiave) {
       var seg = semaforoAttivo() && (a.reflusso === 'attenzione' || a.fodmap !== 'ok');
@@ -34367,7 +34427,13 @@ function vDiario() {
                (v.a.marca || '').toLowerCase().indexOf(qa) >= 0 ||
                (v.a.ean || '').indexOf(qa) >= 0;
       });
-      if (!trovati.length) {
+      /* v28 (R24): i piatti delle ricette che combaciano, da scegliere */
+      var piatti = qa.length >= 3 ? piattiTrovati(qa) : [];
+      if (piatti.length) h += '<h2>Piatti (dalle ricette)</h2><div class="cibi">' + piatti.slice(0, 15).map(function (p) {
+        return '<button class="cibo-add' + (S.ctx.piatto === p.id ? ' on' : '') + '" data-piatto="' + p.id + '"><b>' + esc(p.v.nome) + '</b><i>' +
+          p.v.kcal + ' kcal · ' + (p.v.prot || 0) + ' g prot · porzione' + (p.v.libro ? ' · ' + esc(p.v.libro) : '') + '</i></button>';
+      }).join('') + '</div>' + (piatti.length > 15 ? '<div class="dim">Mostrati 15 di ' + piatti.length + ': scrivi qualche parola in più.</div>' : '');
+      if (!trovati.length && !piatti.length) {
         h += '<p class="dim">Nessun alimento con questo nome. Se è un prodotto confezionato ' +
              'scansiona il codice a barre qui sopra; altrimenti usa &laquo;Altro&raquo; ' +
              'in fondo e scrivi tu i valori dell\'etichetta.</p>';
@@ -34883,7 +34949,13 @@ function collegaDiario() {
      da dove arrivano i valori per 100 g e cosa succede quando confermi. */
   var vMod = g.cibo[S.ctx.modifica];
   var gr = document.getElementById('q-gr');
-  if (gr) {
+  /* v28 (R24): nel pannello del piatto i grammi rifanno il conto ridisegnando il pannello */
+  if (gr && S.ctx.piatto) {
+    gr.onchange = function () { S.ctx.qta = Math.max(1, parseInt(gr.value, 10) || 100); render(); };
+    document.querySelectorAll('[data-dq]').forEach(function (b) {
+      b.onclick = function () { S.ctx.qta = Math.max(10, (S.ctx.qta || 100) + (+b.dataset.dq)); render(); };
+    });
+  } else if (gr) {
     var a = vMod ? baseCentograni(vMod) : voceCatalogo(S.ctx.alim);
     var aggiorna = function () {
       var q = Math.max(0, parseInt(gr.value, 10) || 0);
@@ -34935,7 +35007,27 @@ function collegaDiario() {
   /* la × in alto chiude il pannello qualunque dei due sia aperto */
   var cx = document.getElementById('calc-x');
   if (cx) cx.onclick = function () {
-    S.ctx.alim = undefined; S.ctx.modifica = undefined; render();
+    S.ctx.alim = undefined; S.ctx.modifica = undefined; S.ctx.piatto = undefined; render();
+  };
+  /* v28 (R24): piatti composti */
+  document.querySelectorAll('[data-piatto]').forEach(function (b) {
+    b.onclick = function () {
+      S.ctx.alim = undefined; S.ctx.modifica = undefined;
+      S.ctx.piatto = S.ctx.piatto === b.dataset.piatto ? undefined : b.dataset.piatto;
+      S.ctx.pesato = undefined; S.ctx.qta = 100; render();
+    };
+  });
+  document.querySelectorAll('[data-pesato]').forEach(function (b) {
+    b.onclick = function () { S.ctx.pesato = b.dataset.pesato; render(); };
+  });
+  var pa = document.getElementById('piatto-add');
+  if (pa) pa.onclick = function () {
+    var qi = document.getElementById('q-gr'), nq = qi ? Math.max(1, parseInt(qi.value, 10) || 100) : S.ctx.qta;
+    if (nq !== S.ctx.qta) { S.ctx.qta = nq; pannelloPiatto(S.ctx.piatto); }   /* ricalcola con i grammi scritti */
+    var v = S.ctx.piattoVal;
+    g.cibo.push({ n: v.n, q: v.q, k: v.k, pr: v.pr, c: v.c, f: v.f, fi: v.fi, piatto: { pesato: v.pesato, ing: v.ing }, h: oraAdesso() });
+    S.ctx.piatto = undefined; S.ctx.pesato = undefined; S.ctx.qcibo = '';
+    save(); toast(v.n + ' aggiunto: ' + v.k + ' kcal'); render();
   };
 
   var cd = document.getElementById('calc-del');
