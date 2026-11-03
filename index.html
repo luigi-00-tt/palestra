@@ -1109,6 +1109,8 @@ nav.cinque button svg { width: 20px; height: 20px; }
 .qz input[type=text] { width: 100%; box-sizing: border-box; }
 .cardio-card b { display: block; margin-bottom: 4px; }
 .qz-pills .pill.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.qz-es-riga { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 4px 0; }
+.qz-es-riga span { flex: 1 1 140px; }
 
 /* v20: ricette, trucchi e varianti */
 .trucchi { margin: 0; padding-left: 18px; }
@@ -6656,6 +6658,16 @@ var REGOLE = {
      prima: 2-3 sedute non consecutive, 8-15 ripetizioni (Behm 2008, D26 p. 547-549),
      niente massimali senza istruttore (D27). Il RIR di almeno 2 è una scelta
      prudente che discende dai «carichi moderati»: nessuna fonte lo prescrive. */
+  /* v28 (R14): le preferenze dell'utente; «auto» o nessuna risposta = come prima.
+     Vicinanza al cedimento: a 0-3 ripetizioni di scorta la crescita è simile,
+     più lontano cala un po' (Robinson 2024, Refalo 2023-2024). Ripetizioni: con
+     carichi da 5 a 30 ripetizioni la crescita è simile (Schoenfeld 2017, Lopez 2021). */
+  preferenze: {
+    cedimento: { tranquillo: ['3-4', '3'], normale: ['1-3', '1-2'], limite: ['0-1', '0-1'], fonti: ['A02', 'A03', 'A04'] },
+    ripetizioni: { basse: '5-8', medie: '8-12', alte: '12-20', fonti: ['A08', 'A44'] },
+    /* cardio: «poco» = qualche minuto dopo i pesi, «tanto» = i 150 minuti dell'OMS */
+    cardio: { poco: { settimana: 0, seduta: 15 }, tanto: { settimana: 150, seduta: 30 }, fonti: ['D10'] }
+  },
   giovani: { sotto: 18, giorniMax: 3, ripMin: 8, rir: '2-3', fonti: ['D23', 'D24', 'D26', 'D27'] },
 
   /* ripetizioni, RIR e recuperi per tipo di obiettivo e tipo di esercizio.
@@ -7375,9 +7387,14 @@ function candidati(schema, q, fam, esclusi) {
   var ids = Object.keys(CATALOGO).filter(function (id) {
     return CATALOGO[id].s === schema && !motivoEsclusione(id, q, esclusi);
   });
+  /* v28 (R14): l'esercizio che non piace esce se c'è un equivalente; il preferito vince fra gli equivalenti */
+  var odiati = q.odiati || [], pref = q.preferiti || [];
+  var senza = ids.filter(function (id) { return odiati.indexOf(id) < 0; });
+  if (senza.length) ids = senza;
   var ordine = Object.keys(CATALOGO);
   return ids.sort(function (a, b) {
-    return (punteggio(b, q, fam) - punteggio(a, q, fam)) || spareggioGrafo(a, b, q) ||
+    return ((pref.indexOf(b) >= 0) - (pref.indexOf(a) >= 0)) ||
+      (punteggio(b, q, fam) - punteggio(a, q, fam)) || spareggioGrafo(a, b, q) ||
       (ordine.indexOf(a) - ordine.indexOf(b));
   });
 }
@@ -7538,10 +7555,14 @@ function prescrizione(id, fam, q, blocco, principale) {
   else p = c.m ? R.ipertrofia.multi : R.ipertrofia.iso;
   var rir = p.rir;
   if ((q.esperienza | 0) === 0) rir = c.m ? R.principiante.rirMulti : R.principiante.rirIso;
+  var P = REGOLE.preferenze, ced = P.cedimento[q.cedimento];
+  if (ced) rir = ced[c.m ? 0 : 1];
   /* chi ha pressione alta o problemi di cuore resta lontano dal cedimento:
      lì lo sforzo massimale è quello che fa salire di più la pressione */
   if (q.condizioni && (q.condizioni.ipertensione || q.condizioni.cardiopatia)) rir = c.m ? '2-3' : '2';
   var rip = p.rip[blocco % p.rip.length];
+  /* il fondamentale della forza resta a ripetizioni basse: è l'obiettivo scelto */
+  if (P.ripetizioni[q.ripetizioni] && !principale) rip = P.ripetizioni[q.ripetizioni];
   if (giovane(q)) {
     rir = REGOLE.giovani.rir;
     if (parseInt(rip, 10) < REGOLE.giovani.ripMin) rip = '8-12';
@@ -7967,6 +7988,10 @@ function etichettaObiettivo(o) {
 
 function cardioPer(q, str) {
   var r = q.obiettivo === 'dimagrire' ? REGOLE.cardio.dimagrire : q.obiettivo === 'salute' ? REGOLE.cardio.salute : null;
+  /* v28 (R14): la risposta dell'utente vince */
+  var PC = REGOLE.preferenze.cardio;
+  if (q.cardio === 'niente') return null;
+  if (PC[q.cardio]) r = { settimana: PC[q.cardio].settimana, seduta: PC[q.cardio].seduta, fonti: PC.fonti };
   if (!r) return null;
   var esclusi = flagEsclusi(q);
   var ex = ['cyclette', 'ellittica', 'camminata-inclinata'].filter(function (id) { return !motivoEsclusione(id, q, esclusi); })[0];
@@ -8097,12 +8122,24 @@ function spiega(q, fam, str, target, esclusi, perche, blocchi) {
   if (perche.cardio) {
     var pc = perche.cardio;
     V.push(['Il cardio',
-      'Almeno ' + pc.settimana + ' minuti a settimana a intensità moderata: riesci a parlare ma non a cantare. ' +
+      (q.cardio === 'poco' ? 'Come hai chiesto, qualche minuto dopo i pesi, a intensità moderata: riesci a parlare ma non a cantare. Per la salute l’OMS consiglia almeno 150 minuti a settimana, contando anche camminate e bici. '
+        : 'Almeno ' + pc.settimana + ' minuti a settimana a intensità moderata: riesci a parlare ma non a cantare. ') +
       (pc.inSeduta ? 'Circa ' + pc.inSeduta + ' stanno in coda ai pesi, nel tempo che hai indicato. ' : '') +
       (pc.fuori ? 'Gli altri ' + pc.fuori + ' nei giorni senza pesi: anche una camminata veloce all\'aperto va bene. ' : '') +
       'Cardio costante e a intervalli funzionano allo stesso modo a parità di calorie. Se li fai nella stessa seduta la scheda mette prima i pesi: l\'ordine non cambia forza né massa, ma così arrivi fresco dove serve' +
       (q.obiettivo === 'dimagrire' ? ', perché sono loro a conservare il muscolo mentre perdi grasso.' : '.') + fonti(pc.fonti)]);
   }
+  /* v28 (R14): le scelte dell'utente, con la fonte */
+  var P = REGOLE.preferenze, scelte = [];
+  if (P.cedimento[q.cedimento]) scelte.push('ti fermi a ' + P.cedimento[q.cedimento][0] + ' ripetizioni dal cedimento sui multiarticolari: fra 0 e 3 di scorta la crescita è simile, più lontano cala un po’' + fonti(P.cedimento.fonti));
+  if (P.ripetizioni[q.ripetizioni]) scelte.push('serie da ' + P.ripetizioni[q.ripetizioni] + ' ripetizioni' + (fam === 'forza' ? ' (tranne il primo esercizio della forza)' : '') + ': fra 5 e 30 ripetizioni il muscolo cresce in modo simile, se arrivi vicino al cedimento' + fonti(P.ripetizioni.fonti));
+  if (q.cardio === 'niente') scelte.push('niente cardio nella scheda');
+  var usati = [];
+  blocchi.forEach(function (b) { b.giorni.forEach(function (g) { g.esercizi.forEach(function (e) { if ((q.odiati || []).indexOf(e.ex) >= 0 && usati.indexOf(e.ex) < 0) usati.push(e.ex); }); }); });
+  if ((q.odiati || []).length) scelte.push(usati.length ? 'gli esercizi che non ti piacciono sono fuori, tranne ' + usati.map(function (id) { return ESERCIZI[id].nome.toLowerCase(); }).join(', ') + ': con i tuoi attrezzi e le tue risposte non ha un equivalente' : 'gli esercizi che non ti piacciono sono fuori');
+  if ((q.preferiti || []).length) scelte.push('i tuoi esercizi preferiti vincono quando ce n’è più d’uno equivalente');
+  if (scelte.length) V.push(['Le tue scelte', 'Come hai chiesto: ' + scelte.join('; ') + '.']);
+  if (giovane(q) && (P.cedimento[q.cedimento] || P.ripetizioni[q.ripetizioni])) V.push(['Le tue scelte e l’età', 'Sotto i 18 anni ripetizioni e vicinanza al cedimento seguono le regole per l’età, anche se hai scelto diversamente.' + fonti(REGOLE.giovani.fonti)]);
   if (fam === 'mantenere') V.push(['Quanto basta per mantenere',
     'Per non perdere muscolo basta da un terzo a un nono del volume di prima, purché i carichi restino alti: si possono togliere serie, non chili.' +
     (etaDa(q.nascita) > 60 ? ' Sopra i 60 anni ne serve un po\' di più, e la scheda ne tiene conto.' : '') + fonti(['D05', 'D06'])]);
@@ -28037,6 +28074,8 @@ function bozzaQuestionario() {
       intolleranze: v.intolleranze || [], allergie: (al.allergie || []).slice(), dieta: v.dieta || 'onnivora',
       allergieTesto: al.allergieTesto || '', nessunaAllergia: !!al.nessunaAllergia,
       divisione: v.divisione || 'auto', ruota: v.ruota || 'si',
+      cedimento: v.cedimento || 'auto', ripetizioni: v.ripetizioni || 'auto', cardio: v.cardio || 'auto',
+      preferiti: (v.preferiti || []).slice(), odiati: (v.odiati || []).slice(),
       pasti: v.pasti || 4, integratori: v.integratori || [], nonMangia: v.nonMangia || ''
     }
   };
@@ -28210,6 +28249,39 @@ function pillole(nome, voci, scelti, singola) {
    giorni, chiede se farle girare in sequenza. */
 var QZ_DIVISIONI = [['auto', 'Decidi tu'], ['full', 'Full body'], ['ul', 'Parte alta / parte bassa'],
   ['ppl', 'Spinta / tirata / gambe'], ['mono', 'Monofrequenza (un muscolo per seduta)']];
+/* v28 (R14): ogni domanda ha «decidi tu», nessuna è obbligatoria */
+function domandePreferenze(d) {
+  var h = '<h2>Quanto vicino al cedimento vuoi arrivare</h2>' +
+    pillole('cedimento', [['auto', 'Decidi tu'], ['tranquillo', 'Tranquillo (3-4 di scorta)'], ['normale', 'Normale (1-3)'], ['limite', 'Al limite (0-1)']], d.cedimento, true);
+  h += '<h2>Quante ripetizioni preferisci</h2>' +
+    pillole('ripetizioni', [['auto', 'Decidi tu'], ['basse', 'Poche, carichi alti (5-8)'], ['medie', 'Medie (8-12)'], ['alte', 'Tante, carichi leggeri (12-20)']], d.ripetizioni, true);
+  h += '<h2>Cardio</h2>' +
+    pillole('cardio', [['auto', 'Decidi tu'], ['niente', 'Niente'], ['poco', 'Poco, 10-15 min dopo i pesi'], ['tanto', 'Tanto, anche sedute a parte']], d.cardio, true);
+  h += '<h2>Esercizi che preferisci o che non sopporti</h2>' +
+    '<p class="dim">Facoltativo. <b>Se non ne hai, salta questa domanda</b>: lascia scegliere all’app, perché ogni scelta qui cambia la scheda. ' +
+    'Un preferito vince fra esercizi equivalenti; uno che non ti piace esce, se c’è un equivalente.</p>' +
+    '<input type="search" id="qz-cerca-es" placeholder="Cerca un esercizio" autocomplete="off"><div id="qz-es-trovati"></div>' +
+    '<div id="qz-es-scelti">' + eserciziScelti(d) + '</div>';
+  return h;
+}
+function eserciziScelti(d) {
+  var riga = function (ids, tipo, testo) {
+    return ids.length ? '<p class="dim">' + testo + '</p><div class="qz-pills">' + ids.map(function (id) {
+      return '<button class="pill on" data-es-togli="' + tipo + ':' + id + '">' + esc(ESERCIZI[id].nome) + ' ✕</button>';
+    }).join('') + '</div>' : '';
+  };
+  return riga(d.preferiti, 'preferiti', 'Preferiti') + riga(d.odiati, 'odiati', 'Da evitare');
+}
+function eserciziTrovati(testo) {
+  var t = fodNormMotore(testo);
+  if (t.length < 2) return '';
+  return Object.keys(CATALOGO).filter(function (id) { return ESERCIZI[id] && fodNormMotore(ESERCIZI[id].nome).indexOf(t) >= 0; }).slice(0, 8).map(function (id) {
+    return '<div class="qz-es-riga"><span>' + esc(ESERCIZI[id].nome) + '</span>' +
+      '<button class="ghost" data-es-metti="preferiti:' + id + '">♥ Preferito</button>' +
+      '<button class="ghost" data-es-metti="odiati:' + id + '">✕ Da evitare</button></div>';
+  }).join('') || '<p class="dim">Nessun esercizio con questo nome.</p>';
+}
+
 function domandeDivisione(d) {
   var h = '<div class="field"><span>Come vuoi dividere i muscoli nelle sedute</span>' + pillole('divisione', QZ_DIVISIONI, d.divisione, true) +
     '<p class="dim">«Decidi tu»: la sceglie l’app in base ai giorni.' + (d.divisione === 'mono' ? ' In monofrequenza ogni muscolo si allena una volta a settimana: il volume settimanale resta più basso.' : '') + '</p></div>';
@@ -28288,6 +28360,7 @@ function vQuestionario() {
     h += '<h2>C\'è un gruppo muscolare a cui tieni di più?</h2>' +
       '<p class="dim">Facoltativo. Se non scegli niente, lo sviluppo è uniforme.</p>' +
       pillole('priorita', QZ_PRIORITA, d.priorita);
+    h += domandePreferenze(d);
   } else if (p === 3) {
     h += '<h2>Hai dolore da qualche parte, adesso?</h2>' +
       '<p class="dim">Anche solo un fastidio. Viene prima di tutto il resto: dalla scheda esce ogni esercizio che carica quella zona.</p>' +
@@ -28449,6 +28522,23 @@ function erroreQz() {
 function collegaQuestionario() {
   if (!QZ) return;
   var d = QZ.d;
+  /* v28 (R14): esercizi preferiti e da evitare; la ricerca aggiorna solo la lista, il campo tiene il fuoco */
+  var cercaEs = document.getElementById('qz-cerca-es'), trovati = document.getElementById('qz-es-trovati');
+  if (cercaEs) {
+    var aggiornaScelti = function () { document.getElementById('qz-es-scelti').innerHTML = eserciziScelti(d); QZ.anteprima = null; };
+    cercaEs.oninput = function () { trovati.innerHTML = eserciziTrovati(cercaEs.value); };
+    document.querySelector('.qz').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-es-metti],[data-es-togli]');
+      if (!b) return;
+      var v = (b.dataset.esMetti || b.dataset.esTogli).split(':'), lista = v[0], id = v[1], altra = lista === 'preferiti' ? 'odiati' : 'preferiti';
+      if (b.dataset.esMetti) {
+        if (d[lista].indexOf(id) < 0) d[lista].push(id);
+        d[altra] = d[altra].filter(function (x) { return x !== id; });
+        cercaEs.value = ''; trovati.innerHTML = '';
+      } else d[lista] = d[lista].filter(function (x) { return x !== id; });
+      aggiornaScelti();
+    });
+  }
   document.querySelectorAll('.qz-pills').forEach(function (box) {
     var gruppo = box.dataset.gruppo, singola = !!box.dataset.singola;
     var card = box.closest('[data-cond]'), cond = card && card.dataset.cond;
@@ -29475,7 +29565,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw0zznk6';
+var BUILD = 'vmw109qdh';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
