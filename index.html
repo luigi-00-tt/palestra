@@ -666,6 +666,7 @@ i.facolt {
 .cerca button {
   background: none; border: 0; color: var(--text-dim); font-size: 22px;
   cursor: pointer; padding: 0 2px; line-height: 1;
+  min-width: 44px; min-height: 44px;   /* v28: abbastanza grande per un dito */
 }
 .seg.tabs.quattro button { font-size: 13px; padding: 0 2px; }
 span.att { color: var(--warm); font-size: 11.5px; }
@@ -1527,6 +1528,9 @@ button { font-family: inherit; }
   flex: 1; min-width: 0; background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
   border-radius: 9px; padding: 9px 10px; font: inherit; font-size: 14px;
 }
+/* v28: i pulsanti ghost e link sono larghi tutta la riga: qui stanno accanto al resto */
+.luogo .link { width: auto; padding: 10px 6px; }
+.luogo-nuovo button { width: auto; flex: 0 0 auto; margin: 0; }
 .riga-luogo { font-size: 13px; color: var(--text-dim); margin: 0 0 10px; }
 details.manca { margin: 10px 0; }
 details.manca summary { cursor: pointer; color: var(--text-dim); font-size: 13.5px; padding: 6px 0; }
@@ -7250,7 +7254,7 @@ function divisioneScelta(g, q) {
     return { tipi: tipi, nome: d.nome + ' ' + g + '×', fissa: g % T.length !== 0, mancano: manca };
   }
   /* a rotazione: il ciclo è più lungo (o più corto) della settimana */
-  return { tipi: T.slice(), nome: d.nome + ' a rotazione (' + g + ' sedute a settimana)', ciclo: T.length / g };
+  return { tipi: T.slice(), nome: d.nome + ' a rotazione, ' + g + '×', ciclo: T.length / g };
 }
 function gruppiMancanti(tipi) {
   return GRUPPI.filter(function (gr) { return !tipi.some(function (t) { return TIPI_SEDUTA[t].gruppi.indexOf(gr) >= 0; }); });
@@ -29642,7 +29646,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw1124zo';
+var BUILD = 'vmw11hsmh';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -30780,7 +30784,9 @@ function volumiSettimanali() {
       (e.indiretti || []).forEach(function (m) { v[m] = (v[m] || 0) + e.serie * 0.5; });
     });
   });
-  for (var k in v) v[k] = Math.round(v[k] * 10) / 10;
+  /* v28: a rotazione un giro delle sedute dura SCHEDA.ciclo settimane */
+  var ciclo = SCHEDA.ciclo || 1;
+  for (var k in v) v[k] = Math.round(v[k] / ciclo * 10) / 10;
   return v;
 }
 
@@ -32254,7 +32260,7 @@ function vNutrizione() {
        '<path d="M20 20l-4-4"/></svg>' +
        '<input type="search" id="q" placeholder="Cerca un piatto o un ingrediente" value="' +
        esc(S.ctx.cerca || '') + '">' +
-       (q ? '<button id="q-x">×</button>' : '') + '</div>';
+       (q ? '<button id="q-x" aria-label="Cancella la ricerca">×</button>' : '') + '</div>';
 
   if (q) { h += risultatiRicerca(q); h += '</main>'; return h; }
 
@@ -34888,7 +34894,7 @@ function applicaBackup(testo) {
 function sezioneLuoghi() {
   var L = luoghi();
   var h = '<h2>Dove ti alleni</h2><div class="card">';
-  h += '<p class="dim">Ognuno ha i suoi attrezzi: la scheda usa solo quelli del luogo attivo.</p>';
+  h += '<p class="dim">Se ti alleni in palestre diverse, ognuna ha i suoi attrezzi: la scheda usa quelli della palestra attiva. Per allenarti a casa o a corpo libero c’è la voce «Sala, corpo libero o casa» qui sopra.</p>';
   L.elenco.forEach(function (l) {
     var on = l.id === L.attivo;
     h += '<div class="luogo' + (on ? ' on' : '') + '"><button class="pill' + (on ? ' on' : '') + '" data-luogo-attivo="' + esc(l.id) + '">' +
@@ -34897,7 +34903,7 @@ function sezioneLuoghi() {
       '<button class="link" data-luogo-mod="' + esc(l.id) + '">attrezzi</button>' +
       (L.elenco.length > 1 ? '<button class="link" data-luogo-via="' + esc(l.id) + '">togli</button>' : '') + '</div>';
   });
-  h += '<div class="luogo-nuovo"><input id="luogo-nome" placeholder="Nuovo luogo, es. Casa" maxlength="30">' +
+  h += '<div class="luogo-nuovo"><input id="luogo-nome" placeholder="Un’altra palestra, es. Napoli" maxlength="30">' +
     '<button class="ghost" id="luogo-agg">Aggiungi</button></div>';
   h += '<label class="check"><input type="checkbox" id="luogo-riga"' + (L.riga ? ' checked' : '') +
     '> Mostra «Oggi sei in…» in cima alla Home e alla seduta</label>';
