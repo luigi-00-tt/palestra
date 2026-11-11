@@ -6759,7 +6759,7 @@ var REGOLE = {
      carichi da 5 a 30 ripetizioni la crescita è simile (Schoenfeld 2017, Lopez 2021). */
   preferenze: {
     cedimento: { tranquillo: ['3-4', '3'], normale: ['1-3', '1-2'], limite: ['0-1', '0-1'], fonti: ['A02', 'A03', 'A04'] },
-    ripetizioni: { basse: '5-8', medie: '8-12', alte: '12-20', fonti: ['A08', 'A44'] },
+    ripetizioni: { basse: '5-8', medie: '8-12', alte: '12-20', fonti: ['A08', 'A44', 'D04'] },
     /* cardio: «poco» = qualche minuto dopo i pesi, «tanto» = i 150 minuti dell'OMS */
     cardio: { poco: { settimana: 0, seduta: 15 }, tanto: { settimana: 150, seduta: 30 }, fonti: ['D10'] }
   },
@@ -7704,11 +7704,18 @@ function prescrizione(id, fam, q, blocco, principale) {
   var rip = p.rip[blocco % p.rip.length];
   /* il fondamentale della forza resta a ripetizioni basse: è l'obiettivo scelto */
   if (P.ripetizioni[q.ripetizioni] && !principale) rip = P.ripetizioni[q.ripetizioni];
+  /* v28: «poche ripetizioni» vale per i multiarticolari, con almeno 3 minuti di recupero
+     (carichi pesanti, D04); gli isolamenti restano a 8-12 */
+  var rec = p.rec;
+  if (q.ripetizioni === 'basse' && !principale) {
+    if (!c.m) rip = P.ripetizioni.medie;
+    else if (!/^3/.test(rec)) rec = '3 min';
+  }
   if (giovane(q)) {
     rir = REGOLE.giovani.rir;
     if (parseInt(rip, 10) < REGOLE.giovani.ripMin) rip = '8-12';
   }
-  return { rip: rip, rir: rir, rec: p.rec };
+  return { rip: rip, rir: rir, rec: rec };
 }
 
 /* Una seduta: per ogni gruppo del tipo di seduta, quante serie dirette e con
@@ -8314,7 +8321,7 @@ function spiega(q, fam, str, target, esclusi, perche, blocchi) {
   /* v28 (R14): le scelte dell'utente, con la fonte */
   var P = REGOLE.preferenze, scelte = [];
   if (P.cedimento[q.cedimento]) scelte.push('ti fermi a ' + P.cedimento[q.cedimento][0] + ' ripetizioni dal cedimento sui multiarticolari: fra 0 e 3 di scorta la crescita è simile, più lontano cala un po’' + fonti(P.cedimento.fonti));
-  if (P.ripetizioni[q.ripetizioni]) scelte.push('serie da ' + P.ripetizioni[q.ripetizioni] + ' ripetizioni' + (fam === 'forza' ? ' (tranne il primo esercizio della forza)' : '') + ': fra 5 e 30 ripetizioni il muscolo cresce in modo simile, se arrivi vicino al cedimento' + fonti(P.ripetizioni.fonti));
+  if (P.ripetizioni[q.ripetizioni]) scelte.push('serie da ' + P.ripetizioni[q.ripetizioni] + ' ripetizioni' + (fam === 'forza' ? ' (tranne il primo esercizio della forza)' : '') + (q.ripetizioni === 'basse' ? ' sui multiarticolari, con 3 minuti di recupero (gli isolamenti restano a 8-12)' : '') + ': fra 5 e 30 ripetizioni il muscolo cresce in modo simile, se arrivi vicino al cedimento' + fonti(P.ripetizioni.fonti));
   if (q.cardio === 'niente') scelte.push('niente cardio nella scheda');
   var usati = [];
   blocchi.forEach(function (b) { b.giorni.forEach(function (g) { g.esercizi.forEach(function (e) { if ((q.odiati || []).indexOf(e.ex) >= 0 && usati.indexOf(e.ex) < 0) usati.push(e.ex); }); }); });
@@ -30027,7 +30034,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwcdsofy';
+var BUILD = 'vmwce3mqs';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -35855,7 +35862,8 @@ function vImpostazioni() {
        '<input type="number" step="1" inputmode="numeric" id="p-altezza" value="' +
        (pr.altezza || '') + '"></label></div>';
   /* <div>, non <label>: un'etichetta intorno ai pulsanti passa il tocco sul titolo al primo pulsante */
-  h += '<div class="field-seg" role="group" aria-label="Quanto ti muovi fuori dalla palestra"><span>Quanto ti muovi fuori dalla palestra</span>' +
+  h += '<div class="field-seg" role="group" aria-label="Quanto ti muovi fuori dalla palestra"><span>Quanto ti muovi fuori dalla palestra ' +
+       '<small class="dim">(lavoro, passi, spostamenti: gli sport li segni sotto e contano a parte)</small></span>' +
        '<div class="seg" id="p-attivita">' +
        [[1.375, 'poco'], [1.55, 'normale'], [1.725, 'molto']].map(function (a) {
          return '<button data-v="' + a[0] + '" class="' + (pr.attivita === a[0] ? 'on' : '') +
@@ -35870,8 +35878,9 @@ function vImpostazioni() {
          'e <b>' + fb.prot + ' g</b> di proteine al giorno.</div>';
   }
   h += '</div>';
-  h += '<div class="note">Restano su questo telefono, dentro il browser. L\'app non ha un ' +
-       'server e non manda niente a nessuno: se cambi telefono o indirizzo, si riparte da qui ' +
+  h += '<div class="note">Restano su questo telefono, dentro il browser. Senza account l\'app non ' +
+       'manda niente a nessuno; con l\'account (facoltativo, più in basso) una copia va sul server ' +
+       'per ritrovarla su un altro telefono. Senza account, se cambi telefono si riparte da qui ' +
        '(o si incolla il backup più in basso).</div>';
 
   /* ---------- fotocamera ----------
