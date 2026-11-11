@@ -30075,7 +30075,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwcgl0eu';
+var BUILD = 'vmwcn167q';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -35596,6 +35596,11 @@ function eseguiCapito(c) {
   var d = oggi();
   if (c.tipo === 'serie') {
     if (!S.log[d]) S.log[d] = { giorno: null, serie: {} };
+    /* v28: se oggi non c'è ancora una seduta, vale la prima della scheda che ha questo esercizio */
+    if (!S.log[d].giorno) {
+      var gg = giorniCorrenti().filter(function (x) { return x.esercizi.some(function (e) { return e.ex === c.ex; }); })[0];
+      if (gg) S.log[d].giorno = gg.id;
+    }
     var arr = S.log[d].serie[c.ex] = S.log[d].serie[c.ex] || [];
     for (var i = 0; i < c.serie; i++) arr.push({ kg: c.kg, rip: c.rip, fatto: true, t: Date.now() });
     save(); toast('Registrate ' + c.serie + ' serie'); return;
