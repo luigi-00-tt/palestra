@@ -703,6 +703,8 @@ span.att { color: var(--warm); font-size: 11.5px; }
   width: 84px; height: 84px; cursor: pointer; display: block;
 }
 .risc-f img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.risc-d { cursor: default; background: var(--surface); }
+.risc-d .disegno-str { margin: 0; height: 100%; }
 .risc-t b { display: block; font-size: 13px; font-weight: 600; margin-bottom: 3px; }
 .risc-t span { font-size: 12px; color: var(--text-dim); line-height: 1.45; display: block; }
 .risc-nb {
@@ -6394,8 +6396,8 @@ var SCHEDA_SU_MISURA = {
            studi molto più alta [J01, J02]: qui è un'aggiunta piccola e costante,
            e il resto lo fanno face pull e rematori. Niente esercizi a pancia in
            giù sul piano: comprimono l'addome (reflusso). */
-        ['Chin tuck al muro', 'Schiena, nuca e talloni al muro: porta il mento indietro come per fare un doppio mento, senza abbassare la testa. Tieni 5 secondi, 8 volte. Allinea il collo, che con la gobba tende ad andare avanti.'],
-        ['Y e T sulla panca inclinata', 'Petto appoggiato su una panca a 30-45 gradi, manubri da 1-2 kg o a mani vuote: 8 alzate a Y (braccia in alto in diagonale) e 8 a T (braccia aperte di lato), pollici in su, 2 secondi in alto. Lavorano trapezio basso e romboidi, i muscoli che tengono indietro le spalle, e scaldano la spalla prima delle spinte.'],
+        ['Chin tuck al muro', 'In piedi, schiena, nuca e talloni contro il muro. Porta il mento indietro come per fare un doppio mento: la nuca scivola sul muro, la testa non si abbassa e non si alza. Tieni 5 secondi e rilascia, 8 volte. Allinea il collo, che con la gobba tende ad andare avanti.'],
+        ['Y e T sulla panca inclinata', 'Panca inclinata a 30-45 gradi: petto appoggiato sullo schienale, piedi a terra. Manubri da 1-2 kg o mani vuote, pollici in su. Prima 8 alzate a Y (braccia in alto, in diagonale), poi 8 a T (braccia aperte di lato). In alto tieni 2 secondi stringendo le scapole, senza tirare le spalle verso le orecchie. Lavorano trapezio basso e romboidi, che tengono indietro le spalle, e scaldano la spalla prima delle spinte.'],
         ['Band pull-apart', 'Un elastico teso davanti al petto, braccia dritte: aprilo fino a toccarlo con il petto, stringendo le scapole. 15 ripetizioni. Se l\'elastico non c\'è, fai 15 face pull leggeri al cavo.', 'band-pull-apart'],
         ['Affondo con rotazione', '5 per lato: scendi in affondo e ruota il busto verso la gamba avanti. Scalda insieme la rotazione del tronco e l\'anca, che lo squat da fermo non tocca.', 'risc-rotazioni'],
         ['Squat a corpo libero', '10 ripetizioni lente con le mani dietro la testa, scendendo bene in basso: svegliano fianchi e caviglie, e sono il motivo per cui sulla pressa bastano due serie di avvicinamento invece di tre. Niente peso: qui non stai allenando le gambe, le stai accendendo.', 'risc-squat']
@@ -26317,9 +26319,7 @@ function diagnosiFotocamera() {
     sicuro: null,        // contesto sicuro (https o file locale)?
     inCornice: false,    // dentro un iframe?
     permessaDalFrame: null, // la cornice concede la fotocamera?
-    api: false,          // getUserMedia esiste?
-    lettore: false,      // BarcodeDetector esiste?
-    formati: null        // formati che il lettore sa davvero leggere
+    api: false           // getUserMedia esiste?
   };
 
   try { d.sicuro = (typeof isSecureContext !== 'undefined') ? !!isSecureContext : null; } catch (e) {}
@@ -26334,7 +26334,6 @@ function diagnosiFotocamera() {
   }
 
   d.api = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  d.lettore = (typeof BarcodeDetector === 'function');
   return d;
 }
 
@@ -26781,7 +26780,6 @@ function decodificaFotogramma(sorgente, righe, largMax) {
   var vw = sorgente.videoWidth || sorgente.naturalWidth || sorgente.width;
   var vh = sorgente.videoHeight || sorgente.naturalHeight || sorgente.height;
   if (!vw || !vh) return null;
-  var video = sorgente;
 
   /* sul video in diretta si sta a 640 px: piu' risoluzione non aiuta e
      rallenta parecchio su un telefono. Su una foto si puo' alzare. */
@@ -26797,7 +26795,7 @@ function decodificaFotogramma(sorgente, righe, largMax) {
   if (TELA.width !== larg || TELA.height !== alt) { TELA.width = larg; TELA.height = alt; }
   var ctx = TELA_CTX;
   if (!ctx) return null;
-  try { ctx.drawImage(video, 0, 0, larg, alt); }
+  try { ctx.drawImage(sorgente, 0, 0, larg, alt); }
   catch (e) { return null; }
 
   righe = righe || 15;
@@ -29518,7 +29516,7 @@ function erroreCloud(r) {
   if (/already registered|already exists/i.test(m)) return 'Questo username è già preso.';
   if (/password/i.test(m)) return 'La password non va bene: almeno 8 caratteri.';
   if (/rate limit/i.test(m) || r.s === 429) return 'Troppi tentativi: aspetta qualche minuto.';
-  if (/database error/i.test(m) || r.s === 500) return 'Registrazione rifiutata: controlla username, età e consenso.';
+  if (/database error/i.test(m)) return 'Registrazione rifiutata: controlla username, età e consenso.';
   return 'Non è andata (' + r.s + '). Riprova più tardi.';
 }
 
@@ -29596,6 +29594,7 @@ function haDatiLocali() {
 /* subito dopo accesso o registrazione: mai sovrascrivere in silenzio */
 function dopoAccesso() {
   return scaricaCloud().then(function (riga) {
+    if (!SESSIONE) return; // uscito mentre si scaricava: niente «Fatto» per un invio mai partito
     if (!riga) return inviaCloud().then(function () { CLOUD_STATO.msg = 'Fatto: i dati di questo telefono sono nel cloud.'; });
     if (!haDatiLocali()) {
       var e = applicaCloud(riga);
@@ -29642,6 +29641,7 @@ function cloudRegistra(username, password) {
 function cloudEsci() {
   clearTimeout(CLOUD_STATO.timer);
   SESSIONE = null; CLOUD_STATO.conflitto = null; scriviSessione();
+  MIE_SEGNALAZIONI = null; // sono dell'account appena chiuso: il prossimo che accede non deve vederle
 }
 
 function cloudElimina() {
@@ -29700,12 +29700,13 @@ function collegaAccount() {
   var dire = function (t) { CLOUD_STATO.msg = t; var m = $('ac-msg'); if (m) m.textContent = t; };
   var fatto = function () { CLOUD_STATO.occupato = false; render(); };
   var errore = function (r) { CLOUD_STATO.occupato = false; CLOUD_STATO.msg = erroreCloud(r); render(); };
-  var lavora = function (p) { CLOUD_STATO.occupato = true; dire('Un momento…'); p.then(fatto, errore); };
+  /* una richiesta alla volta: un doppio tocco su «Crea l'account» ne mandava due, e la seconda rispondeva «username già preso» */
+  var lavora = function (f) { if (CLOUD_STATO.occupato) return; CLOUD_STATO.occupato = true; dire('Un momento…'); f().then(fatto, errore); };
 
   if ($('ac-accedi')) $('ac-accedi').onclick = function () {
     var u = $('ac-user').value.trim().toLowerCase(), p = $('ac-pass').value;
     if (!usernameValido(u) || !p) return dire('Scrivi username e password.');
-    lavora(cloudAccedi(u, p));
+    lavora(function () { return cloudAccedi(u, p); });
   };
   if ($('ac-registra')) $('ac-registra').onclick = function () {
     var u = $('ac-nuovo-user').value.trim().toLowerCase(), p = $('ac-nuovo-pass').value;
@@ -29713,10 +29714,10 @@ function collegaAccount() {
     if (p.length < 8) return dire('La password deve avere almeno 8 caratteri.');
     if (!$('ac-eta').checked) return dire('Serve la conferma di avere almeno 14 anni.');
     if (!$('ac-consenso').checked) return dire('Senza il consenso l\'account non si può creare: puoi usare l\'app senza.');
-    lavora(cloudRegistra(u, p));
+    lavora(function () { return cloudRegistra(u, p); });
   };
   if ($('ac-invia')) $('ac-invia').onclick = function () {
-    lavora(inviaCloud().then(function () { CLOUD_STATO.msg = 'Inviato.'; }));
+    lavora(function () { return inviaCloud().then(function () { CLOUD_STATO.msg = 'Inviato.'; }); });
   };
   if ($('ac-tieni-cloud')) $('ac-tieni-cloud').onclick = function () {
     var e = applicaCloud(CLOUD_STATO.conflitto);
@@ -29724,14 +29725,15 @@ function collegaAccount() {
     render();
   };
   if ($('ac-tieni-tel')) $('ac-tieni-tel').onclick = function () {
+    if (CLOUD_STATO.occupato) return;
     CLOUD_STATO.conflitto = null;
-    lavora(inviaCloud().then(function () { CLOUD_STATO.msg = 'Fatto: nel cloud ora ci sono i dati di questo telefono.'; }));
+    lavora(function () { return inviaCloud().then(function () { CLOUD_STATO.msg = 'Fatto: nel cloud ora ci sono i dati di questo telefono.'; }); });
   };
   if ($('ac-esci')) $('ac-esci').onclick = function () { cloudEsci(); CLOUD_STATO.msg = 'Sei uscito.'; render(); };
   var el_ = $('ac-elimina');
   if (el_) el_.onclick = function () {
     if (!el_.dataset.sure) { el_.dataset.sure = '1'; el_.textContent = 'Sicuro? Tocca di nuovo: account e copia nel cloud spariscono'; return; }
-    lavora(cloudElimina().then(function () { CLOUD_STATO.msg = 'Account eliminato. I dati sul telefono restano: per toglierli usa «Cancella tutti i dati».'; }));
+    lavora(function () { return cloudElimina().then(function () { CLOUD_STATO.msg = 'Account eliminato. I dati sul telefono restano: per toglierli usa «Cancella tutti i dati».'; }); });
   };
 }
 
@@ -29933,7 +29935,7 @@ function indiceAssistente() {
     var d = radiciDi(c[0]), r = radiciDi(c[1]);
     return d.concat(d, r);
   });
-  var df = {}, tot = 0;
+  var df = Object.create(null), tot = 0; // senza prototipo: la parola «constructor» non trova una funzione
   docs.forEach(function (t) {
     tot += t.length;
     t.filter(function (w, i, a) { return a.indexOf(w) === i; }).forEach(function (w) { df[w] = (df[w] || 0) + 1; });
@@ -29976,7 +29978,7 @@ function vAssistente() {
   if (q && typeof SESSIONE !== 'undefined' && SESSIONE) {
     var on = S.ctx.rispostaOnline;
     h += on ? '<div class="card ass-r"><b>Risposta online</b><p>' + esc(on.risposta) + '</p><p class="dim">Scritta da un modello gratuito a partire ' +
-        'dalle risposte qui sopra: controlla le fonti. Te ne restano ' + on.restanti + ' oggi.</p></div>'
+        'dalle risposte qui sopra: controlla le fonti. Te ne restano ' + esc(on.restanti) + ' oggi.</p></div>'
       : '<button class="ghost" id="ass-online">Chiedi online (facoltativo, 20 domande al giorno)</button><div id="ass-msg" class="note" role="status" aria-live="polite"></div>';
   } else if (q) h += '<p class="dim">Con l’account puoi anche chiedere online a un modello che parte da queste risposte.</p>';
   h += '<div class="note">Sono informazioni prese dalla letteratura dell’app, non consigli medici: per un disturbo che dura il riferimento è il medico.</div>';
@@ -30025,14 +30027,14 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmw18gxi5';
+var BUILD = 'vmwcdmlqs';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
    sito pubblico (`sito/index.html`), dove i dati personali non devono comparire:
    la' i valori sono neutri e `impostato` e' false, cosi' l'app li chiede al primo
    avvio e restano soltanto nel telefono di chi la usa. Nella copia locale e
-   nell'Artifact privato restano i valori veri, per comodita'.
+   (app/index.html) restano i valori veri, per comodita'.
    Il marcatore sotto serve a build.js: non toglierlo e non cambiarne la forma. */
 /*__PROFILO__*/
 /* copia pubblica: nessun dato personale, li chiede l'app al primo avvio */
@@ -30140,6 +30142,7 @@ function datiDaSalvare() {
     menu: S.menu, // v26: seme della settimana e piatti cambiati del menù
     prefEsercizi: S.prefEsercizi, // v28: bilanciere scelto e minuti/secondi per esercizio
     luoghi: S.luoghi, // v28: i luoghi e i loro attrezzi
+    agenda: S.agenda, // v28 (R27): mancava, e l'agenda spariva a ogni riapertura
     idLocale: S.idLocale
   };
 }
@@ -30230,10 +30233,9 @@ function nuovoId() {
 }
 function idUtente() { return (typeof SESSIONE !== 'undefined' && SESSIONE && SESSIONE.id) || S.idLocale; }
 
-function oggi() {
-  var d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
+/* una data come 'AAAA-MM-GG', nel fuso del telefono */
+function dataIso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function oggi() { return dataIso(new Date()); }
 function dataIt(iso) {
   var p = iso.split('-');
   return p[2] + '/' + p[1];
@@ -30343,9 +30345,7 @@ function nomeFotoVT(id) {
    i ridisegni dovuti a un tocco (una serie spuntata, un filtro) non si animano,
    altrimenti la pagina lampeggerebbe a ogni gesto. */
 function anima(sel) {
-  try {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  } catch (e) { /* niente media query: si anima */ }
+  if (movimentoRidotto()) return;
   document.querySelectorAll(sel).forEach(function (n) {
     n.classList.remove('entra');
     void n.offsetWidth;
@@ -30354,14 +30354,7 @@ function anima(sel) {
 }
 
 /* Tasto indietro di Android: torna alla vista precedente invece di chiudere. */
-window.addEventListener('popstate', function () {
-  if (PILA.length) {
-    var p = PILA.pop();
-    applica(p.v, p.ctx, 'indietro');
-  } else {
-    applica('home', {}, 'indietro');
-  }
-});
+window.addEventListener('popstate', indietro);
 
 /* v27: da tastiera Invio e Spazio aprono anche le schede che non sono <button> (role="button") */
 document.addEventListener('keydown', function (e) {
@@ -30444,7 +30437,7 @@ function giornoDi(id) {
 var toastTimer = null;
 function toast(testo) {
   var n = document.querySelector('.toast');
-  if (!n) { n = el('<div class="toast"></div>'); document.body.appendChild(n); }
+  if (!n) { n = el('<div class="toast" role="status" aria-live="polite"></div>'); document.body.appendChild(n); }
   n.textContent = testo;
   n.classList.add('on');
   clearTimeout(toastTimer);
@@ -30470,7 +30463,7 @@ function navBar() {
      il nome della sezione */
   return '<nav class="cinque">' + tab.map(function (t) {
     var on = (v === t[0] || (t[0] === 'home' && (v === 'giorno' || v === 'esercizio'))) ? ' on' : '';
-    return '<button class="' + on.trim() + '" data-nav="' + t[0] + '">' +
+    return '<button class="' + on.trim() + '"' + (on ? ' aria-current="page"' : '') + ' data-nav="' + t[0] + '">' +
            '<svg aria-hidden="true" viewBox="0 0 24 24">' + t[2] + '</svg>' + t[1] + '</button>';
   }).join('') + '</nav>';
 }
@@ -30770,8 +30763,7 @@ function giorniCorrenti() { return bloccoCorrente().giorni; }
 function impostaSettimana(n) {
   var d = new Date();
   d.setDate(d.getDate() - (n - 1) * 7);
-  S.profilo.inizioManuale = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
-                            '-' + String(d.getDate()).padStart(2, '0');
+  S.profilo.inizioManuale = dataIso(d);
   S.profilo.inizio = S.profilo.inizioManuale;
   save();
 }
@@ -31210,8 +31202,11 @@ function vHome() {
 
 /* v28 (R18): l'ultima seduta fatta di una delle due schede */
 function ultimaDiScheda(n) {
-  var date = Object.keys(S.log).filter(function (d) { var g = giornoDi(S.log[d].giorno); return g && g.scheda === n; }).sort();
-  return date.length ? S.log[date[date.length - 1]].giorno : null;
+  /* le sedute si leggono una volta sola: giornoDi() per ogni data rifaceva il conto del ciclo */
+  var schedaDi = {}, u = '';
+  giorniCorrenti().forEach(function (g) { schedaDi[g.id] = g.scheda; });
+  for (var d in S.log) if (d > u && schedaDi[S.log[d].giorno] === n) u = d;
+  return u ? S.log[u].giorno : null;
 }
 
 function volumiSettimanali() {
@@ -31496,7 +31491,8 @@ function vGiorno() {
                      (typeof GIF_NOTA !== 'undefined' && GIF_NOTA[v[2]])) : null;
     return '<div class="risc-v">' +
       (g ? '<button class="risc-f" data-zoom="' + v[2] + '">' +
-           '<img src="' + g + '" alt="' + esc(v[0]) + '" loading="lazy"></button>' : '') +
+           '<img src="' + g + '" alt="' + esc(v[0]) + '" loading="lazy"></button>' :
+       DISEGNI[v[0]] ? '<div class="risc-f risc-d">' + disegno(v[0]) + '</div>' : '') +
       '<div class="risc-t"><b>' + esc(v[0]) + '</b><span>' + esc(v[1]) + '</span>' +
       (nb ? '<i class="risc-nb">' + nb + '</i>' : '') +
       '</div></div>';
@@ -31539,13 +31535,13 @@ function vGiorno() {
     h += '</div></details>';
   }
 
-  var bloccoCorrente = null;
-  eserciziDiOggi(g).forEach(function (e, i) {
+  var bloccoCorrente = null, diOggi = eserciziDiOggi(g);
+  diOggi.forEach(function (e) {
     var ex = esercizioDi(e.ex);
     if (!ex) return;
     if (e.blocco && e.blocco !== bloccoCorrente) {
       bloccoCorrente = e.blocco;
-      var quante = eserciziDiOggi(g).filter(function (x) { return x.blocco === e.blocco; }).length;
+      var quante = diOggi.filter(function (x) { return x.blocco === e.blocco; }).length;
       /* Gli addominali sono un blocco a parte: facoltativi, in coda e fuori dal
          tempo dichiarato. Va detto qui, non solo nella scheda di ognuno. */
       var core = e.blocco === 'Addominali';
@@ -31559,7 +31555,7 @@ function vGiorno() {
     }
     var fatte = 0;
     if (oggiLog && oggiLog.serie && oggiLog.serie[e.ex])
-      fatte = oggiLog.serie[e.ex].filter(function (s) { return s.fatto; }).length;
+      fatte = oggiLog.serie[e.ex].filter(function (s) { return s && s.fatto; }).length;   /* dopo un ricaricamento i buchi sono null */
     var nS = serieDi(e);
     h += '<div class="ex' + (e.superset ? ' superset' : '') + (e.opzionale ? ' opzionale' : '') +
       '" data-ex="' + e.ex + '" data-giorno="' + g.id + '">' +
@@ -31812,7 +31808,6 @@ function collegaLibreria() {
       var v = null;
       LIB.forEach(function (r) { if (r[0] === b.dataset.lib) v = libVoce(r); });
       if (!v) return;
-      S.ctx.scelto = v;
       pannelloExtra(v);
     };
   });
@@ -32052,10 +32047,10 @@ function vEsercizio() {
     h += '<div class="serie" data-i="' + i + '">' +
       '<span class="n">' + (i + 1) + '</span>' +
       '<input type="number" inputmode="decimal" step="0.5" class="kg' + (s.kg ? ' filled' : '') +
-        '" value="' + (s.kg !== undefined ? s.kg - bil : '') + '" placeholder="' + (ph.kg !== undefined ? Math.max(0, ph.kg - bil) : '–') + '">' +
+        '" aria-label="Serie ' + (i + 1) + ', ' + (bil ? 'chili di dischi' : 'chili') + '" value="' + (s.kg !== undefined ? s.kg - bil : '') + '" placeholder="' + (ph.kg !== undefined ? Math.max(0, ph.kg - bil) : '–') + '">' +
       '<input type="number" inputmode="' + (inMin ? 'decimal" step="0.25' : 'numeric') + '" class="rip' + (s.rip ? ' filled' : '') +
-        '" value="' + aVista(s.rip) + '" placeholder="' + (ph.rip !== undefined ? aVista(ph.rip) : e.rip) + '">' +
-      '<button class="ok' + (s.fatto ? ' on' : '') + '">✓</button>' +
+        '" aria-label="Serie ' + (i + 1) + ', ' + (tempo ? (inMin ? 'minuti' : 'secondi') : 'ripetizioni') + '" value="' + aVista(s.rip) + '" placeholder="' + (ph.rip !== undefined ? aVista(ph.rip) : e.rip) + '">' +
+      '<button class="ok' + (s.fatto ? ' on' : '') + '" aria-label="Serie ' + (i + 1) + ' fatta" aria-pressed="' + !!s.fatto + '">✓</button>' +
       '</div>';
   }
   if (bil) h += '<p class="dim" id="tot-bil"></p>';
@@ -32117,6 +32112,7 @@ function vEsercizio() {
       var ss = S.log[d].serie && S.log[d].serie[e.ex];
       if (!ss) return;
       h += '<tr><td>' + dataIt(d) + '</td>' + ss.map(function (x) {
+        x = x || {};   /* una serie saltata, dopo un ricaricamento, è null */
         return '<td class="num">' + (x.kg || '–') + '&times;' + (x.rip || '–') + '</td>'; }).join('') + '</tr>';
     });
     h += '</table>';
@@ -32130,7 +32126,12 @@ function vEsercizio() {
    adatte (l'unica dei femorali mostra la schiena curva e la testa bassa, il
    contrario di quello che chiede il testo): sono disegni nostri, a linee, che
    prendono il colore del tema. Terreno e attrezzi in grigio, la persona in colore. */
-var DISEGNI_STRETCHING = {
+var DISEGNI = {
+  /* v28 (R40): i due esercizi per la postura senza foto libere adatte */
+  'Chin tuck al muro': '<rect x="30" y="6" width="8" height="108" rx="2" class="d-att"/><path d="M8 114h144" class="d-att"/>' +
+    '<circle cx="48" cy="22" r="9"/><path d="M46 31v44M46 75l-2 37M46 75l5 37M46 38l7 34M82 22H64M70 16l-6 6 6 6"/>',
+  'Y e T sulla panca inclinata': '<path d="M20 112L96 36M86 46v68M30 102v12M8 114h144" class="d-att"/>' +
+    '<circle cx="95" cy="17" r="10"/><path d="M41 73L85 29M41 73L26 92l4 22M85 29L142 6"/><path d="M85 29v36" class="d-att"/>',
   'Pettorali sullo stipite': '<rect x="28" y="6" width="10" height="108" rx="2" class="d-att"/><path d="M8 114h144" class="d-att"/>' +
     '<circle cx="96" cy="22" r="9"/><path d="M96 31v44M96 75l-9 37M96 75l13 37M96 38H42V10M96 38l5 32"/>',
   "Flessori dell'anca in affondo": '<path d="M8 114h144" class="d-att"/><circle cx="80" cy="20" r="9"/>' +
@@ -32140,9 +32141,9 @@ var DISEGNI_STRETCHING = {
   'Dorsali appeso alla sbarra': '<path d="M30 10h100" class="d-att"/><circle cx="80" cy="36" r="9"/>' +
     '<path d="M64 10l6 34M96 10l-6 34M70 44h20M80 46v40M80 86l-5 30M80 86l5 30"/>'
 };
-function disegnoStretching(nome) {
-  var d = DISEGNI_STRETCHING[nome];
-  return d ? '<svg class="disegno-str" viewBox="0 0 160 120" role="img" aria-label="' + esc(nome) + '">' + d + '</svg>' : '';
+function disegno(nome) {
+  var d = DISEGNI[nome];
+  return d ? '<svg class="disegno-str" viewBox="0 0 160 120" aria-hidden="true">' + d + '</svg>' : '';
 }
 
 function vExtra() {
@@ -32152,7 +32153,7 @@ function vExtra() {
   h += '<div class="hint warm">' + e.avvertenza + '</div>';
   h += '<h2>Esercizi</h2>';
   e.esercizi.forEach(function (x) {
-    h += '<div class="card">' + disegnoStretching(x[0]) + '<b style="font-size:14.5px">' + esc(x[0]) + '</b>' +
+    h += '<div class="card">' + disegno(x[0]) + '<b style="font-size:14.5px">' + esc(x[0]) + '</b>' +
       '<div class="dim" style="font-variant-numeric:tabular-nums;margin:2px 0 6px">' + esc(x[1]) + '</div>' +
       '<div style="font-size:13.5px">' + esc(x[2]) + '</div></div>';
   });
@@ -32270,6 +32271,7 @@ function collegaEsercizio() {
     ok.onclick = function () {
       var on = !ok.classList.contains('on');
       ok.classList.toggle('on', on);
+      ok.setAttribute('aria-pressed', on);
       if (on && !kg.value && kg.placeholder !== '–') kg.value = kg.placeholder;
       if (on && !rip.value && /^\d+(\.\d+)?$/.test(rip.placeholder)) rip.value = rip.placeholder;
       kg.classList.toggle('filled', !!kg.value); rip.classList.toggle('filled', !!rip.value);
@@ -32510,16 +32512,21 @@ function portataDi(v) {
 var FONTI = [['mie', 'Scritte per te'], ['gr', 'Gambero Rosso'], ['L32', 'Artusi'], ['libri', 'Altri ricettari']];
 function fonteDi(v) { return v.gr ? 'gr' : v.lib === 'L32' ? 'L32' : v.lib ? 'libri' : 'mie'; }
 var ORDINI = [['az', 'dalla A alla Z'], ['prot', 'più proteine'], ['kcal', 'meno calorie'], ['sem', 'consigliate prima']];
+/* un solo confronto alfabetico per tutta l'app: localeCompare(…, 'it') ne creava uno a ogni coppia di ricette */
+var ALFABETO = typeof Intl !== 'undefined' && Intl.Collator ? new Intl.Collator('it') : null;
 function ordinaRicette(lista) {
   var o = S.ctx.ordR || 'az';
-  var nome = function (x) { return String(x[0].nome || ''); };
+  var perNome = function (a, b) {
+    var x = String(a[0].nome || ''), y = String(b[0].nome || '');
+    return ALFABETO ? ALFABETO.compare(x, y) : x.localeCompare(y, 'it');
+  };
   var cmp = {
-    az: function (a, b) { return nome(a).localeCompare(nome(b), 'it'); },
-    prot: function (a, b) { return (b[0].prot || -1) - (a[0].prot || -1) || nome(a).localeCompare(nome(b), 'it'); },
-    kcal: function (a, b) { return (a[0].kcal || 1e6) - (b[0].kcal || 1e6) || nome(a).localeCompare(nome(b), 'it'); },
+    az: perNome,
+    prot: function (a, b) { return (b[0].prot || -1) - (a[0].prot || -1) || perNome(a, b); },
+    kcal: function (a, b) { return (a[0].kcal || 1e6) - (b[0].kcal || 1e6) || perNome(a, b); },
     sem: function (a, b) {
       var r = { verde: 0, giallo: 1, rosso: 2 };
-      return r[semRicetta(a[0])] - r[semRicetta(b[0])] || nome(a).localeCompare(nome(b), 'it');
+      return r[semRicetta(a[0])] - r[semRicetta(b[0])] || perNome(a, b);
     }
   }[o] || null;
   if (o === 'sem' && !semaforoAttivo()) cmp = null;
@@ -32534,8 +32541,9 @@ function nelleScelte(v) {
 /* Quello che serve ai filtri di una ricetta, calcolato una volta sola. */
 function caratteriRicetta(v) {
   return {
-    sem: semRicetta(v), pref: preferita(v), mie: !v.gr && !v.lib, proteica: (v.prot || 0) >= 30,
-    veloce: (v.ing || []).filter(function (r) { return !r[2]; }).length <= 4
+    sem: semRicetta(v), pref: preferita(v), proteica: (v.prot || 0) >= 30,
+    /* gli ingredienti non cambiano: si contano una volta sola */
+    veloce: v._vel !== undefined ? v._vel : (v._vel = (v.ing || []).filter(function (r) { return !r[2]; }).length <= 4)
   };
 }
 
@@ -32544,7 +32552,6 @@ function passaCon(c, f) {
   for (var k in FILTRI_COLORE) if (f[k]) { colori++; if (c.sem === k) colorOk = true; }
   if (colori && !colorOk) return false;
   if (f.preferiti && !c.pref) return false;
-  if (f.mie && !c.mie) return false;
   if (f.proteica && !c.proteica) return false;
   if (f.veloce && !c.veloce) return false;
   return true;
@@ -32841,7 +32848,7 @@ function vNutrizione() {
   /* barra di ricerca: cerca fra ricette, ingredienti e alimenti */
   h += '<div class="cerca"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/>' +
        '<path d="M20 20l-4-4"/></svg>' +
-       '<input type="search" id="q" placeholder="Cerca un piatto o un ingrediente" value="' +
+       '<input type="search" id="q" aria-label="Cerca un piatto o un ingrediente" placeholder="Cerca un piatto o un ingrediente" value="' +
        esc(S.ctx.cerca || '') + '">' +
        (q ? '<button id="q-x" aria-label="Cancella la ricerca">×</button>' : '') + '</div>';
 
@@ -33121,7 +33128,7 @@ function risultatiRicerca(q) {
   PASTI.gruppi.forEach(function (g, gi) {
     if (gruppi.indexOf(gi) < 0) return;
     g.voci.forEach(function (v, vi) {
-      var testo = (v.nome + ' ' + v.ing.map(function (r) { return r[0]; }).join(' ')).toLowerCase();
+      var testo = (v.nome + ' ' + (v.ing || []).map(function (r) { return r[0]; }).join(' ')).toLowerCase();
       if (reQ.test(testo) && ricettaAdatta(v) && nelleScelte(v)) ric.push({ v: v, gi: gi, vi: vi });
     });
   });
@@ -33745,7 +33752,6 @@ function ricetteDallaDispensa(quante) {
 
   PASTI.gruppi.forEach(function (g, gi) {
     g.voci.forEach(function (v, vi) {
-      if (!ricettaAdatta(v)) return;
       /* le parole di ogni ingrediente si calcolano una volta sola e restano
          attaccate alla ricetta: qui si gira su 880 ricette a ogni render */
       if (!v._pw) {
@@ -33771,6 +33777,8 @@ function ricetteDallaDispensa(quante) {
       if (!totale || hai.length < 2) return;    /* con un ingrediente solo non e' un suggerimento */
       var quota = hai.length / totale;
       if (quota < 0.5) return;
+      /* il filtro alimentare per ultimo: costa, e qui arrivano poche ricette */
+      if (!ricettaAdatta(v)) return;
       out.push({ id: gi + '-' + vi, v: v, hai: hai, mancano: mancano, quota: quota,
                  scade: inScadenza });
     });
@@ -33864,10 +33872,10 @@ function vDispensa() {
       }
       h += '<label class="field"><span>Nome</span>' +
         '<input type="text" id="d-nome" value="' + esc(v.n) + '"></label>';
-      h += '<div class="disp-q"><button class="passo" data-dq="-1">−</button>' +
-        '<input type="number" id="d-q" inputmode="decimal" value="' + esc(String(v.q)) + '">' +
-        '<button class="passo" data-dq="1">+</button>' +
-        '<select id="d-unita">' + UNITA_DISPENSA.map(function (u) {
+      h += '<div class="disp-q"><button class="passo" data-dq="-1" aria-label="Uno in meno">−</button>' +
+        '<input type="number" id="d-q" inputmode="decimal" aria-label="Quantità" value="' + esc(String(v.q)) + '">' +
+        '<button class="passo" data-dq="1" aria-label="Uno in più">+</button>' +
+        '<select id="d-unita" aria-label="Unità di misura">' + UNITA_DISPENSA.map(function (u) {
           return '<option' + (u === v.unita ? ' selected' : '') + '>' + u + '</option>';
         }).join('') + '</select></div>';
       h += '<label class="field"><span>Scadenza</span>' +
@@ -34184,9 +34192,18 @@ function catalogo() {
         dentro l'arrotondamento gia' fatto — un grammo o due di scarto;
      3. senza grammi non c'e' nessuna proporzione da rifare: torna null e la
         voce si corregge nei suoi kcal, non nei suoi grammi. */
+var ALIMENTI_PER_NOME = null;
+function alimentoDiNome(n) {
+  if (!ALIMENTI_PER_NOME) {
+    ALIMENTI_PER_NOME = Object.create(null);   /* senza prototipo: il nome lo scrive anche l'utente */
+    ALIMENTI.forEach(function (a) { if (!ALIMENTI_PER_NOME[a.n]) ALIMENTI_PER_NOME[a.n] = a; });
+  }
+  return ALIMENTI_PER_NOME[n] || null;
+}
 function baseCentograni(c) {
-  var trovata = null;
-  catalogo().forEach(function (v) { if (!trovata && v.a.n === c.n) trovata = v.a; });
+  /* stessa precedenza di catalogo(), prima i prodotti tuoi e poi le tabelle, senza ricostruire l'elenco a ogni voce */
+  for (var ean in S.prodotti) if (S.prodotti[ean].n === c.n) return S.prodotti[ean];
+  var trovata = alimentoDiNome(c.n);
   if (trovata) return trovata;
   if (!c.q) return null;
   var r = function (x) { return Math.round((x || 0) * 100 / c.q * 10) / 10; };
@@ -34217,7 +34234,7 @@ function piattoDa(v) {
     if (!amido && gr) AMIDI.forEach(function (a) { if (!amido && a[0].test(r[0])) amido = { nome: a[1], g: gr / pers, crudo: a[2], cotto: a[3] }; });
   });
   if (amido) {
-    var k = function (n) { return (ALIMENTI.filter(function (x) { return x.n === n; })[0] || {}).k; };
+    var k = function (n) { return (alimentoDiNome(n) || {}).k; };
     amido.resa = k(amido.crudo) && k(amido.cotto) ? k(amido.crudo) / k(amido.cotto) : 1;
   }
   var porz = tot / pers;
@@ -34435,9 +34452,9 @@ function vCibi() {
 
   h += '<div class="cerca"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/>' +
     '<path d="M20 20l-4-4"/></svg>' +
-    '<input type="search" id="q-cibi" placeholder="Cerca un alimento..." value="' +
+    '<input type="search" id="q-cibi" aria-label="Cerca un alimento" placeholder="Cerca un alimento..." value="' +
     esc(S.ctx.qcibi || '') + '">' +
-    ((S.ctx.qcibi || '') ? '<button id="qci-x">×</button>' : '') + '</div>';
+    ((S.ctx.qcibi || '') ? '<button id="qci-x" aria-label="Cancella la ricerca">×</button>' : '') + '</div>';
 
   var dentro = tutti.filter(function (v) {
     if (livelloCibo(v.a) !== lista) return false;
@@ -34587,7 +34604,7 @@ function vDiario() {
     h += '<h2>Acqua</h2><div class="card acqua">';
     h += '<div class="bicchieri">';
     for (var b = 1; b <= 10; b++) {
-      h += '<button class="bicchiere' + (b <= g.acqua ? ' pieno' : '') + '" data-acqua="' + b + '">' +
+      h += '<button class="bicchiere' + (b <= g.acqua ? ' pieno' : '') + '" data-acqua="' + b + '" aria-label="' + b + (b === 1 ? ' bicchiere' : ' bicchieri') + '">' +
            '<svg aria-hidden="true" viewBox="0 0 24 30"><path d="M4 3h16l-2 24a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/></svg></button>';
     }
     h += '</div><div class="dim" style="margin-top:8px">' +
@@ -34613,7 +34630,7 @@ function vDiario() {
              '<svg class="matita" viewBox="0 0 24 24" aria-hidden="true">' +
              '<path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/></svg></button></td>' +
              '<td class="num">' + c.k + ' kcal</td><td class="num">' + c.pr + ' g</td>' +
-             '<td class="num"><button class="rimuovi" data-rimuovi="' + i + '">×</button></td></tr>';
+             '<td class="num"><button class="rimuovi" data-rimuovi="' + i + '" aria-label="Togli ' + esc(c.n) + '">×</button></td></tr>';
       });
       h += '<tr class="tot"><td><b>Totale</b></td><td class="num"><b>' + t.k + ' kcal</b></td>' +
            '<td class="num"><b>' + t.p + ' g</b></td><td></td></tr>';
@@ -34659,9 +34676,9 @@ function vDiario() {
 
     h += '<div class="cerca"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/>' +
          '<path d="M20 20l-4-4"/></svg>' +
-         '<input type="search" id="q-cibo" placeholder="Cerca: pomodori, mozzarella, pasta..." value="' +
+         '<input type="search" id="q-cibo" aria-label="Cerca un alimento da aggiungere" placeholder="Cerca: pomodori, mozzarella, pasta..." value="' +
          esc(S.ctx.qcibo || '') + '">' +
-         ((S.ctx.qcibo || '') ? '<button id="qc-x">×</button>' : '') + '</div>';
+         ((S.ctx.qcibo || '') ? '<button id="qc-x" aria-label="Cancella la ricerca">×</button>' : '') + '</div>';
 
     /* i due pannelli usano gli stessi id: non possono stare aperti insieme,
        e quello della correzione ha la precedenza perche' l'hai appena toccato */
@@ -34734,19 +34751,20 @@ function vDiario() {
       '<input type="text" id="lib-nome" placeholder="Cosa hai mangiato">' +
       '<input type="number" id="lib-kcal" inputmode="numeric" placeholder="kcal">' +
       '<input type="number" id="lib-prot" inputmode="numeric" placeholder="prot">' +
-      '<button id="lib-add">+</button></div>';
+      '<button id="lib-add" aria-label="Aggiungi alla giornata">+</button></div>';
 
   } else if (sez === 'sintomi') {
     h += '<div class="hint">Compila la sera: bastano dieci secondi. Dopo un paio di settimane la ' +
          'scheda "Andamento" incrocia questi dati con quello che hai mangiato e con gli allenamenti.</div>';
-    h += '<label class="field"><span>Dolore o fastidio addominale</span><div class="seg" id="s-dolore">' +
+    /* <div>, non <label>: un'etichetta intorno ai pulsanti passa il tocco sul titolo al primo («nessuno») */
+    h += '<div class="field-seg" role="group" aria-label="Dolore o fastidio addominale"><span>Dolore o fastidio addominale</span><div class="seg" id="s-dolore">' +
          [0, 1, 2, 3].map(function (n) {
            return '<button data-v="' + n + '" class="' + (g.dolore === n ? 'on' : '') + '">' +
-                  ['nessuno', 'lieve', 'medio', 'forte'][n] + '</button>'; }).join('') + '</div></label>';
-    if (ha('reflusso') || ha('gastrite')) h += '<label class="field"><span>Reflusso</span><div class="seg" id="s-reflusso">' +
+                  ['nessuno', 'lieve', 'medio', 'forte'][n] + '</button>'; }).join('') + '</div></div>';
+    if (ha('reflusso') || ha('gastrite')) h += '<div class="field-seg" role="group" aria-label="Reflusso"><span>Reflusso</span><div class="seg" id="s-reflusso">' +
          [0, 1, 2, 3].map(function (n) {
            return '<button data-v="' + n + '" class="' + (g.reflusso === n ? 'on' : '') + '">' +
-                  ['nessuno', 'lieve', 'medio', 'forte'][n] + '</button>'; }).join('') + '</div></label>';
+                  ['nessuno', 'lieve', 'medio', 'forte'][n] + '</button>'; }).join('') + '</div></div>';
     if (ha('ibs') || ha('gonfiore')) h += bloccoBagno(g);   /* v23: il diario del bagno solo a chi ha l'intestino sensibile */
     h += bloccoIntegratori(g);
     h += '<label class="field"><span>Note</span>' +
@@ -35039,6 +35057,15 @@ function vAndamento() {
   return h;
 }
 
+/* L'ora sta in un <input type=time> che vive solo finche' la riga e' aperta:
+   prima di qualunque ridisegno va riportata nello stato, altrimenti si perde
+   proprio mentre la si sta scrivendo. */
+function salvaOraBagno(g) {
+  var i = S.ctx.bagnoAperto;
+  var c = document.getElementById('bagno-ora');
+  if (c && i !== null && i !== undefined && g.bagno && g.bagno[i]) g.bagno[i].h = c.value || null;
+}
+
 function collegaDiario() {
   var d = oggi(), g = giornoDiario(d);
 
@@ -35235,7 +35262,7 @@ function collegaDiario() {
         /* si riscrive la voce al suo posto: resta dov'era nell'elenco, e il
            nome resta quello registrato anche se il catalogo nel frattempo
            l'avesse cambiato */
-        g.cibo[S.ctx.modifica] = { n: vMod.n, q: q, k: v.k, pr: v.pr, c: v.c, f: v.f, fi: v.fi };
+        g.cibo[S.ctx.modifica] = { n: vMod.n, q: q, k: v.k, pr: v.pr, c: v.c, f: v.f, fi: v.fi, h: vMod.h };   /* l'ora del pasto resta */
         toast(vMod.n + ': ora ' + q + ' g, ' + v.k + ' kcal');
         S.ctx.modifica = undefined;
       } else {
@@ -35388,17 +35415,8 @@ function collegaDiario() {
     });
   });
 
-  
-/* L'ora sta in un <input type=time> che vive solo finche' la riga e' aperta:
-   prima di qualunque ridisegno va riportata nello stato, altrimenti si perde
-   proprio mentre la si sta scrivendo. */
-function salvaOraBagno(g) {
-  var i = S.ctx.bagnoAperto;
-  var c = document.getElementById('bagno-ora');
-  if (c && i !== null && i !== undefined && g.bagno && g.bagno[i]) g.bagno[i].h = c.value || null;
-}
 
-/* --- integratori --- */
+  /* --- integratori --- */
   document.querySelectorAll('[data-int]').forEach(function (b) {
     b.onclick = function () {
       var id = b.dataset.int;
@@ -35442,7 +35460,6 @@ var PAROLE_SINTOMI = [['bruciore', 'bruciore'], ['reflusso', 'reflusso'], ['acid
   ['mal di pancia', 'mal di pancia'], ['dolore alla pancia', 'mal di pancia'], ['crampi', 'crampi'], ['nausea', 'nausea'], ['diarrea', 'diarrea'],
   ['stitic', 'stitichezza'], ['aria nella pancia', 'gonfiore'], ['rigurgit', 'rigurgito']];
 var PAROLE_AGENDA = /chiamat|telefonat|appuntament|ricordami|promemoria|dentista|medico|dottor|visita|riunion|compleann|esame|colloquio|partita|allenamento di|cena con|pranzo con/;
-function dataIso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function senzaAccenti(t) { return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
 function capisciData(t) {
   var o = new Date(), m;
@@ -35554,6 +35571,14 @@ function vAgenda() {
   return h + '<p class="dim">Gli avvisi sul telefono arriveranno con le notifiche; per ora l\u2019agenda si guarda qui.</p>';
 }
 function collegaCapisci() {
+  /* prima l'agenda: sta in una scheda dove il campo «scrivi» non c'è, e con il return qui sotto
+     i suoi tasti «fatto» e «togli» non rispondevano */
+  document.querySelectorAll('[data-ag-fatto]').forEach(function (x) {
+    x.onclick = function () { S.agenda.forEach(function (a) { if (a.id === x.dataset.agFatto) a.fatto = !a.fatto; }); save(); render(); };
+  });
+  document.querySelectorAll('[data-ag-via]').forEach(function (x) {
+    x.onclick = function () { S.agenda = S.agenda.filter(function (a) { return a.id !== x.dataset.agVia; }); save(); render(); };
+  });
   var inp = document.getElementById('capisci-t');
   if (!inp) return;
   var vai = function () { S.ctx.capisciT = inp.value; S.ctx.capito = capisciTesto(inp.value); render(); };
@@ -35564,12 +35589,6 @@ function collegaCapisci() {
   if (ok) ok.onclick = function () { eseguiCapito(S.ctx.capito); S.ctx.capito = null; S.ctx.capisciT = ''; render(); };
   var no = document.getElementById('capisci-no');
   if (no) no.onclick = function () { S.ctx.capito = null; render(); };
-  document.querySelectorAll('[data-ag-fatto]').forEach(function (x) {
-    x.onclick = function () { S.agenda.forEach(function (a) { if (a.id === x.dataset.agFatto) a.fatto = !a.fatto; }); save(); render(); };
-  });
-  document.querySelectorAll('[data-ag-via]').forEach(function (x) {
-    x.onclick = function () { S.agenda = S.agenda.filter(function (a) { return a.id !== x.dataset.agVia; }); save(); render(); };
-  });
 }
 
 
@@ -35611,19 +35630,19 @@ function vProgressi() {
   var serieTot = 0, volumeTot = 0;
   for (var d in S.log) {
     var ser = S.log[d].serie || {};
-    for (var k in ser) ser[k].forEach(function (s) {
-      if (s.fatto) { serieTot++; volumeTot += (s.kg || 0) * (s.rip || 0); }
+    for (var k in ser) (ser[k] || []).forEach(function (s) {
+      if (s && s.fatto) { serieTot++; volumeTot += (s.kg || 0) * (s.rip || 0); }
     });
   }
   h += '<div class="stats">' +
     '<div class="stat"><b>' + nSed + '</b><span>sedute registrate</span></div>' +
     '<div class="stat"><b>' + serieTot + '</b><span>serie completate</span></div>' +
     '<div class="stat"><b>' + Math.round(volumeTot / 1000) + 't</b><span>volume totale sollevato</span></div>' +
-    '<div class="stat"><b>' + S.profilo.peso + ' kg</b><span>peso corporeo</span></div>' +
+    '<div class="stat"><b>' + (S.profilo.peso ? S.profilo.peso + ' kg' : '–') + '</b><span>peso corporeo</span></div>' +
     '</div>';
 
   h += '<label class="field"><span>Aggiorna il peso corporeo (pesati a digiuno, stesso giorno ogni settimana)</span>' +
-       '<input type="number" step="0.1" inputmode="decimal" id="peso" value="' + S.profilo.peso + '"></label>' +
+       '<input type="number" step="0.1" inputmode="decimal" id="peso" value="' + (S.profilo.peso || '') + '"></label>' +
        '<button class="ghost" id="salva-peso">Salva peso</button>';
 
   /* ---------- durata reale delle sedute ----------
@@ -35657,7 +35676,7 @@ function vProgressi() {
     var s = S.ultimo[id];
     var best = s.reduce(function (a, x) { return Math.max(a, x.kg || 0); }, 0);
     h += '<div class="card"><b style="font-size:14.5px">' + esc(ex.nome) + '</b>' +
-      '<div class="dim">ultimo: ' + s.map(function (x) { return x.kg + '×' + x.rip; }).join('  ·  ') +
+      '<div class="dim">ultimo: ' + s.map(function (x) { return x.kg + '×' + (x.rip || '–'); }).join('  ·  ') +
       '  —  massimo ' + best + ' kg</div></div>';
   });
   h += '</main>';
@@ -35832,12 +35851,13 @@ function vImpostazioni() {
        '<label class="np-l"><span>Altezza (cm)</span>' +
        '<input type="number" step="1" inputmode="numeric" id="p-altezza" value="' +
        (pr.altezza || '') + '"></label></div>';
-  h += '<label class="field"><span>Quanto ti muovi fuori dalla palestra</span>' +
+  /* <div>, non <label>: un'etichetta intorno ai pulsanti passa il tocco sul titolo al primo pulsante */
+  h += '<div class="field-seg" role="group" aria-label="Quanto ti muovi fuori dalla palestra"><span>Quanto ti muovi fuori dalla palestra</span>' +
        '<div class="seg" id="p-attivita">' +
        [[1.375, 'poco'], [1.55, 'normale'], [1.725, 'molto']].map(function (a) {
          return '<button data-v="' + a[0] + '" class="' + (pr.attivita === a[0] ? 'on' : '') +
                 '">' + a[1] + '</button>';
-       }).join('') + '</div></label>';
+       }).join('') + '</div></div>';
   h += sezioneAltriSport();
   h += '<button class="primary" id="p-salva">Salva il profilo</button>';
   if (profiloCompleto()) {
@@ -35938,11 +35958,11 @@ function vImpostazioni() {
     h += '<button class="ghost" id="scarico-toggle">' +
          (c.scarico ? 'Togli lo scarico' : 'Attiva lo scarico per questa settimana') + '</button>';
   }
-  h += '<label class="field"><span>Sono nella settimana</span><div class="seg" id="s-settimana">';
+  h += '<div class="field-seg" role="group" aria-label="Sono nella settimana"><span>Sono nella settimana</span><div class="seg" id="s-settimana">';
   for (var w = 1; w <= SCHEDA.settimanePerBlocco; w++) {
     h += '<button data-v="' + w + '" class="' + (!c.nuovo && c.nelBlocco === w ? 'on' : '') + '">' + w + '</button>';
   }
-  h += '</div></label>';
+  h += '</div></div>';
   h += '<div class="seg" style="margin-top:4px">';
   SCHEDA.blocchi.forEach(function (b, i) {
     h += '<button data-blocco="' + i + '" class="' + (!c.nuovo && c.indice === i ? 'on' : '') +
@@ -36019,8 +36039,7 @@ function vImpostazioni() {
   h += '<details><summary>Oppure copia e incolla il testo</summary><div>' +
        '<p class="dim">Serve dove il download è bloccato.</p>' +
        '<label class="field"><span>Seleziona tutto il testo e copialo</span>' +
-       '<textarea id="dump" style="height:130px;font-size:11px">' +
-       esc(JSON.stringify(datiDaSalvare())) + '</textarea></label>' +
+       '<textarea id="dump" style="height:130px;font-size:11px"></textarea></label>' +
        '<button class="ghost" id="copia">Copia negli appunti</button></div></details>';
 
   h += '<h2>Ripristino</h2>';
@@ -36109,7 +36128,7 @@ function vImpostazioni() {
     'La classificazione col semaforo, i motivi, i rimedi e i valori nutrizionali sono invece ' +
     'calcolati e scritti qui, con le tabelle CREA e la rassegna di letteratura del progetto.</p>' +
     '<p class="dim">Le altre ricette, quelle con le grammature esatte e il «perché questa», ' +
-    'sono scritte per te: le riconosci dal filtro <b>scritte per me</b>.</p></div>';
+    'sono scritte per te: le trovi scegliendo la fonte <b>Scritte per te</b>.</p></div>';
 
   h += '<h2>Azzeramento</h2>';
   h += '<button class="ghost danger" id="azzera">Cancella tutti i dati da questo telefono</button>';
@@ -36259,12 +36278,18 @@ function collegaImpostazioni() {
   };
 
 
+  /* il testo del backup si scrive quando si apre il riquadro, non a ogni ridisegno:
+     con mesi di dati sono centinaia di kB */
+  var dump = document.getElementById('dump');
+  if (dump) dump.closest('details').ontoggle = function () { if (this.open) dump.value = JSON.stringify(datiDaSalvare()); };
   var c = document.getElementById('copia');
   if (c) c.onclick = function () {
     var t = document.getElementById('dump');
-    t.select(); t.setSelectionRange(0, 999999);
-    try { navigator.clipboard.writeText(t.value); c.textContent = 'Copiato'; }
-    catch (e) { document.execCommand('copy'); c.textContent = 'Copiato'; }
+    t.select(); t.setSelectionRange(0, t.value.length);
+    var aMano = function () { try { document.execCommand('copy'); } catch (e2) { /* resta selezionato: si copia a mano */ } };
+    /* writeText fallisce in modo asincrono (permesso negato): senza il catch restava un errore in console */
+    try { navigator.clipboard.writeText(t.value).catch(aMano); } catch (e) { aMano(); }
+    c.textContent = 'Copiato';
     S.profilo.ultimoBackup = oggi();
     save();
     setTimeout(function () { c.textContent = 'Copia negli appunti'; }, 1600);
