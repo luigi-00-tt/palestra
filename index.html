@@ -30064,7 +30064,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwcg1cop';
+var BUILD = 'vmwcg91e5';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -35816,9 +35816,9 @@ function collegaProgressi() {
 
 /* ---------- salvare un file: un link con `download` e un blob ----------
    `esito(ok, messaggio)` viene chiamata una volta sola. */
-function salvaFile(nome, testo, esito) {
+function salvaFile(nome, testo, esito, tipo) {
   try {
-    var blob = new Blob([testo], { type: 'application/json' });
+    var blob = new Blob([testo], { type: tipo || 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = nome;
@@ -35829,6 +35829,37 @@ function salvaFile(nome, testo, esito) {
   } catch (e) {
     esito(false, 'Il download è bloccato qui: usa il copia e incolla qui sotto.');
   }
+}
+
+/* v28 (R44): serie e diario in CSV per Excel italiano: punto e virgola, virgola
+   nei decimali, BOM perché gli accenti si leggano. Una riga per serie o per cibo. */
+function csvDa(righe) {
+  return '\ufeff' + righe.map(function (r) {
+    return r.map(function (x) {
+      x = x === undefined || x === null ? '' : typeof x === 'number' ? String(x).replace('.', ',') : String(x);
+      return /[;"\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x;
+    }).join(';');
+  }).join('\r\n');
+}
+function csvSerie() {
+  var R = [['data', 'seduta', 'esercizio', 'serie', 'kg', 'ripetizioni o secondi']];
+  Object.keys(S.log).sort().forEach(function (d) {
+    var ser = S.log[d].serie || {};
+    Object.keys(ser).forEach(function (id) {
+      var ex = esercizioDi(id);
+      (ser[id] || []).forEach(function (x, i) {
+        if (x && x.fatto) R.push([d, S.log[d].giorno || '', ex ? ex.nome : id, i + 1, x.kg, x.rip]);
+      });
+    });
+  });
+  return csvDa(R);
+}
+function csvCibo() {
+  var R = [['data', 'ora', 'cibo', 'grammi', 'kcal', 'proteine g', 'carboidrati g', 'grassi g', 'fibra g']];
+  Object.keys(S.diario).sort().forEach(function (d) {
+    (S.diario[d].cibo || []).forEach(function (c) { R.push([d, c.h, c.n, c.q, c.k, c.pr, c.c, c.f, c.fi]); });
+  });
+  return csvDa(R);
 }
 
 /* Quanto storico c'e' davvero: serve a far vedere all'utente cosa perderebbe. */
@@ -36153,6 +36184,9 @@ function vImpostazioni() {
             'telefono perso o riformattato.') + '</div>';
   }
   h += '<button class="primary" id="scarica-bk">Scarica il file di backup</button>';
+  /* v28 (R44): per Excel o Fogli Google; il backup resta il file JSON */
+  h += '<div style="display:flex;gap:8px;margin-top:8px"><button class="ghost" id="csv-serie">Serie in CSV</button>' +
+       '<button class="ghost" id="csv-cibo">Diario del cibo in CSV</button></div>';
   h += '<div class="note">Salva un file <code>palestra-backup-AAAA-MM-GG.json</code> nei Download. ' +
        'Mettilo dove vuoi: Drive, email a te stesso, un\'altra cartella. Contiene allenamenti, ' +
        'diario, prodotti e profilo.</div>';
@@ -36369,6 +36403,12 @@ function collegaImpostazioni() {
 
   /* Scarica il backup come file. Dentro un Artifact i download sono bloccati
      dalla piattaforma, quindi si dichiara e si rimanda al copia-incolla. */
+  [['csv-serie', 'palestra-serie-', csvSerie], ['csv-cibo', 'palestra-cibo-', csvCibo]].forEach(function (c) {
+    var b = document.getElementById(c[0]);
+    if (b) b.onclick = function () {
+      salvaFile(c[1] + oggi() + '.csv', c[2](), function (ok, m) { toast(m); }, 'text/csv;charset=utf-8');
+    };
+  });
   var sb = document.getElementById('scarica-bk');
   if (sb) sb.onclick = function () {
     sb.disabled = true;
