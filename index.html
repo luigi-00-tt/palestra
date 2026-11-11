@@ -25702,6 +25702,19 @@ var FOTO_PIATTI = {
 };
 
 
+/* ===== foto-tipi.js ===== */
+/* foto-tipi.js — la foto del tipo di piatto per le ricette che non hanno la loro.
+   Generato da app/strumenti/genera_foto_tipi.py (tipi in tipi_piatti.py): non si modifica a mano.
+   Il file è sito/foto/tipo-<tipo>.jpg. Crediti: [autore, licenza, pagina]. */
+
+var TIPI_FOTO = [
+
+];
+var FOTO_TIPI = {
+
+};
+
+
 /* ===== passaggi.js ===== */
 /* passaggi.js — «Come deve venire» (v24, 7 ottobre 2026).
 
@@ -27517,7 +27530,7 @@ function giudizioDispensa(v) {
     /* «>» come l'FSA. Grassi: aumentano i sintomi, non l'acido [J47]; per oli
        e burro conta la porzione, quindi mai oltre «con moderazione» */
     if (pr && pr.f > SOGLIE_ETICHETTA.grassi) {
-      segna(1, 'Grasso (' + String(pr.f).replace('.', ',') + ' g su 100 g): nei pasti ricchi di grassi i sintomi ' +
+      segna(1, 'Grasso (' + virgola(pr.f) + ' g su 100 g): nei pasti ricchi di grassi i sintomi ' +
         'aumentano. Meglio poco per volta e lontano dalla sera.', 'J47, J43, J78');
     }
     if (tags.some(function (t) { return /^en:(carbonated|sodas|sparkling)/.test(t); }) ||
@@ -27556,10 +27569,10 @@ function giudizioDispensa(v) {
 
   /* 4. diabete e pressione: i valori dell'etichetta */
   if (ha('diabete') && pr && pr.zu > SOGLIE_ETICHETTA.zuccheri) {
-    segna(1, 'Molti zuccheri (' + String(pr.zu).replace('.', ',') + ' g su 100 g): in piccole porzioni e insieme a un pasto.');
+    segna(1, 'Molti zuccheri (' + virgola(pr.zu) + ' g su 100 g): in piccole porzioni e insieme a un pasto.');
   }
   if (ha('ipertensione') && pr && pr.sa > SOGLIE_ETICHETTA.sale) {
-    segna(1, 'Molto sale (' + String(pr.sa).replace('.', ',') + ' g su 100 g): conta nei 5 g al giorno.');
+    segna(1, 'Molto sale (' + virgola(pr.sa) + ' g su 100 g): conta nei 5 g al giorno.');
   }
 
   /* niente dati su cui giudicare: meglio tacere che dire «ti fa bene» */
@@ -30086,7 +30099,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwcoje5c';
+var BUILD = 'vmwcp4b9m';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -30721,6 +30734,9 @@ function collega() {
 
   if (S.vista === 'impostazioni') collegaImpostazioni();
 }
+
+/* v28: i numeri con la virgola, come si scrivono in italiano (dec = cifre decimali fisse) */
+function virgola(n, dec) { return (dec == null ? String(n) : (+n).toFixed(dec)).replace('.', ','); }
 
 
 /* ===== vista-allenamento.js ===== */
@@ -32851,6 +32867,16 @@ function fotoFile(v) {
   var k = chiaveFoto(v.nome);
   return FOTO_PIATTI[k] ? 'foto/' + k + '.jpg' : null;
 }
+/* v28: il tipo di piatto (risotto ai funghi, zuppa di pesce, crêpes...) per le ricette senza foto
+   loro: è più vicino della famiglia larga di categoriaFoto. Tipi e foto in foto-tipi.js. */
+function tipoFoto(v) {
+  if (v._tf !== undefined) return v._tf;
+  var n = ' ' + fodNorm(v.nome || '') + ' ', t = null;
+  if (typeof TIPI_FOTO !== 'undefined') {
+    for (var i = 0; !t && i < TIPI_FOTO.length; i++) if (TIPI_FOTO[i][1].test(n)) t = TIPI_FOTO[i][0];
+  }
+  return (v._tf = t);
+}
 function ripiegaFoto(img) {
   img.onerror = null;
   var cat = img.dataset.cf && typeof FOTO_CATEGORIA !== 'undefined' ? FOTO_CATEGORIA[img.dataset.cf] : null;
@@ -32880,6 +32906,11 @@ function immaginePiatto(v, grande) {
            '" alt="' + esc(v.nome) + '" loading="lazy" decoding="async" data-cf="' + (cf || '') +
            '" onerror="ripiegaFoto(this)">';
   }
+  if (tipoFoto(v)) {
+    return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="foto/tipo-' + tipoFoto(v) +
+           '.jpg" alt="' + esc(v.nome) + '" loading="lazy" decoding="async" data-cf="' + (cf || '') +
+           '" onerror="ripiegaFoto(this)">';
+  }
   var cat = cf ? FOTO_CATEGORIA[cf] : null;
   if (cat) {
     return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="' + urlFoto(cat) +
@@ -32903,6 +32934,11 @@ function creditoFoto(nome, v) {
     var cp = FOTO_PIATTI[chiaveFoto(v.nome)];
     return '<p class="credito">Foto: ' + esc(cp[0]) + ' · ' + esc(cp[1]) +
            ' · Wikimedia Commons. È il piatto, non necessariamente questa versione.</p>';
+  }
+  if (v && tipoFoto(v)) {
+    var ct = FOTO_TIPI[tipoFoto(v)];
+    return '<p class="credito"><b>Foto di repertorio</b>: un piatto dello stesso tipo, non questa ricetta. ' +
+           esc(ct[0]) + ' · ' + esc(ct[1]) + ' · Wikimedia Commons</p>';
   }
   /* La foto di categoria è un piatto della stessa famiglia, non questo. Va
      scritto sotto l'immagine: chi guarda una fotografia crede a quello che
@@ -33119,7 +33155,7 @@ function vNumeri(f) {
       '<i class="r-c" style="width:' + pc(kC) + '%"></i><i class="r-g" style="width:' + pc(kG) + '%"></i></div>' +
     '<div class="macro3">' +
       '<div><i class="r-p"></i><b>' + f.prot + ' g</b><span>proteine</span><em>' +
-        (f.prot / p.peso).toFixed(1).replace('.', ',') + ' g/kg · ' + pc(kP) + '%</em></div>' +
+        virgola(f.prot / p.peso, 1) + ' g/kg · ' + pc(kP) + '%</em></div>' +
       '<div><i class="r-c"></i><b>' + f.carb + ' g</b><span>carboidrati</span><em>' + pc(kC) + '% delle kcal</em></div>' +
       '<div><i class="r-g"></i><b>' + f.gras + ' g</b><span>grassi</span><em>' + pc(kG) + '% delle kcal</em></div>' +
     '</div>' +
@@ -33128,7 +33164,7 @@ function vNumeri(f) {
       '<table class="hist conti">' +
       '<tr><td>Metabolismo basale (Mifflin-St Jeor)<br><span class="dim">' + eta() + ' anni, ' + p.peso + ' kg, ' +
         p.altezza + ' cm</span></td><td class="num">' + f.bmr + '</td></tr>' +
-      '<tr><td>× attività ' + String(p.attivita || 1.55).replace('.', ',') + ' = mantenimento</td><td class="num">' + f.tdee + '</td></tr>' +
+      '<tr><td>× attività ' + virgola(p.attivita || 1.55) + ' = mantenimento</td><td class="num">' + f.tdee + '</td></tr>' +
       '<tr><td>' + (f.surplus >= 0 ? 'Surplus' : 'Deficit') + ' per il tuo obiettivo</td><td class="num">' +
         (f.surplus >= 0 ? '+' : '') + f.surplus + '</td></tr>' +
       '<tr class="tot"><td>Obiettivo</td><td class="num">' + f.kcal + '</td></tr></table>' +
@@ -33649,11 +33685,11 @@ function comeCalcolato(f, p) {
   var rn = regoleNutrizione(p.obiettivo), fo = function (c) { return ' <span class="fonte">[' + c.join(', ') + ']</span>'; };
   var vegano = S.questionario && S.questionario.dieta === 'vegana';
   var h = '<table class="hist conti">' +
-    '<tr><td>Proteine: ' + String(f.prot / p.peso >= 0 ? (f.prot / p.peso).toFixed(1) : '').replace('.', ',') + ' g per kg di peso' +
+    '<tr><td>Proteine: ' + virgola(f.prot / p.peso >= 0 ? (f.prot / p.peso).toFixed(1) : '') + ' g per kg di peso' +
       (vegano ? ' (+15% perché le proteine vegetali rendono un po’ meno' + fo(REGOLE_NUTRIZIONE.veganoFonti) + ')' : '') + fo(rn.fonti) +
       '</td><td class="num">' + f.prot + ' g</td></tr>' +
-    '<tr><td>Grassi: ' + (rn.grassiKg ? String(rn.grassiKg).replace('.', ',') + ' g per kg' : Math.round(rn.grassi * 100) + '% delle calorie, mai sotto ' +
-      String(rn.grassiMin).replace('.', ',') + ' g per kg') + '</td><td class="num">' + f.gras + ' g</td></tr>' +
+    '<tr><td>Grassi: ' + (rn.grassiKg ? virgola(rn.grassiKg) + ' g per kg' : Math.round(rn.grassi * 100) + '% delle calorie, mai sotto ' +
+      virgola(rn.grassiMin) + ' g per kg') + '</td><td class="num">' + f.gras + ' g</td></tr>' +
     '<tr><td>Carboidrati: le calorie che restano, a 4 kcal per grammo</td><td class="num">' + f.carb + ' g</td></tr></table>' +
     '<p class="dim">Le proteine valgono 4 kcal al grammo, i carboidrati 4, i grassi 9.</p>';
   var sp = p.sport || [];
@@ -34358,7 +34394,7 @@ function pannelloPiatto(id) {
   S.ctx.piattoVal = { n: v.nome, q: q, k: val.k, pr: val.pr, c: val.c, f: val.f, fi: val.fi, pesato: pes, ing: ing };
   return h + '<div class="calc-q"><button data-dq="-10">&minus;10</button><input type="number" inputmode="numeric" step="5" id="q-gr" value="' + q + '"><span>g</span>' +
     '<button data-dq="10">+10</button></div>' + pastiglieMacro(val) +
-    '<p class="dim">Sono ' + String(Math.round(f * 100) / 100).replace('.', ',') + ' porzioni. Dentro: ' +
+    '<p class="dim">Sono ' + virgola(Math.round(f * 100) / 100) + ' porzioni. Dentro: ' +
     ing.map(function (i) { return esc(i[0].toLowerCase()) + ' ' + i[1] + ' g'; }).join(', ') + '.' +
     (pes === 'pronto' ? ' Il peso del piatto cotto è stimato: ' + (P.amido ? esc(P.amido.nome) + ' cuocendo assorbe acqua (resa dalle tabelle CREA)' : 'quello degli ingredienti') + '.' : '') + '</p>' +
     '<button class="primary" id="piatto-add">Aggiungi alla giornata</button></div>';
@@ -34696,7 +34732,7 @@ function vDiario() {
            '<svg aria-hidden="true" viewBox="0 0 24 30"><path d="M4 3h16l-2 24a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/></svg></button>';
     }
     h += '</div><div class="dim" style="margin-top:8px">' +
-      (g.acqua * 0.25).toFixed(2).replace('.', ',') + ' litri su circa 2,5 consigliati. ' +
+      virgola(g.acqua * 0.25, 2) + ' litri su circa 2,5 consigliati. ' +
       (ha('reflusso') ? 'Durante l\'allenamento bevi a piccoli sorsi: oltre mezzo litro in una volta lo stomaco non ' +
       'lo svuota più in fretta e il reflusso peggiora.' : 'Durante l\'allenamento bevi a piccoli sorsi, poco e spesso.') + '</div></div>';
 
@@ -34930,9 +34966,9 @@ function vIntestino() {
 
   var h = '<h2>Intestino</h2>';
   h += '<div class="stats">' +
-    '<div class="stat"><b>' + (tot / date.length).toFixed(1).replace('.', ',') + '</b>' +
+    '<div class="stat"><b>' + virgola(tot / date.length, 1) + '</b>' +
       '<span>volte al giorno, in media</span></div>' +
-    '<div class="stat"><b>' + (nb ? (bris / nb).toFixed(1).replace('.', ',') : '—') + '</b>' +
+    '<div class="stat"><b>' + (nb ? virgola(bris / nb, 1) : '—') + '</b>' +
       '<span>Bristol medio (4 è il centro)</span></div>' +
     '<div class="stat"><b>' + storte.length + '</b><span>giornate storte su ' + date.length + '</span></div>' +
     '<div class="stat"><b>' + peggio.length + '</b><span>giorni in cui è peggiorata strada facendo</span></div>' +
@@ -34993,8 +35029,8 @@ function vIntestino() {
     var mBuone = buone.reduce(function (a, d) { return a + fodmapAlti(d); }, 0) / buone.length;
     if (mStorte || mBuone) {
       h += '<h2>FODMAP</h2><p class="dim">Nelle giornate storte hai mangiato in media <b>' +
-        mStorte.toFixed(1).replace('.', ',') + '</b> alimenti ad alto FODMAP, nelle altre <b>' +
-        mBuone.toFixed(1).replace('.', ',') + '</b>.' +
+        virgola(mStorte, 1) + '</b> alimenti ad alto FODMAP, nelle altre <b>' +
+        virgola(mBuone, 1) + '</b>.' +
         (mStorte > mBuone + 0.5 ? ' La differenza c\'è: vale la pena provare a ridurli per due settimane.' :
          ' Differenza piccola: nel tuo caso i FODMAP non sembrano la leva principale.') + '</p>';
     }
@@ -35008,8 +35044,8 @@ function vIntestino() {
   if (conF.length >= 7 && senzaF.length >= 7) {
     function mediaScariche(l) { return l.reduce(function (a, d) { return a + S.diario[d].bagno.length; }, 0) / l.length; }
     h += '<h2>Fermenti</h2><p class="dim">Nei <b>' + conF.length + '</b> giorni in cui li hai presi: ' +
-      mediaScariche(conF).toFixed(1).replace('.', ',') + ' volte al giorno. Negli altri <b>' +
-      senzaF.length + '</b>: ' + mediaScariche(senzaF).toFixed(1).replace('.', ',') + '. ' +
+      virgola(mediaScariche(conF), 1) + ' volte al giorno. Negli altri <b>' +
+      senzaF.length + '</b>: ' + virgola(mediaScariche(senzaF), 1) + '. ' +
       'È un confronto fra giorni diversi, non una prova: per sapere se funzionano davvero serve ' +
       'prenderli tutti i giorni per il periodo intero, come spiegato nella scheda dei fermenti.</p>';
   } else if (conF.length) {
@@ -35111,8 +35147,8 @@ function vAndamento() {
   var aSenza = media(senzaR, function (g) { return g.acqua; });
   if (aCon !== null && aSenza !== null) {
     h += '<h2>Acqua</h2><div class="card"><table class="hist">' +
-      '<tr><td>Giorni con ' + NOME_SINT + '</td><td class="num">' + (aCon * 0.25).toFixed(1).replace('.', ',') + ' litri</td></tr>' +
-      '<tr><td>Giorni senza</td><td class="num">' + (aSenza * 0.25).toFixed(1).replace('.', ',') + ' litri</td></tr>' +
+      '<tr><td>Giorni con ' + NOME_SINT + '</td><td class="num">' + virgola(aCon * 0.25, 1) + ' litri</td></tr>' +
+      '<tr><td>Giorni senza</td><td class="num">' + virgola(aSenza * 0.25, 1) + ' litri</td></tr>' +
       '</table></div>';
   }
 
@@ -35122,9 +35158,9 @@ function vAndamento() {
     var rRiposo = media(date.filter(function (d) { return !S.log[d]; }), function (g) { return g[SINT] || 0; });
     h += '<h2>Allenamento e sintomi</h2><div class="card"><table class="hist">' +
       '<tr><td>' + NOME_SINT.charAt(0).toUpperCase() + NOME_SINT.slice(1) + ' nei giorni di palestra</td><td class="num">' +
-        (rAllen === null ? '–' : rAllen.toFixed(1).replace('.', ',')) + ' su 3</td></tr>' +
+        (rAllen === null ? '–' : virgola(rAllen, 1)) + ' su 3</td></tr>' +
       '<tr><td>' + NOME_SINT.charAt(0).toUpperCase() + NOME_SINT.slice(1) + ' nei giorni di riposo</td><td class="num">' +
-        (rRiposo === null ? '–' : rRiposo.toFixed(1).replace('.', ',')) + ' su 3</td></tr>' +
+        (rRiposo === null ? '–' : virgola(rRiposo, 1)) + ' su 3</td></tr>' +
       '</table></div>';
     if (SINT === 'reflusso') h += '<div class="note">Se il reflusso è sistematicamente peggiore nei giorni di palestra, ' +
          'prova a spostare il pasto più lontano dalla seduta prima di cambiare gli esercizi.</div>';
@@ -35139,7 +35175,7 @@ function vAndamento() {
     h += '<tr><td>' + dataIt(x) + '</td><td>' + liv[v.dolore || 0] + '</td>' +
          (SINT === 'reflusso' ? '<td>' + liv[v.reflusso || 0] + '</td>' : '') +
          '<td class="num">' + totaliCibo(v).k + '</td><td class="num">' +
-         (v.acqua ? (v.acqua * 0.25).toFixed(1).replace('.', ',') + ' l' : '–') + '</td></tr>';
+         (v.acqua ? virgola(v.acqua * 0.25, 1) + ' l' : '–') + '</td></tr>';
   });
   h += '</table></div>';
   return h;
@@ -35730,7 +35766,6 @@ function recordDi(id, salta) {
 
 /* v28 (R43): le ultime 26 pesate in una linea, con la media delle ultime tre:
    il peso di un giorno oscilla per acqua e cibo, la media dice dove sta andando */
-function virgola(n) { return String(n).replace('.', ','); }
 function andamentoPeso() {
   var P = S.profilo.pesate || {}, dd = Object.keys(P).sort().slice(-26);
   if (dd.length < 2) return '<p class="dim">Dalla seconda pesata qui compare l\'andamento.</p>';
@@ -35876,7 +35911,7 @@ function salvaFile(nome, testo, esito, tipo) {
 function csvDa(righe) {
   return '\ufeff' + righe.map(function (r) {
     return r.map(function (x) {
-      x = x === undefined || x === null ? '' : typeof x === 'number' ? String(x).replace('.', ',') : String(x);
+      x = x === undefined || x === null ? '' : typeof x === 'number' ? virgola(x) : String(x);
       return /[;"\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x;
     }).join(';');
   }).join('\r\n');
@@ -36200,7 +36235,7 @@ function vImpostazioni() {
          'Fai una copia di sicurezza ogni tanto.';
   }
   if (ARCHIVIO.usati != null) {
-    h += '<br><br>Spazio occupato: <b>' + (ARCHIVIO.usati / 1048576).toFixed(1).replace('.', ',') +
+    h += '<br><br>Spazio occupato: <b>' + virgola(ARCHIVIO.usati / 1048576, 1) +
          ' MB</b>' + (ARCHIVIO.disponibili ? ' su ' +
          Math.round(ARCHIVIO.disponibili / 1048576) + ' MB disponibili' : '') +
          '. Un anno di allenamenti sta in meno di un megabyte: lo spazio non sarà mai il problema.';
