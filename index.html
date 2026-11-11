@@ -28403,7 +28403,11 @@ function bozzaQuestionario() {
       ambito: v.ambito || 'sala', attrezziCasa: (v.attrezziCasa || []).slice(),
       cedimento: v.cedimento || 'auto', ripetizioni: v.ripetizioni || 'auto', cardio: v.cardio || 'auto',
       preferiti: (v.preferiti || []).slice(), odiati: (v.odiati || []).slice(),
-      pasti: v.pasti || 4, integratori: v.integratori || [], nonMangia: v.nonMangia || ''
+      pasti: v.pasti || 4, integratori: v.integratori || [], nonMangia: v.nonMangia || '',
+      /* v28: la seconda scheda e il calendario si cambiano nelle Impostazioni, ma
+         salvare il questionario non deve cancellarli */
+      seconda: v.seconda ? JSON.parse(JSON.stringify(v.seconda)) : undefined,
+      calendario: v.calendario ? JSON.parse(JSON.stringify(v.calendario)) : undefined
     }
   };
   return QZ;
@@ -28566,6 +28570,15 @@ function migraQuestionario() {
   return false;
 }
 
+/* v28 (R47): con due schede i giorni li decide il calendario, giorno per giorno:
+   la domanda «quanti giorni» non conterebbe e si toglie */
+function domandaGiorni(d) {
+  if (d.seconda && d.calendario) return '<p class="dim">Hai due schede: in quali giorni fai l’una o l’altra lo scegli nel ' +
+    '<a href="#" data-go="impostazioni">calendario delle Impostazioni</a>, giorno per giorno.</p>';
+  return '<div class="field"><span>Quanti giorni a settimana puoi andare in palestra</span>' +
+    pillole('giorni', [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], d.giorni, true) + '</div>';
+}
+
 function pillole(nome, voci, scelti, singola) {
   return '<div class="qz-pills" data-gruppo="' + nome + '"' + (singola ? ' data-singola="1"' : '') + '>' +
     voci.map(function (v) {
@@ -28644,8 +28657,7 @@ function vQuestionario() {
     h += '<div class="field"><span>Sesso</span>' + pillole('sesso', [['m', 'Uomo'], ['f', 'Donna']], d.sesso, true) + '</div>';
     h += '<div class="field"><span>Da quanto ti alleni con i pesi</span>' +
       pillole('esperienza', [[0, 'Mai'], [1, 'Meno di 6 mesi'], [2, '6-12 mesi'], [3, 'Oltre un anno']], d.esperienza, true) + '</div>';
-    h += '<div class="field"><span>Quanti giorni a settimana puoi andare in palestra</span>' +
-      pillole('giorni', [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], d.giorni, true) + '</div>';
+    h += domandaGiorni(d);
     h += '<div class="field"><span>Quanto tempo hai per ogni seduta, riscaldamento compreso</span>' +
       pillole('minuti', [[30, '30 min'], [45, '45 min'], [60, '1 ora'], [75, '1 ora e ¼'], [90, '1 ora e ½'],
         [105, '1 ora e ¾'], [120, '2 ore'], [150, '2 ore e ½'], [180, '3 ore']], d.minuti, true) + '</div>';
@@ -28664,8 +28676,7 @@ function vQuestionario() {
          '<label class="np-l"><span>Altezza (cm)</span><input type="number" step="1" inputmode="numeric" id="qz-altezza" value="' + esc(d.altezza) + '"></label></div>';
     h += '<div class="field"><span>Da quanto ti alleni con i pesi</span>' +
       pillole('esperienza', [[0, 'Mai'], [1, 'Meno di 6 mesi'], [2, '6-12 mesi'], [3, 'Oltre un anno']], d.esperienza, true) + '</div>';
-    h += '<div class="field"><span>Quanti giorni a settimana puoi andare in palestra</span>' +
-      pillole('giorni', [[2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], d.giorni, true) + '</div>';
+    h += domandaGiorni(d);
     h += '<div class="field"><span>Quanto tempo hai per ogni seduta, riscaldamento compreso</span>' +
       pillole('minuti', [[30, '30 min'], [45, '45 min'], [60, '1 ora'], [75, '1 ora e ¼'], [90, '1 ora e ½'],
         [105, '1 ora e ¾'], [120, '2 ore'], [150, '2 ore e ½'], [180, '3 ore']], d.minuti, true) + '</div>';
@@ -30064,7 +30075,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwcg91e5';
+var BUILD = 'vmwcgl0eu';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
