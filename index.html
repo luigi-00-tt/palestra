@@ -30060,7 +30060,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwcfj93f';
+var BUILD = 'vmwcfqqqq';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -35639,6 +35639,28 @@ function collegaCapisci() {
    v28: diviso da app.js; i file si riuniscono in build.js nell'ordine di `ordine`. */
 
 /* ---------- progressi ---------- */
+/* v28 (R42): serie fatte negli ultimi 7 giorni per gruppo, contate come il motore
+   (dirette 1, indirette 0,5): si confrontano con quelle previste in volumiSettimanali(). */
+function serieFatteSettimana() {
+  var v = {}, da = new Date(Date.now() - 6 * 864e5).toISOString().slice(0, 10);
+  Object.keys(volumiSettimanali()).forEach(function (m) { v[m] = 0; });
+  var ind = {};   /* gli indiretti come li ha la scheda in uso, se no dal catalogo */
+  giorniCorrenti().forEach(function (g) { g.esercizi.forEach(function (e) { if (e.indiretti) ind[e.ex] = e.indiretti; }); });
+  Object.keys(S.log).forEach(function (d) {
+    if (d < da) return;
+    var ser = S.log[d].serie || {};
+    Object.keys(ser).forEach(function (id) {
+      var ex = esercizioDi(id), n = (ser[id] || []).filter(function (s) { return s && s.fatto; }).length;
+      if (!ex || !n) return;
+      if (v[ex.gruppo] !== undefined) v[ex.gruppo] += n;
+      (ind[id] || (typeof CATALOGO !== 'undefined' && CATALOGO[id] && CATALOGO[id].ind) || []).forEach(function (m) {
+        if (v[m] !== undefined) v[m] += n / 2;
+      });
+    });
+  });
+  return v;
+}
+
 /* v28 (R41): record personali di un esercizio, dal registro. 1RM stimato con la
    formula di Epley (kg × (1 + rip/30)) e solo fino a 10 ripetizioni, oltre la
    stima perde precisione [A50]. `salta` = una data da non contare (oggi, per l'avviso). */
@@ -35726,6 +35748,16 @@ function vProgressi() {
          'più tempo del previsto sulla parte di lavoro.</div>';
   }
 
+  /* v28 (R42) */
+  var fatte = serieFatteSettimana(), previste = volumiSettimanali();
+  h += '<h2>Serie per muscolo, ultimi 7 giorni</h2><div class="card">';
+  Object.keys(previste).forEach(function (m) {
+    var f = Math.round((fatte[m] || 0) * 10) / 10, p = Math.round((previste[m] || 0) * 10) / 10;
+    h += '<div class="volrow"><div class="volhead"><span>' + m + '</span><span class="dim"><b>' + f + '</b> fatte / ' +
+      p + ' previste</span></div><div class="bar"><i class="' + (p && f >= p ? 'good' : '') + '" style="width:' +
+      (p ? Math.min(100, f / p * 100) : 0) + '%"></i></div></div>';
+  });
+  h += '<div class="dim" style="margin-top:6px">Come nel motore: una serie diretta vale 1, quella di un esercizio che lavora il muscolo in modo indiretto 0,5.</div></div>';
   h += '<h2>Carichi per esercizio</h2>';
   var ids = Object.keys(S.ultimo);
   if (!ids.length) h += '<p class="dim">Ancora nessuna serie registrata. Compare qui appena completi il primo esercizio.</p>';
