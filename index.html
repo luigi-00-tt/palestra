@@ -1557,6 +1557,10 @@ details.manca summary { cursor: pointer; color: var(--text-dim); font-size: 13.5
 
 /* v28 (R27): nella riga dell agenda il testo prende lo spazio, «togli» va a destra */
 .luogo > span { flex: 1; }
+
+/* v28 (R43): andamento del peso */
+.peso-linea { display: block; width: 100%; height: 80px; margin-bottom: 6px; }
+.peso-linea polyline { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -28978,7 +28982,7 @@ function salvaQuestionario(d, voce) {
   /* v21: lo storico dei dolori segue le risposte (quelli spenti sono passati) */
   doloriDaQuestionario(d);
   /* il profilo delle calorie si allinea alle risposte */
-  S.profilo.nascita = d.nascita; S.profilo.peso = d.peso; S.profilo.altezza = d.altezza;
+  S.profilo.nascita = d.nascita; segnaPeso(d.peso); S.profilo.altezza = d.altezza;
   S.profilo.sesso = d.sesso; S.profilo.obiettivo = d.obiettivo; S.profilo.impostato = true;
   QZ = null;
   applicaScheda();
@@ -30060,7 +30064,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwcfqqqq';
+var BUILD = 'vmwcg1cop';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -30269,6 +30273,13 @@ function idUtente() { return (typeof SESSIONE !== 'undefined' && SESSIONE && SES
 /* una data come 'AAAA-MM-GG', nel fuso del telefono */
 function dataIso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function oggi() { return dataIso(new Date()); }
+/* v28 (R43): ogni peso salvato resta nello storico, una pesata per giorno;
+   sta nel profilo, così va anche nel backup e nell'account senza altro codice */
+function segnaPeso(p) {
+  if (!(p > 30 && p < 250)) return;
+  S.profilo.peso = p;
+  (S.profilo.pesate = S.profilo.pesate || {})[oggi()] = p;
+}
 function dataIt(iso) {
   var p = iso.split('-');
   return p[2] + '/' + p[1];
@@ -35677,6 +35688,21 @@ function recordDi(id, salta) {
   return r;
 }
 
+/* v28 (R43): le ultime 26 pesate in una linea, con la media delle ultime tre:
+   il peso di un giorno oscilla per acqua e cibo, la media dice dove sta andando */
+function virgola(n) { return String(n).replace('.', ','); }
+function andamentoPeso() {
+  var P = S.profilo.pesate || {}, dd = Object.keys(P).sort().slice(-26);
+  if (dd.length < 2) return '<p class="dim">Dalla seconda pesata qui compare l\'andamento.</p>';
+  var v = dd.map(function (d) { return P[d]; }), lo = Math.min.apply(null, v), hi = Math.max.apply(null, v), r = (hi - lo) || 1;
+  var pts = v.map(function (x, i) { return Math.round(i / (v.length - 1) * 300) + ',' + Math.round(70 - (x - lo) / r * 60); }).join(' ');
+  var ult = v.slice(-3), media = Math.round(ult.reduce(function (a, x) { return a + x; }, 0) / ult.length * 10) / 10;
+  var diff = Math.round((v[v.length - 1] - v[0]) * 10) / 10;
+  return '<div class="card" style="margin-top:12px"><svg viewBox="0 0 300 80" class="peso-linea" aria-hidden="true"><polyline points="' + pts + '"/></svg>' +
+    '<div class="dim">Media delle ultime ' + ult.length + ' pesate: <b>' + virgola(media) + ' kg</b> · dal ' + dataIt(dd[0]) + ': ' +
+    (diff > 0 ? '+' : '') + virgola(diff) + ' kg (' + dd.length + ' pesate)</div></div>';
+}
+
 /* Durata misurata di ogni seduta registrata, dalla prima all'ultima serie
    spuntata. Le giornate salvate prima della versione 9 non hanno l'ora e
    vengono semplicemente saltate, senza inventare un numero. */
@@ -35724,6 +35750,7 @@ function vProgressi() {
   h += '<label class="field"><span>Aggiorna il peso corporeo (pesati a digiuno, stesso giorno ogni settimana)</span>' +
        '<input type="number" step="0.1" inputmode="decimal" id="peso" value="' + (S.profilo.peso || '') + '"></label>' +
        '<button class="ghost" id="salva-peso">Salva peso</button>';
+  h += andamentoPeso();
 
   /* ---------- durata reale delle sedute ----------
      Dalla versione 9 ogni serie spuntata porta con se' l'ora. Da prima e ultima
@@ -35753,8 +35780,8 @@ function vProgressi() {
   h += '<h2>Serie per muscolo, ultimi 7 giorni</h2><div class="card">';
   Object.keys(previste).forEach(function (m) {
     var f = Math.round((fatte[m] || 0) * 10) / 10, p = Math.round((previste[m] || 0) * 10) / 10;
-    h += '<div class="volrow"><div class="volhead"><span>' + m + '</span><span class="dim"><b>' + f + '</b> fatte / ' +
-      p + ' previste</span></div><div class="bar"><i class="' + (p && f >= p ? 'good' : '') + '" style="width:' +
+    h += '<div class="volrow"><div class="volhead"><span>' + m + '</span><span class="dim"><b>' + virgola(f) + '</b> fatte / ' +
+      virgola(p) + ' previste</span></div><div class="bar"><i class="' + (p && f >= p ? 'good' : '') + '" style="width:' +
       (p ? Math.min(100, f / p * 100) : 0) + '%"></i></div></div>';
   });
   h += '<div class="dim" style="margin-top:6px">Come nel motore: una serie diretta vale 1, quella di un esercizio che lavora il muscolo in modo indiretto 0,5.</div></div>';
@@ -35778,7 +35805,7 @@ function collegaProgressi() {
   var b = document.getElementById('salva-peso');
   if (b) b.onclick = function () {
     var p = parseFloat(document.getElementById('peso').value);
-    if (p > 30 && p < 250) { S.profilo.peso = p; save(); render(); }
+    if (p > 30 && p < 250) { segnaPeso(p); save(); render(); }
   };
 }
 
@@ -36282,7 +36309,7 @@ function collegaImpostazioni() {
     var anni = etaDa(nascita);
     if (!(anni >= ETA_MIN && anni <= ETA_MAX)) { toast('La data di nascita non sembra giusta'); return; }
     S.profilo.nascita = nascita;
-    S.profilo.peso = peso;
+    segnaPeso(peso);
     S.profilo.altezza = altezza;
     if (!S.profilo.attivita) S.profilo.attivita = 1.55;
     S.profilo.impostato = true;
