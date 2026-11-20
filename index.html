@@ -2590,6 +2590,14 @@ main.qz-pag input:not([type=checkbox]):not([type=radio]):not([type=range]) { bac
 
 /* 20/11: l'animazione con i muscoli in rosso nasce su fondo bianco: la si mostra intera, su bianco */
 .es-hero .eh-media img.eh-ill { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+
+/* 20/11 sera (Luigi): due immagini per esercizio, partenza e arrivo; le animazioni di stretching e postura */
+.eh-due figure { position: relative; margin: 0; min-width: 0; height: 100%; }
+.eh-due.eh-disegnate { background: #fff; }
+.eh-due.eh-disegnate img { object-fit: contain; }
+.eh-due figcaption { position: absolute; left: 8px; bottom: 56px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: var(--bg); color: var(--text); }
+.ex-ill { display: block; width: 100%; max-width: 280px; aspect-ratio: 1; object-fit: contain; margin: 0 auto 10px; border-radius: 12px; background: #fff; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -8255,6 +8263,16 @@ var ILLUSTRAZIONI = {
 "pendulum-squat": "foto/es/pendulum-squat.webp",
 "pike-push-up": "foto/es/pike-push-up.webp",
 "plank": "foto/es/plank.webp",
+"po-bird-dog": "foto/es/po-bird-dog.webp",
+"po-chin-tuck": "foto/es/po-chin-tuck.webp",
+"po-foam-roller": "foto/es/po-foam-roller.webp",
+"po-gatto": "foto/es/po-gatto.webp",
+"po-pull-apart": "foto/es/po-pull-apart.webp",
+"po-retrazione": "foto/es/po-retrazione.webp",
+"po-rotazione-toracica": "foto/es/po-rotazione-toracica.webp",
+"po-scapular-pull-up": "foto/es/po-scapular-pull-up.webp",
+"po-wall-slide": "foto/es/po-wall-slide.webp",
+"po-y-panca": "foto/es/po-y-panca.webp",
 "preacher-curl": "foto/es/preacher-curl.webp",
 "pulldown-braccia-tese": "foto/es/pulldown-braccia-tese.webp",
 "pulley-basso": "foto/es/pulley-basso.webp",
@@ -8293,6 +8311,18 @@ var ILLUSTRAZIONI = {
 "squat-corpo-libero": "foto/es/squat-corpo-libero.webp",
 "squat-jump": "foto/es/squat-jump.webp",
 "squat-multipower": "foto/es/squat-multipower.webp",
+"st-adduttori": "foto/es/st-adduttori.webp",
+"st-collo": "foto/es/st-collo.webp",
+"st-dorsale-muro": "foto/es/st-dorsale-muro.webp",
+"st-dorsali-sbarra": "foto/es/st-dorsali-sbarra.webp",
+"st-femorali": "foto/es/st-femorali.webp",
+"st-flessori-anca": "foto/es/st-flessori-anca.webp",
+"st-glutei": "foto/es/st-glutei.webp",
+"st-pettorali": "foto/es/st-pettorali.webp",
+"st-polpacci": "foto/es/st-polpacci.webp",
+"st-quadricipiti": "foto/es/st-quadricipiti.webp",
+"st-spalla": "foto/es/st-spalla.webp",
+"st-tricipiti": "foto/es/st-tricipiti.webp",
 "stacco": "foto/es/stacco.webp",
 "stacco-rumeno": "foto/es/stacco-rumeno.webp",
 "stacco-rumeno-manubri": "foto/es/stacco-rumeno-manubri.webp",
@@ -8304,6 +8334,657 @@ var ILLUSTRAZIONI = {
 "trazioni-assistite": "foto/es/trazioni-assistite.webp",
 "verticale-muro": "foto/es/verticale-muro.webp",
 "vogatore": "foto/es/vogatore.webp"
+};
+/* le due immagini ferme: partenza e arrivo */
+var ILLUSTRAZIONI_FOTO = {
+"abductor": [
+"foto/es/abductor.a.webp",
+"foto/es/abductor.b.webp"
+],
+"adductor-macchina": [
+"foto/es/adductor-macchina.a.webp",
+"foto/es/adductor-macchina.b.webp"
+],
+"affondi": [
+"foto/es/affondi.a.webp",
+"foto/es/affondi.b.webp"
+],
+"affondi-camminati": [
+"foto/es/affondi-camminati.a.webp",
+"foto/es/affondi-camminati.b.webp"
+],
+"air-bike": [
+"foto/es/air-bike.a.webp",
+"foto/es/air-bike.b.webp"
+],
+"alzate-cavo": [
+"foto/es/alzate-cavo.a.webp",
+"foto/es/alzate-cavo.b.webp"
+],
+"alzate-laterali": [
+"foto/es/alzate-laterali.a.webp",
+"foto/es/alzate-laterali.b.webp"
+],
+"alzate-laterali-inclinate": [
+"foto/es/alzate-laterali-inclinate.a.webp",
+"foto/es/alzate-laterali-inclinate.b.webp"
+],
+"alzate-laterali-macchina": [
+"foto/es/alzate-laterali-macchina.a.webp",
+"foto/es/alzate-laterali-macchina.b.webp"
+],
+"alzate-scapolari": [
+"foto/es/alzate-scapolari.a.webp",
+"foto/es/alzate-scapolari.b.webp"
+],
+"band-pull-apart": [
+"foto/es/band-pull-apart.a.webp",
+"foto/es/band-pull-apart.b.webp"
+],
+"belt-squat": [
+"foto/es/belt-squat.a.webp",
+"foto/es/belt-squat.b.webp"
+],
+"box-jump": [
+"foto/es/box-jump.a.webp",
+"foto/es/box-jump.b.webp"
+],
+"calf-in-piedi-macchina": [
+"foto/es/calf-in-piedi-macchina.a.webp",
+"foto/es/calf-in-piedi-macchina.b.webp"
+],
+"calf-multipower": [
+"foto/es/calf-multipower.a.webp",
+"foto/es/calf-multipower.b.webp"
+],
+"calf-pressa": [
+"foto/es/calf-pressa.a.webp",
+"foto/es/calf-pressa.b.webp"
+],
+"calf-raise": [
+"foto/es/calf-raise.a.webp",
+"foto/es/calf-raise.b.webp"
+],
+"calf-seduto": [
+"foto/es/calf-seduto.a.webp",
+"foto/es/calf-seduto.b.webp"
+],
+"calf-una-gamba": [
+"foto/es/calf-una-gamba.a.webp",
+"foto/es/calf-una-gamba.b.webp"
+],
+"camminata-inclinata": [
+"foto/es/camminata-inclinata.a.webp",
+"foto/es/camminata-inclinata.b.webp"
+],
+"chest-press": [
+"foto/es/chest-press.a.webp",
+"foto/es/chest-press.b.webp"
+],
+"chest-press-inclinata": [
+"foto/es/chest-press-inclinata.a.webp",
+"foto/es/chest-press-inclinata.b.webp"
+],
+"chest-supported-row": [
+"foto/es/chest-supported-row.a.webp",
+"foto/es/chest-supported-row.b.webp"
+],
+"chin-up": [
+"foto/es/chin-up.a.webp",
+"foto/es/chin-up.b.webp"
+],
+"copenhagen": [
+"foto/es/copenhagen.a.webp",
+"foto/es/copenhagen.b.webp"
+],
+"croci-cavi": [
+"foto/es/croci-cavi.a.webp",
+"foto/es/croci-cavi.b.webp"
+],
+"croci-manubri": [
+"foto/es/croci-manubri.a.webp",
+"foto/es/croci-manubri.b.webp"
+],
+"crunch": [
+"foto/es/crunch.a.webp",
+"foto/es/crunch.b.webp"
+],
+"crunch-cavo": [
+"foto/es/crunch-cavo.a.webp",
+"foto/es/crunch-cavo.b.webp"
+],
+"crunch-macchina": [
+"foto/es/crunch-macchina.a.webp",
+"foto/es/crunch-macchina.b.webp"
+],
+"curl-bilanciere": [
+"foto/es/curl-bilanciere.a.webp",
+"foto/es/curl-bilanciere.b.webp"
+],
+"curl-cavo-basso": [
+"foto/es/curl-cavo-basso.a.webp",
+"foto/es/curl-cavo-basso.b.webp"
+],
+"curl-concentrato": [
+"foto/es/curl-concentrato.a.webp",
+"foto/es/curl-concentrato.b.webp"
+],
+"curl-inverso": [
+"foto/es/curl-inverso.a.webp",
+"foto/es/curl-inverso.b.webp"
+],
+"curl-macchina": [
+"foto/es/curl-macchina.a.webp",
+"foto/es/curl-macchina.b.webp"
+],
+"curl-manubri": [
+"foto/es/curl-manubri.a.webp",
+"foto/es/curl-manubri.b.webp"
+],
+"cyclette": [
+"foto/es/cyclette.a.webp",
+"foto/es/cyclette.b.webp"
+],
+"cyclette-reclinata": [
+"foto/es/cyclette-reclinata.a.webp",
+"foto/es/cyclette-reclinata.b.webp"
+],
+"dead-bug": [
+"foto/es/dead-bug.a.webp",
+"foto/es/dead-bug.b.webp"
+],
+"dip": [
+"foto/es/dip.a.webp",
+"foto/es/dip.b.webp"
+],
+"dip-macchina": [
+"foto/es/dip-macchina.a.webp",
+"foto/es/dip-macchina.b.webp"
+],
+"ellittica": [
+"foto/es/ellittica.a.webp",
+"foto/es/ellittica.b.webp"
+],
+"estensione-tricipiti-macchina": [
+"foto/es/estensione-tricipiti-macchina.a.webp",
+"foto/es/estensione-tricipiti-macchina.b.webp"
+],
+"extrarotazione-cavo": [
+"foto/es/extrarotazione-cavo.a.webp",
+"foto/es/extrarotazione-cavo.b.webp"
+],
+"extrarotazione-elastico": [
+"foto/es/extrarotazione-elastico.a.webp",
+"foto/es/extrarotazione-elastico.b.webp"
+],
+"face-pull": [
+"foto/es/face-pull.a.webp",
+"foto/es/face-pull.b.webp"
+],
+"farmer-walk": [
+"foto/es/farmer-walk.a.webp",
+"foto/es/farmer-walk.b.webp"
+],
+"french-press": [
+"foto/es/french-press.a.webp",
+"foto/es/french-press.b.webp"
+],
+"french-press-manubrio": [
+"foto/es/french-press-manubrio.a.webp",
+"foto/es/french-press-manubrio.b.webp"
+],
+"glute-bridge": [
+"foto/es/glute-bridge.a.webp",
+"foto/es/glute-bridge.b.webp"
+],
+"glute-bridge-una-gamba": [
+"foto/es/glute-bridge-una-gamba.a.webp",
+"foto/es/glute-bridge-una-gamba.b.webp"
+],
+"glute-ham-raise": [
+"foto/es/glute-ham-raise.a.webp",
+"foto/es/glute-ham-raise.b.webp"
+],
+"goblet-squat": [
+"foto/es/goblet-squat.a.webp",
+"foto/es/goblet-squat.b.webp"
+],
+"hack-squat": [
+"foto/es/hack-squat.a.webp",
+"foto/es/hack-squat.b.webp"
+],
+"hammer-curl": [
+"foto/es/hammer-curl.a.webp",
+"foto/es/hammer-curl.b.webp"
+],
+"high-row": [
+"foto/es/high-row.a.webp",
+"foto/es/high-row.b.webp"
+],
+"hip-thrust": [
+"foto/es/hip-thrust.a.webp",
+"foto/es/hip-thrust.b.webp"
+],
+"hip-thrust-macchina": [
+"foto/es/hip-thrust-macchina.a.webp",
+"foto/es/hip-thrust-macchina.b.webp"
+],
+"hop-ostacoli": [
+"foto/es/hop-ostacoli.a.webp",
+"foto/es/hop-ostacoli.b.webp"
+],
+"hyperextension-45": [
+"foto/es/hyperextension-45.a.webp",
+"foto/es/hyperextension-45.b.webp"
+],
+"incline-curl": [
+"foto/es/incline-curl.a.webp",
+"foto/es/incline-curl.b.webp"
+],
+"inverted-row": [
+"foto/es/inverted-row.a.webp",
+"foto/es/inverted-row.b.webp"
+],
+"kickback-cavo": [
+"foto/es/kickback-cavo.a.webp",
+"foto/es/kickback-cavo.b.webp"
+],
+"kickback-manubrio": [
+"foto/es/kickback-manubrio.a.webp",
+"foto/es/kickback-manubrio.b.webp"
+],
+"l-sit": [
+"foto/es/l-sit.a.webp",
+"foto/es/l-sit.b.webp"
+],
+"landmine-press": [
+"foto/es/landmine-press.a.webp",
+"foto/es/landmine-press.b.webp"
+],
+"lat-machine": [
+"foto/es/lat-machine.a.webp",
+"foto/es/lat-machine.b.webp"
+],
+"lat-machine-neutra": [
+"foto/es/lat-machine-neutra.a.webp",
+"foto/es/lat-machine-neutra.b.webp"
+],
+"leg-curl-in-piedi": [
+"foto/es/leg-curl-in-piedi.a.webp",
+"foto/es/leg-curl-in-piedi.b.webp"
+],
+"leg-curl-sdraiato": [
+"foto/es/leg-curl-sdraiato.a.webp",
+"foto/es/leg-curl-sdraiato.b.webp"
+],
+"leg-curl-seduto": [
+"foto/es/leg-curl-seduto.a.webp",
+"foto/es/leg-curl-seduto.b.webp"
+],
+"leg-extension": [
+"foto/es/leg-extension.a.webp",
+"foto/es/leg-extension.b.webp"
+],
+"leg-press": [
+"foto/es/leg-press.a.webp",
+"foto/es/leg-press.b.webp"
+],
+"leg-press-orizzontale": [
+"foto/es/leg-press-orizzontale.a.webp",
+"foto/es/leg-press-orizzontale.b.webp"
+],
+"military-press": [
+"foto/es/military-press.a.webp",
+"foto/es/military-press.b.webp"
+],
+"muscle-up-progressione": [
+"foto/es/muscle-up-progressione.a.webp",
+"foto/es/muscle-up-progressione.b.webp"
+],
+"navetta-cono": [
+"foto/es/navetta-cono.a.webp",
+"foto/es/navetta-cono.b.webp"
+],
+"nordic-curl": [
+"foto/es/nordic-curl.a.webp",
+"foto/es/nordic-curl.b.webp"
+],
+"overhead-extension": [
+"foto/es/overhead-extension.a.webp",
+"foto/es/overhead-extension.b.webp"
+],
+"pallof-press": [
+"foto/es/pallof-press.a.webp",
+"foto/es/pallof-press.b.webp"
+],
+"panca-inclinata-bilanciere": [
+"foto/es/panca-inclinata-bilanciere.a.webp",
+"foto/es/panca-inclinata-bilanciere.b.webp"
+],
+"panca-inclinata-manubri": [
+"foto/es/panca-inclinata-manubri.a.webp",
+"foto/es/panca-inclinata-manubri.b.webp"
+],
+"panca-inclinata-multipower": [
+"foto/es/panca-inclinata-multipower.a.webp",
+"foto/es/panca-inclinata-multipower.b.webp"
+],
+"panca-manubri": [
+"foto/es/panca-manubri.a.webp",
+"foto/es/panca-manubri.b.webp"
+],
+"panca-multipower": [
+"foto/es/panca-multipower.a.webp",
+"foto/es/panca-multipower.b.webp"
+],
+"panca-piana": [
+"foto/es/panca-piana.a.webp",
+"foto/es/panca-piana.b.webp"
+],
+"panca-presa-stretta": [
+"foto/es/panca-presa-stretta.a.webp",
+"foto/es/panca-presa-stretta.b.webp"
+],
+"pec-deck": [
+"foto/es/pec-deck.a.webp",
+"foto/es/pec-deck.b.webp"
+],
+"pendulum-squat": [
+"foto/es/pendulum-squat.a.webp",
+"foto/es/pendulum-squat.b.webp"
+],
+"pike-push-up": [
+"foto/es/pike-push-up.a.webp",
+"foto/es/pike-push-up.b.webp"
+],
+"plank": [
+"foto/es/plank.a.webp",
+"foto/es/plank.b.webp"
+],
+"po-bird-dog": [
+"foto/es/po-bird-dog.a.webp",
+"foto/es/po-bird-dog.b.webp"
+],
+"po-chin-tuck": [
+"foto/es/po-chin-tuck.a.webp",
+"foto/es/po-chin-tuck.b.webp"
+],
+"po-foam-roller": [
+"foto/es/po-foam-roller.a.webp",
+"foto/es/po-foam-roller.b.webp"
+],
+"po-gatto": [
+"foto/es/po-gatto.a.webp",
+"foto/es/po-gatto.b.webp"
+],
+"po-pull-apart": [
+"foto/es/po-pull-apart.a.webp",
+"foto/es/po-pull-apart.b.webp"
+],
+"po-retrazione": [
+"foto/es/po-retrazione.a.webp",
+"foto/es/po-retrazione.b.webp"
+],
+"po-rotazione-toracica": [
+"foto/es/po-rotazione-toracica.a.webp",
+"foto/es/po-rotazione-toracica.b.webp"
+],
+"po-scapular-pull-up": [
+"foto/es/po-scapular-pull-up.a.webp",
+"foto/es/po-scapular-pull-up.b.webp"
+],
+"po-wall-slide": [
+"foto/es/po-wall-slide.a.webp",
+"foto/es/po-wall-slide.b.webp"
+],
+"po-y-panca": [
+"foto/es/po-y-panca.a.webp",
+"foto/es/po-y-panca.b.webp"
+],
+"preacher-curl": [
+"foto/es/preacher-curl.a.webp",
+"foto/es/preacher-curl.b.webp"
+],
+"pulldown-braccia-tese": [
+"foto/es/pulldown-braccia-tese.a.webp",
+"foto/es/pulldown-braccia-tese.b.webp"
+],
+"pulley-basso": [
+"foto/es/pulley-basso.a.webp",
+"foto/es/pulley-basso.b.webp"
+],
+"pullover-macchina": [
+"foto/es/pullover-macchina.a.webp",
+"foto/es/pullover-macchina.b.webp"
+],
+"push-up": [
+"foto/es/push-up.a.webp",
+"foto/es/push-up.b.webp"
+],
+"push-up-esplosivo": [
+"foto/es/push-up-esplosivo.a.webp",
+"foto/es/push-up-esplosivo.b.webp"
+],
+"push-up-inclinati": [
+"foto/es/push-up-inclinati.a.webp",
+"foto/es/push-up-inclinati.b.webp"
+],
+"push-up-piedi-rialzati": [
+"foto/es/push-up-piedi-rialzati.a.webp",
+"foto/es/push-up-piedi-rialzati.b.webp"
+],
+"push-up-stretti": [
+"foto/es/push-up-stretti.a.webp",
+"foto/es/push-up-stretti.b.webp"
+],
+"pushdown": [
+"foto/es/pushdown.a.webp",
+"foto/es/pushdown.b.webp"
+],
+"pushdown-una-mano": [
+"foto/es/pushdown-una-mano.a.webp",
+"foto/es/pushdown-una-mano.b.webp"
+],
+"rematore-bilanciere": [
+"foto/es/rematore-bilanciere.a.webp",
+"foto/es/rematore-bilanciere.b.webp"
+],
+"rematore-macchina": [
+"foto/es/rematore-macchina.a.webp",
+"foto/es/rematore-macchina.b.webp"
+],
+"rematore-manubrio": [
+"foto/es/rematore-manubrio.a.webp",
+"foto/es/rematore-manubrio.b.webp"
+],
+"rematore-mono-cavo": [
+"foto/es/rematore-mono-cavo.a.webp",
+"foto/es/rematore-mono-cavo.b.webp"
+],
+"rematore-t-macchina": [
+"foto/es/rematore-t-macchina.a.webp",
+"foto/es/rematore-t-macchina.b.webp"
+],
+"reverse-fly": [
+"foto/es/reverse-fly.a.webp",
+"foto/es/reverse-fly.b.webp"
+],
+"reverse-fly-cavi": [
+"foto/es/reverse-fly-cavi.a.webp",
+"foto/es/reverse-fly-cavi.b.webp"
+],
+"reverse-fly-manubri": [
+"foto/es/reverse-fly-manubri.a.webp",
+"foto/es/reverse-fly-manubri.b.webp"
+],
+"reverse-hyper": [
+"foto/es/reverse-hyper.a.webp",
+"foto/es/reverse-hyper.b.webp"
+],
+"saltelli-corda": [
+"foto/es/saltelli-corda.a.webp",
+"foto/es/saltelli-corda.b.webp"
+],
+"salti-laterali": [
+"foto/es/salti-laterali.a.webp",
+"foto/es/salti-laterali.b.webp"
+],
+"salto-in-lungo": [
+"foto/es/salto-in-lungo.a.webp",
+"foto/es/salto-in-lungo.b.webp"
+],
+"shoulder-press": [
+"foto/es/shoulder-press.a.webp",
+"foto/es/shoulder-press.b.webp"
+],
+"shoulder-press-macchina": [
+"foto/es/shoulder-press-macchina.a.webp",
+"foto/es/shoulder-press-macchina.b.webp"
+],
+"shoulder-press-multipower": [
+"foto/es/shoulder-press-multipower.a.webp",
+"foto/es/shoulder-press-multipower.b.webp"
+],
+"side-plank": [
+"foto/es/side-plank.a.webp",
+"foto/es/side-plank.b.webp"
+],
+"sissy-squat": [
+"foto/es/sissy-squat.a.webp",
+"foto/es/sissy-squat.b.webp"
+],
+"skip-sprint": [
+"foto/es/skip-sprint.a.webp",
+"foto/es/skip-sprint.b.webp"
+],
+"slancio-glutei-cavo": [
+"foto/es/slancio-glutei-cavo.a.webp",
+"foto/es/slancio-glutei-cavo.b.webp"
+],
+"slancio-glutei-macchina": [
+"foto/es/slancio-glutei-macchina.a.webp",
+"foto/es/slancio-glutei-macchina.b.webp"
+],
+"sollevamento-gambe": [
+"foto/es/sollevamento-gambe.a.webp",
+"foto/es/sollevamento-gambe.b.webp"
+],
+"split-jump": [
+"foto/es/split-jump.a.webp",
+"foto/es/split-jump.b.webp"
+],
+"split-squat-bulgaro": [
+"foto/es/split-squat-bulgaro.a.webp",
+"foto/es/split-squat-bulgaro.b.webp"
+],
+"squat-bilanciere": [
+"foto/es/squat-bilanciere.a.webp",
+"foto/es/squat-bilanciere.b.webp"
+],
+"squat-corpo-libero": [
+"foto/es/squat-corpo-libero.a.webp",
+"foto/es/squat-corpo-libero.b.webp"
+],
+"squat-jump": [
+"foto/es/squat-jump.a.webp",
+"foto/es/squat-jump.b.webp"
+],
+"squat-multipower": [
+"foto/es/squat-multipower.a.webp",
+"foto/es/squat-multipower.b.webp"
+],
+"st-adduttori": [
+"foto/es/st-adduttori.a.webp",
+"foto/es/st-adduttori.b.webp"
+],
+"st-collo": [
+"foto/es/st-collo.a.webp",
+"foto/es/st-collo.b.webp"
+],
+"st-dorsale-muro": [
+"foto/es/st-dorsale-muro.a.webp",
+"foto/es/st-dorsale-muro.b.webp"
+],
+"st-dorsali-sbarra": [
+"foto/es/st-dorsali-sbarra.a.webp",
+"foto/es/st-dorsali-sbarra.b.webp"
+],
+"st-femorali": [
+"foto/es/st-femorali.a.webp",
+"foto/es/st-femorali.b.webp"
+],
+"st-flessori-anca": [
+"foto/es/st-flessori-anca.a.webp",
+"foto/es/st-flessori-anca.b.webp"
+],
+"st-glutei": [
+"foto/es/st-glutei.a.webp",
+"foto/es/st-glutei.b.webp"
+],
+"st-pettorali": [
+"foto/es/st-pettorali.a.webp",
+"foto/es/st-pettorali.b.webp"
+],
+"st-polpacci": [
+"foto/es/st-polpacci.a.webp",
+"foto/es/st-polpacci.b.webp"
+],
+"st-quadricipiti": [
+"foto/es/st-quadricipiti.a.webp",
+"foto/es/st-quadricipiti.b.webp"
+],
+"st-spalla": [
+"foto/es/st-spalla.a.webp",
+"foto/es/st-spalla.b.webp"
+],
+"st-tricipiti": [
+"foto/es/st-tricipiti.a.webp",
+"foto/es/st-tricipiti.b.webp"
+],
+"stacco": [
+"foto/es/stacco.a.webp",
+"foto/es/stacco.b.webp"
+],
+"stacco-rumeno": [
+"foto/es/stacco-rumeno.a.webp",
+"foto/es/stacco-rumeno.b.webp"
+],
+"stacco-rumeno-manubri": [
+"foto/es/stacco-rumeno-manubri.a.webp",
+"foto/es/stacco-rumeno-manubri.b.webp"
+],
+"stacco-trap-bar": [
+"foto/es/stacco-trap-bar.a.webp",
+"foto/es/stacco-trap-bar.b.webp"
+],
+"stacco-una-gamba": [
+"foto/es/stacco-una-gamba.a.webp",
+"foto/es/stacco-una-gamba.b.webp"
+],
+"step-up": [
+"foto/es/step-up.a.webp",
+"foto/es/step-up.b.webp"
+],
+"stepper": [
+"foto/es/stepper.a.webp",
+"foto/es/stepper.b.webp"
+],
+"trazioni": [
+"foto/es/trazioni.a.webp",
+"foto/es/trazioni.b.webp"
+],
+"trazioni-assistite": [
+"foto/es/trazioni-assistite.a.webp",
+"foto/es/trazioni-assistite.b.webp"
+],
+"verticale-muro": [
+"foto/es/verticale-muro.a.webp",
+"foto/es/verticale-muro.b.webp"
+],
+"vogatore": [
+"foto/es/vogatore.a.webp",
+"foto/es/vogatore.b.webp"
+]
 };
 var ILLUSTRAZIONI_FONTE = 'Illustrazione di Fitness Programer (fitnessprogramer.com)';
 
@@ -9040,18 +9721,71 @@ var SCHEDA_SU_MISURA = {
         'riscaldamento in movimento in cima a ogni seduta è un\'altra cosa e va fatto. Per il ' +
         'reflusso, evita le posizioni con <b>la testa sotto il livello della pancia</b> nelle due ' +
         'ore dopo mangiato.',
+      /* 20/11 sera (Luigi): più allungamenti, uno per zona, con l'animazione (la chiave in illustrazioni.js) */
       esercizi: [
         ['Pettorali sullo stipite', '2 × 30 secondi per lato', 'Avambraccio sul telaio della porta, ' +
          'gomito all\'altezza della spalla, ruota il busto dalla parte opposta. Utile se sulla panca ' +
-         'senti la spalla chiusa.'],
+         'senti la spalla chiusa.', 'st-pettorali'],
         ['Flessori dell\'anca in affondo', '2 × 30 secondi per lato', 'Ginocchio a terra, bacino ' +
-         'spinto avanti, glutei contratti. Serve soprattutto a chi sta seduto molte ore.'],
-        ['Femorali da seduto', '2 × 30 secondi per lato', 'Seduto, una gamba tesa, busto in avanti ' +
-         'dai fianchi tenendo la schiena dritta. Da seduto, quindi la testa resta alta.'],
+         'spinto avanti, glutei contratti. Serve soprattutto a chi sta seduto molte ore.', 'st-flessori-anca'],
+        ['Femorali da seduto', '2 × 30 secondi', 'Seduto a gambe larghe e tese, porta il busto in avanti ' +
+         'dai fianchi tenendo la schiena dritta, verso una gamba e poi verso l\'altra. Fermati quando senti tirare ' +
+         'dietro la coscia, non quando tocchi i piedi.', 'st-femorali'],
+        ['Quadricipiti in piedi', '2 × 30 secondi per lato', 'Una mano al muro, prendi la caviglia e porta il ' +
+         'tallone verso il sedere. Ginocchia vicine e bacino in avanti: se la schiena si inarca, tira meno.', 'st-quadricipiti'],
+        ['Glutei da sdraiato', '2 × 30 secondi per lato', 'A pancia in su, la caviglia appoggiata sul ginocchio ' +
+         'opposto: tira la gamba sotto verso il petto finché senti il gluteo dell\'altra.', 'st-glutei'],
+        ['Adduttori a farfalla', '2 × 30 secondi', 'Seduto, piante dei piedi unite, talloni vicini. ' +
+         'Spingi piano le ginocchia verso terra con i gomiti, schiena dritta.', 'st-adduttori'],
+        ['Polpacci al muro', '2 × 30 secondi per lato', 'Mani al muro, una gamba indietro tesa con il tallone ' +
+         'a terra, l\'altra piegata davanti. Porta il bacino verso il muro.', 'st-polpacci'],
         ['Dorsali appeso alla sbarra', '2 × 20-30 secondi', 'Appeso a braccia distese, lascia ' +
-         'allungare le spalle. Ottimo subito dopo le trazioni o la lat machine.']
+         'allungare le spalle. Ottimo subito dopo le trazioni o la lat machine.', 'st-dorsali-sbarra'],
+        ['Dorsale al muro, un braccio', '2 × 30 secondi per lato', 'Mano al muro all\'altezza della testa, ' +
+         'fai un passo indietro e porta il sedere indietro: il fianco si allunga sotto l\'ascella.', 'st-dorsale-muro'],
+        ['Spalla con il braccio incrociato', '2 × 30 secondi per lato', 'Porta un braccio teso davanti al petto ' +
+         'e tienilo con l\'altro, sopra il gomito. Spalle basse.', 'st-spalla'],
+        ['Tricipiti sopra la testa', '2 × 30 secondi per lato', 'Un gomito in alto piegato, la mano dietro la ' +
+         'nuca: con l\'altra mano spingi piano il gomito verso la testa.', 'st-tricipiti'],
+        ['Collo di lato', '2 × 20 secondi per lato', 'In piedi, spalle basse. Porta l\'orecchio verso la spalla ' +
+         'e aiutati appena con la mano: niente strappi.', 'st-collo']
       ],
-      dove: 'A fine seduta, o la sera davanti alla televisione: conta la costanza, non il momento.'
+      dove: 'A fine seduta, o la sera davanti alla televisione: conta la costanza, non il momento. Non serve farli tutti: ' +
+        'scegli le zone in cui ti senti rigido.'
+    },
+    /* 20/11 sera (Luigi): gli esercizi posturali, in una pagina loro [D19, J01, J02] */
+    {
+      id: 'postura', titolo: 'Postura', quando: 'facoltativo · 10 minuti, 2-3 volte a settimana',
+      premessa: 'Anche qui, onestà: per la postura <b>rinforzare funziona più che allungare</b>. Gli studi trovano che ' +
+        'gli esercizi per il dorso alto e per i muscoli che tengono indietro le spalle riducono un poco la curva ' +
+        'della schiena; lo stretching da solo no. Conta la costanza per settimane, non la singola seduta. ' +
+        'Rematori e face pull della scheda fanno già una parte del lavoro: questi lo completano.',
+      avvertenza: 'Se senti dolore che scende nel braccio o formicolii, o se la curva della schiena non si ' +
+        'appiana quando sei sdraiato, serve il medico prima degli esercizi. Per il reflusso: sono tutti in piedi, ' +
+        'seduti, sdraiati sulla schiena o a quattro zampe, <b>nessuno a pancia in giù</b>.',
+      esercizi: [
+        ['Chin tuck al muro', '8 × 5 secondi', 'Schiena, nuca e talloni contro il muro. Porta il mento indietro come ' +
+         'per fare un doppio mento: la nuca scivola sul muro, la testa non si abbassa.', 'po-chin-tuck'],
+        ['Wall slide (angeli al muro)', '2 × 10', 'Schiena e braccia contro il muro, gomiti a 90 gradi. Fai salire ' +
+         'le braccia senza staccarle dal muro, poi riscendi stringendo le scapole.', 'po-wall-slide'],
+        ['Y sulla panca inclinata', '2 × 10', 'Petto sullo schienale inclinato, manubri leggeri o mani vuote, ' +
+         'pollici in su. Alza le braccia a Y e tieni 2 secondi in alto, spalle lontane dalle orecchie.', 'po-y-panca'],
+        ['Band pull-apart', '2 × 15', 'Elastico teso davanti al petto, braccia dritte: aprilo fino al petto ' +
+         'stringendo le scapole.', 'po-pull-apart'],
+        ['Retrazione delle scapole da seduto', '2 × 12', 'Seduto con la schiena dritta, braccia aperte: porta ' +
+         'indietro le scapole e stringile per 2 secondi, poi rilascia.', 'po-retrazione'],
+        ['Scapular pull-up', '2 × 8', 'Appeso alla sbarra a braccia tese, senza piegare i gomiti: porta le scapole ' +
+         'in basso e indietro, il corpo sale di pochi centimetri. Poi torna giù lento.', 'po-scapular-pull-up'],
+        ['Rotazione toracica a quattro zampe', '2 × 8 per lato', 'Una mano dietro la nuca o tesa: ruota il busto ' +
+         'verso l\'alto seguendo il gomito con lo sguardo, il bacino resta fermo.', 'po-rotazione-toracica'],
+        ['Estensione sul foam roller', '1 × 1 minuto', 'Sdraiato con il rullo sotto il dorso alto, mani dietro la ' +
+         'nuca e sedere a terra: lascia andare indietro la schiena sopra il rullo, poi spostalo di qualche centimetro.', 'po-foam-roller'],
+        ['Gatto e mucca', '2 × 8', 'A quattro zampe: arrotonda la schiena verso l\'alto, poi lasciala scendere ' +
+         'portando il petto in avanti. Lento, seguendo il respiro.', 'po-gatto'],
+        ['Bird dog', '2 × 8 per lato', 'A quattro zampe: allunga un braccio e la gamba opposta fino in linea con ' +
+         'la schiena, tieni 2 secondi senza ruotare il bacino.', 'po-bird-dog']
+      ],
+      dove: 'Bastano 4-5 esercizi a volta, a rotazione: in un giorno di riposo, dopo la seduta o la sera.'
     }
   ],
 
@@ -10731,7 +11465,7 @@ function generaScheda(q) {
     core: coreGenerato(q, esclusi),
     tempo: tempoGenerico(),
     riscaldamento: risc,
-    extra: SCHEDA_BASE.extra.filter(function (e) { return e.id === 'stretching'; }),
+    extra: SCHEDA_BASE.extra.filter(function (e) { return e.id === 'stretching' || e.id === 'postura'; }),
     glossario: SCHEDA_BASE.glossario,
     primaVolta: SCHEDA_BASE.primaVolta.filter(function (p) { return !/reflusso|braccia|lean bulk/i.test(p.t + ' ' + (p.d || '')); }),
     principi: perche.voci.map(function (v) { return { t: v[0], d: v[1] }; })
@@ -28049,6 +28783,25 @@ var FOTO_PIATTI = {
 };
 
 
+/* ===== foto-web.js ===== */
+/* foto-web.js — 20/11 sera: le ricette con una foto vera trovata su Openverse (licenze Creative Commons).
+   Scritto da app/strumenti/foto_web.py: non modificarlo a mano. Il file è sito/foto/w/<chiave>.jpg,
+   non scaricato in anticipo: il telefono tiene quelle viste. Crediti: [autore, licenza, pagina]. */
+var FOTO_WEB = {
+  'bomboloni-alla-crema': ['wonggawei', 'CC BY-NC-SA 2.0', 'https://www.flickr.com/photos/25142357@N08/4960109187'],
+  'carciofi-in-pastella': ['fugzu', 'CC BY 2.0', 'https://www.flickr.com/photos/70253321@N00/10435751775'],
+  'ciambelline-al-vino': ['franciva', 'CC BY-NC-SA 2.0', 'https://www.flickr.com/photos/98557816@N02/11031757133'],
+  'cipolle-al-forno': ['Sara Maternini', 'CC BY-NC-SA 2.0', 'https://www.flickr.com/photos/47041138@N00/2078094102'],
+  'crostata-di-cioccolato': ['chefpercaso', 'CC BY-NC 2.0', 'https://www.flickr.com/photos/8941244@N02/15407404277'],
+  'frittata-di-friarelli': ['sbarrax', 'CC BY-NC-SA 2.0', 'https://www.flickr.com/photos/32872027@N00/296812998'],
+  'pancake-alle-mele': ['fugzu', 'CC BY 2.0', 'https://www.flickr.com/photos/70253321@N00/6271965405'],
+  'pasta-e-patate': ['Ottobrerosso83', 'CC BY 2.0', 'https://www.flickr.com/photos/29768027@N07/4345668651'],
+  'seppie-e-piselli': ['_as coisas_', 'CC BY-NC-SA 2.0', 'https://www.flickr.com/photos/40870738@N04/4532911800'],
+  'torta-di-riso': ['frideryka', 'CC BY 2.0', 'https://www.flickr.com/photos/8199131@N03/2115100322'],
+  'zuppa-di-farro-e-fagioli': ['catepol', 'CC BY-NC-SA 2.0', 'https://www.flickr.com/photos/90011821@N00/2575267882']
+};
+
+
 /* ===== foto-tipi.js ===== */
 /* foto-tipi.js — la foto del tipo di piatto per le ricette che non hanno la loro.
    Generato da app/strumenti/genera_foto_tipi.py (tipi in tipi_piatti.py): non si modifica a mano.
@@ -33474,7 +34227,7 @@ function schedaMia(m, q) {
     core: null,
     tempo: typeof tempoGenerico === 'function' ? tempoGenerico() : null,
     riscaldamento: typeof riscaldamentoPer === 'function' ? riscaldamentoPer(q) : SCHEDA_BASE.riscaldamento,
-    extra: SCHEDA_BASE.extra.filter(function (e) { return e.id === 'stretching'; }),
+    extra: SCHEDA_BASE.extra.filter(function (e) { return e.id === 'stretching' || e.id === 'postura'; }),
     glossario: SCHEDA_BASE.glossario,
     primaVolta: SCHEDA_BASE.primaVolta.filter(function (p) { return !/reflusso|braccia|lean bulk/i.test(p.t + ' ' + (p.d || '')); }),
     principi: [{ t: 'È la tua scheda', d: 'Esercizi, serie, ripetizioni e recupero sono quelli che hai inserito tu. ' +
@@ -35688,7 +36441,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwpedwrw';
+var BUILD = 'vmwphnbmm';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -36603,7 +37356,7 @@ function cardioDi(g) {
 }
 function riquadroAggiunte(g) {
   if (!S.questionario) return '';
-  var a = aggiunteDi(g.id), voci = [['core', 'Addominali', a.core !== false], ['stretching', 'Stretching', !!a.stretching],
+  var a = aggiunteDi(g.id), voci = [['core', 'Addominali', a.core !== false], ['stretching', 'Stretching', !!a.stretching], ['postura', 'Postura', !!a.postura],
     ['cardio', 'Cardio ' + CARDIO_AGGIUNTO + ' min', !!a.cardio || !!g.cardio]];
   return '<h2>In coda a questa seduta</h2><div class="qz-pills">' + voci.map(function (v) {
     var fisso = v[0] === 'cardio' && g.cardio;   /* il cardio della scheda resta */
@@ -37090,6 +37843,12 @@ function fotoDi(id) {
   return (typeof FOTO !== 'undefined' && FOTO[id]) || null;
 }
 
+/* 20/11 sera (Luigi): due immagini per esercizio, partenza e arrivo, ricavate dall'animazione con i muscoli
+   in rosso; dove non c'è, la coppia di fotografie di prima */
+function coppiaDi(id) {
+  return (typeof ILLUSTRAZIONI_FOTO !== 'undefined' && ILLUSTRAZIONI_FOTO[id]) || fotoDi(id);
+}
+
 function gifDi(id) {
   return (typeof GIF !== 'undefined' && GIF[id]) || null;
 }
@@ -37148,17 +37907,18 @@ function miniatura(id, nome) {
    quello che ha sempre fatto; ci pensa chiudiLente() in applica() a non
    lasciarla aperta. */
 function apriFoto(id, indice) {
-  var coppia = fotoDi(id);
+  var coppia = coppiaDi(id);
   var nome = nomeDi(id);
   chiudiLente();
   var n;
   if (coppia) {
     var i = indice === 1 ? 1 : 0;
-    var passi = (typeof FOTO_PASSI !== 'undefined' && FOTO_PASSI[id]) || null;
+    var passi = coppia === fotoDi(id) && typeof FOTO_PASSI !== 'undefined' && FOTO_PASSI[id] ||
+      [['Partenza', ''], ['Arrivo', '']];
     n = el('<div class="lente">' +
            '<img src="' + coppia[i] + '" alt="' + esc(nome) + '">' +
            '<div class="lente-t"><b>' + esc(nome) + '</b>' +
-           (passi ? '<span>' + esc(passi[i][0]) + ' — ' + esc(perTe(passi[i][1]) || '') + '</span>' : '') +
+           '<span>' + esc(passi[i][0]) + (passi[i][1] ? ' — ' + esc(perTe(passi[i][1]) || '') : '') + '</span>' +
            '<button class="lente-alt">Vedi l\'altra posizione</button></div>' +
            '<button class="lente-x" aria-label="Chiudi">&times;</button></div>');
     var alt = n.querySelector('.lente-alt');
@@ -37166,9 +37926,7 @@ function apriFoto(id, indice) {
       ev.stopPropagation();
       i = 1 - i;
       n.querySelector('img').src = coppia[i];
-      if (passi) {
-        n.querySelector('.lente-t span').textContent = passi[i][0] + ' — ' + passi[i][1];
-      }
+      n.querySelector('.lente-t span').textContent = passi[i][0] + (passi[i][1] ? ' — ' + passi[i][1] : '');
     };
   } else {
     var g = gifDi(id);
@@ -37191,7 +37949,7 @@ var NOMI_VISTA = { fronte: 'fronte', lato: 'lato', tre4: 'tre quarti' };
 function mediaDi(id, ex) {
   var m = [];
   if ((typeof ILLUSTRAZIONI !== 'undefined' && ILLUSTRAZIONI[id]) || (typeof MANICHINI !== 'undefined' && MANICHINI[id]) || gifDi(id) || ex.media) m.push(['clip', 'Clip']);
-  if (fotoDi(id) || (typeof FOTO_LIBERE !== 'undefined' && FOTO_LIBERE[id]) || disegnoEsercizio(id)) m.push(['foto', 'Foto']);
+  if (coppiaDi(id) || (typeof FOTO_LIBERE !== 'undefined' && FOTO_LIBERE[id]) || disegnoEsercizio(id)) m.push(['foto', 'Foto']);
   if (MW[id]) m.push(['video', 'Video']);
   return m;
 }
@@ -37222,11 +37980,14 @@ function eroeEsercizio(id, ex) {
   } else if (sc === 'clip') {
     dentro = '<img src="' + libGif(ex.media) + '" alt="' + esc(ex.nome) + '" loading="lazy" data-gif-cdn="1">';
     nota = 'Se non compare serve la rete: si scarica una volta e poi resta';
-  } else if (sc === 'foto' && fotoDi(id)) {
-    dentro = '<div class="eh-due">' + fotoDi(id).map(function (u, i) {
-      return '<img data-zoom="' + id + '" data-i="' + i + '" src="' + u + '" alt="' + esc(ex.nome + (i ? ': dove arrivi' : ': come parti')) + '">';
+  } else if (sc === 'foto' && coppiaDi(id)) {
+    var disegnate = coppiaDi(id) !== fotoDi(id);
+    dentro = '<div class="eh-due' + (disegnate ? ' eh-disegnate' : '') + '">' + coppiaDi(id).map(function (u, i) {
+      return '<figure><img data-zoom="' + id + '" data-i="' + i + '" src="' + u + '" alt="' + esc(ex.nome + (i ? ': dove arrivi' : ': come parti')) + '">' +
+        '<figcaption>' + (i ? 'Arrivo' : 'Partenza') + '</figcaption></figure>';
     }).join('') + '</div>';
-    nota = 'Scorri: prima l’allungamento, poi la contrazione. Tocca per ingrandire.';
+    nota = disegnate ? 'A sinistra come parti, a destra dove arrivi. In rosso i muscoli che lavorano. Tocca per ingrandire.' :
+      'Scorri: prima l’allungamento, poi la contrazione. Tocca per ingrandire.';
   } else if (sc === 'foto' && typeof FOTO_LIBERE !== 'undefined' && FOTO_LIBERE[id]) {
     dentro = '<img src="' + FOTO_LIBERE[id] + '" alt="' + esc(ex.nome) + '">';
     nota = 'Foto: ' + FOTO_LIBERE_CREDITI[id][0] + ' (Wikimedia Commons)';
@@ -37238,7 +37999,7 @@ function eroeEsercizio(id, ex) {
       '<b>Guarda il video su MuscleWiki</b><span>' + esc(MW[id][1]) + ', serve la rete</span></a>';
   }
   var cod = (typeof GRAFO !== 'undefined' && GRAFO.esercizi[id]) || [];
-  return '<div class="es-hero' + (sc === 'foto' && fotoDi(id) ? ' eh-foto' : '') + '">' + '<div class="eh-media">' + dentro + '</div>' +
+  return '<div class="es-hero' + (sc === 'foto' && coppiaDi(id) ? ' eh-foto' : '') + '">' + '<div class="eh-media">' + dentro + '</div>' +
     '<button class="eh-tondo eh-back" data-back="1" aria-label="Indietro"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>' +
     (cod.length ? '<button class="eh-tondo eh-fonti fonte" aria-label="Le fonti dell’esercizio">Fonti<span hidden>' + cod.join(' ') + '</span></button>' : '') +
     '<div class="eh-barra">' + (voci.length > 1 ? selettoreEroe('media', voci, sc, 'Tipo di immagine') : '<span></span>') +
@@ -37473,13 +38234,15 @@ function vGiorno() {
     h += '<div class="blocco-h"><b>Cardio</b><span>' + cardio.minuti + ' min</span></div>' +
       '<div class="card cardio-card"><b>Dopo i pesi</b><span class="dim">' + esc(cardio.testo) + '</span></div>';
   }
-  /* v28 (R20): lo stretching in coda, con la pagina che c'è già */
-  var iStr = SCHEDA.extra.map(function (e) { return e.id; }).indexOf('stretching');
-  if (aggiunteDi(g.id).stretching && iStr >= 0) {
-    h += '<div class="blocco-h"><b>Stretching</b><span>a fine seduta</span></div>' +
-      '<div class="ex extra-riga" data-extra="' + iStr + '"><div class="t"><b>' + esc(SCHEDA.extra[iStr].titolo) + '</b><span>' +
-      esc(SCHEDA.extra[iStr].quando) + '</span></div><div class="chev">›</div></div>';
-  }
+  /* v28 (R20): lo stretching in coda, con la pagina che c'è già; 20/11 sera: anche la postura */
+  ['stretching', 'postura'].forEach(function (k) {
+    var iStr = SCHEDA.extra.map(function (e) { return e.id; }).indexOf(k);
+    if (aggiunteDi(g.id)[k] && iStr >= 0) {
+      h += '<div class="blocco-h"><b>' + esc(SCHEDA.extra[iStr].titolo) + '</b><span>a fine seduta</span></div>' +
+        '<div class="ex extra-riga" data-extra="' + iStr + '"><div class="t"><b>' + esc(SCHEDA.extra[iStr].titolo) + '</b><span>' +
+        esc(SCHEDA.extra[iStr].quando) + '</span></div><div class="chev">›</div></div>';
+    }
+  });
   h += riquadroAggiunte(g);
   h += '<button class="agg" id="agg-ex">+ Aggiungi un esercizio a oggi</button>';
   /* in fondo: comincia o continua, e chiudi */
@@ -37952,15 +38715,7 @@ var DISEGNI = {
   'Chin tuck al muro': '<rect x="30" y="6" width="8" height="108" rx="2" class="d-att"/><path d="M8 114h144" class="d-att"/>' +
     '<circle cx="48" cy="22" r="9"/><path d="M46 31v44M46 75l-2 37M46 75l5 37M46 38l7 34M82 22H64M70 16l-6 6 6 6"/>',
   'Y e T sulla panca inclinata': '<path d="M20 112L96 36M86 46v68M30 102v12M8 114h144" class="d-att"/>' +
-    '<circle cx="95" cy="17" r="10"/><path d="M41 73L85 29M41 73L26 92l4 22M85 29L142 6"/><path d="M85 29v36" class="d-att"/>',
-  'Pettorali sullo stipite': '<rect x="28" y="6" width="10" height="108" rx="2" class="d-att"/><path d="M8 114h144" class="d-att"/>' +
-    '<circle cx="96" cy="22" r="9"/><path d="M96 31v44M96 75l-9 37M96 75l13 37M96 38H42V10M96 38l5 32"/>',
-  "Flessori dell'anca in affondo": '<path d="M8 114h144" class="d-att"/><circle cx="80" cy="20" r="9"/>' +
-    '<path d="M79 29l-3 43M76 72l-16 40H30M76 72l36 6v34M78 40l10 22"/>',
-  'Femorali da seduto': '<path d="M8 114h144" class="d-att"/><circle cx="88" cy="40" r="9"/>' +
-    '<path d="M80 50L42 104M42 104h100v-14M78 54l40 40"/>',
-  'Dorsali appeso alla sbarra': '<path d="M30 10h100" class="d-att"/><circle cx="80" cy="36" r="9"/>' +
-    '<path d="M64 10l6 34M96 10l-6 34M70 44h20M80 46v40M80 86l-5 30M80 86l5 30"/>'
+    '<circle cx="95" cy="17" r="10"/><path d="M41 73L85 29M41 73L26 92l4 22M85 29L142 6"/><path d="M85 29v36" class="d-att"/>'
 };
 function disegno(nome, piccolo) {
   /* v28: dove c'è una foto libera vince sulla figura disegnata */
@@ -37981,11 +38736,14 @@ function vExtra() {
   h += '<div class="hint warm">' + e.avvertenza + '</div>';
   h += '<h2>Esercizi</h2>';
   e.esercizi.forEach(function (x) {
-    h += '<div class="card">' + disegno(x[0]) + '<b style="font-size:14.5px">' + esc(x[0]) + '</b>' +
+    var ill = x[3] && typeof ILLUSTRAZIONI !== 'undefined' && ILLUSTRAZIONI[x[3]];
+    h += '<div class="card">' + (ill ? '<img class="ex-ill" src="' + ill + '" alt="' + esc(x[0]) + '" loading="lazy">' : disegno(x[0])) +
+      '<b style="font-size:14.5px">' + esc(x[0]) + '</b>' +
       '<div class="dim" style="font-variant-numeric:tabular-nums;margin:2px 0 6px">' + esc(x[1]) + '</div>' +
       '<div style="font-size:13.5px">' + esc(x[2]) + '</div></div>';
   });
   h += '<div class="note">' + esc(e.dove) + '</div>';
+  if (e.esercizi.some(function (x) { return x[3]; })) h += '<p class="dim">' + ILLUSTRAZIONI_FONTE + '.</p>';
   h += '</main>';
   return h;
 }
@@ -38649,6 +39407,15 @@ function urlFoto(d) {
   return u;
 }
 
+function fotoWeb(v) {
+  if (typeof FOTO_WEB === 'undefined') return null;
+  var k = chiaveFoto(v.nome);
+  return FOTO_WEB[k] ? 'foto/w/' + k + '.jpg' : null;
+}
+/* senza rete una foto mai vista non c'è: si ripiega sull'immagine del tipo, che il telefono ha già */
+function ripiegoGemini(v) {
+  return typeof PIATTI_GEMINI !== 'undefined' && PIATTI_GEMINI[tipoFoto(v)] ? 'foto/piatti/' + tipoFoto(v) + '.jpg' : '';
+}
 function fotoFile(v) {
   if (typeof FOTO_PIATTI === 'undefined') return null;
   var k = chiaveFoto(v.nome);
@@ -38698,6 +39465,16 @@ function immaginePiatto(v, grande) {
      tutto, nell'elenco e nella ricetta (piatti-gemini.js, strumenti/piatti_gemini.py) */
   /* 20/11: la foto di QUESTA ricetta (griglie 5 × 5, ricette_gemini.js); non è fra quelle scaricate in
      sottofondo, quindi senza rete, se non è mai stata vista, ripiega sull'immagine del tipo */
+  /* 20/11 sera (Luigi): prima la fotografia vera di QUESTO piatto, libera e precisa: la voce di Wikipedia
+     (foto-piatti.js) o la foto trovata su Openverse (foto-web.js, strumenti/foto_web.py); poi Gemini */
+  if (fotoFile(v)) {
+    return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="' + fotoFile(v) + '" alt="' + esc(v.nome) +
+           '" loading="lazy" decoding="async" data-rip="' + ripiegoGemini(v) + '" data-cf="' + (categoriaFoto(v) || '') + '" onerror="ripiegaFoto(this)">';
+  }
+  if (fotoWeb(v)) {
+    return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="' + fotoWeb(v) + '" alt="' + esc(v.nome) +
+           '" loading="lazy" decoding="async" data-rip="' + ripiegoGemini(v) + '" data-cf="' + (categoriaFoto(v) || '') + '" onerror="ripiegaFoto(this)">';
+  }
   var kr = typeof PIATTI_GEMINI_R !== 'undefined' && chiaveFoto(v.nome);
   if (kr && PIATTI_GEMINI_R[kr]) {
     var rip = PIATTI_GEMINI[tipoFoto(v)] ? 'foto/piatti/' + tipoFoto(v) + '.jpg' : '';
@@ -38714,15 +39491,6 @@ function immaginePiatto(v, grande) {
            '" alt="' + esc(v.nome) + '" loading="lazy" decoding="async">';
   }
   var cf = categoriaFoto(v);
-  /* v24 (7/10): la foto di questo piatto come file a parte (sito/foto/), per le
-     ricette che nell'HTML non ce l'hanno. Se il file non si carica (copia
-     locale, o senza rete prima che il service worker l'abbia tenuto) si
-     ripiega sulla foto di categoria. */
-  if (fotoFile(v)) {
-    return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="' + fotoFile(v) +
-           '" alt="' + esc(v.nome) + '" loading="lazy" decoding="async" data-cf="' + (cf || '') +
-           '" onerror="ripiegaFoto(this)">';
-  }
   if (tipoFoto(v)) {
     return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="foto/tipo-' + tipoFoto(v) +
            '.jpg" alt="' + esc(v.nome) + '" loading="lazy" decoding="async" data-cf="' + (cf || '') +
@@ -38740,17 +39508,25 @@ function immaginePiatto(v, grande) {
 /* Credito della foto: e' la condizione della licenza, quindi sta sotto la foto
    e non solo in una schermata nascosta. */
 function creditoFoto(nome, v) {
+  if (v && fotoWeb(v)) {
+    var cw = FOTO_WEB[chiaveFoto(v.nome)];
+    return '<p class="credito">Foto: ' + esc(cw[0]) + ' · ' + esc(cw[1]) + ' · via Openverse. È il piatto, non necessariamente questa versione.</p>';
+  }
+  if (v && fotoFile(v)) {
+    var cp = FOTO_PIATTI[chiaveFoto(v.nome)];
+    return '<p class="credito">Foto: ' + esc(cp[0]) + ' · ' + esc(cp[1]) +
+           ' · Wikimedia Commons. È il piatto, non necessariamente questa versione.</p>';
+  }
+  /* l'immagine fatta con Gemini viene prima delle altre (immaginePiatto): il credito la segue */
+  if (v && typeof PIATTI_GEMINI !== 'undefined' && (PIATTI_GEMINI_R[chiaveFoto(v.nome)] || PIATTI_GEMINI[tipoFoto(v)])) {
+    return '<p class="credito"><b>Immagine illustrativa</b>' + (PIATTI_GEMINI_R[chiaveFoto(v.nome)] ? '' : ': un piatto dello stesso tipo, non questa ricetta') + '.</p>';
+  }
   if (typeof FOTO_RICETTE_CREDITI !== 'undefined') {
     var c = FOTO_RICETTE_CREDITI[chiaveFoto(nome)];
     if (c) {
       return '<p class="credito">Foto: ' + esc(c[0]) + ' · ' + esc(c[1]) +
              ' · Wikimedia Commons</p>';
     }
-  }
-  if (v && fotoFile(v)) {
-    var cp = FOTO_PIATTI[chiaveFoto(v.nome)];
-    return '<p class="credito">Foto: ' + esc(cp[0]) + ' · ' + esc(cp[1]) +
-           ' · Wikimedia Commons. È il piatto, non necessariamente questa versione.</p>';
   }
   if (v && tipoFoto(v)) {
     var ct = FOTO_TIPI[tipoFoto(v)];
