@@ -1,0 +1,3 @@
+# App personale: non c'e' niente da indicizzare.
+User-agent: *
+Disallow: /

@@ -1,0 +1,25 @@
+PUBBLICA-SU-GITHUB.md
+# chiavi segrete: mai su GitHub (v27)
+.env
+.env.*
+supabase/.temp/
+
+# Tutti i segreti stanno SOLO nel .env (20/11/2026). Mai pubblicare chiavi, certificati, dump o file di sessione:
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+*segret*
+*secret*
+*credential*
+*credenziali*
+vapid*.json
+service-account*.json
+.claude/settings.local.json
+supabase/.temp/
+supabase/.branches/
+**/supabase/.temp/
+*.dump
+*.sqlite
+*.db
