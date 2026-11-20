@@ -1678,6 +1678,19 @@ a, button { transition: transform .12s cubic-bezier(.23, 1, .32, 1), background-
 .eroe-n { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .eroe-b { height: 56px; border: 0; border-radius: 999px; background: var(--on-accent); color: var(--accent);
           font-size: 17px; font-weight: 700; cursor: pointer; }
+/* 20/11: le sedute scorrono di lato; la carta dopo si intravede, così si capisce che c'è altro */
+.eroi { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 4px -16px 0; padding: 0 16px;
+        scroll-padding: 0 16px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.eroi::-webkit-scrollbar { display: none; }
+.eroi > .eroe { flex: 0 0 calc(100% - 36px); scroll-snap-align: start; margin: 0; }
+.eroi > .eroe:only-child { flex-basis: 100%; }
+.eroe.alt { background: var(--surface-2); color: var(--text); }
+.eroe.alt .eroe-b { background: var(--accent); color: var(--on-accent); }
+.eroi-p { display: flex; align-items: center; gap: 6px; margin: 10px 0 16px; }
+.eroi-p i { font-style: normal; min-width: 28px; height: 28px; padding: 0 8px; border-radius: 999px; display: grid; place-items: center;
+            font-size: 13px; font-weight: 700; background: var(--surface-2); color: var(--text-dim); cursor: pointer; }
+.eroi-p i.on { background: var(--accent); color: var(--on-accent); }
+.eroi-p span { margin-left: 6px; font-size: 13px; }
 .riga-t { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .riga-t h2 { margin-bottom: 10px; }
 .card .riga-t b { font-size: 15px; font-weight: 650; }
@@ -2549,8 +2562,31 @@ main.qz-pag input:not([type=checkbox]):not([type=radio]):not([type=range]) { bac
 .dc-via svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .dc-via.sure { background: var(--bad); color: #fff; }
 .al-via { width: 100%; margin-top: 8px; }
+.sp-svuota { width: 100%; margin-top: 20px; }
+/* 20/11: la foto del prodotto, se c'è, prende il posto dell'icona */
+.con-foto { background-size: cover; background-position: center; }
+.disp-card .dc-ico.con-foto svg, .al-eroe.con-foto .al-ic { visibility: hidden; }
+.foglio-due.al-az > .al-foto { display: flex; align-items: center; justify-content: center; cursor: pointer; height: 52px; border-radius: 999px;
+  background: var(--surface-2); color: var(--text); font-size: 15px; font-weight: 600; }
+.al-ean { align-self: center; text-align: center; }
 .foglio-due.al-az { align-items: stretch; }
 .foglio-due.al-az > button { height: 52px; min-height: 52px; margin: 0 !important; }
+
+/* 20/11 (Luigi): il Gym Assistant da ogni schermata, tondo sopra la barra in basso a destra */
+.fab-ass { position: fixed; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); z-index: 24;
+           width: 52px; height: 52px; border-radius: 50%; border: 0; background: var(--accent); color: var(--on-accent);
+           display: grid; place-items: center; cursor: pointer; box-shadow: 0 6px 18px rgb(0 0 0 / .22); }
+.fab-ass svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.fab-ass:active { transform: scale(.94); }
+#app:has(.cs-piede) .fab-ass { bottom: calc(env(safe-area-inset-bottom, 0px) + 148px); }
+
+/* 20/11: quanto ogni giorno del menù è lontano dall'obiettivo */
+.m-testa .m-scarto { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--warn, #f0b35a); }
+.m-testa .m-scarto.ok { color: var(--accent); }
+.m-obi { display: grid; gap: 4px; margin: 6px 0 4px; }
+.m-obi i { display: block; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.m-obi i b { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.m-obi span { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 </style>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icona-192.png">
@@ -31533,9 +31569,14 @@ function spesaCalcolata() {
   return out;
 }
 
+/* 20/11 (Luigi): «Svuota la lista» segna le voci calcolate con 'via', così non tornano finché non fai la spesa */
+function vociSpesa() {
+  var presi = S.spesaPresi || (S.spesaPresi = {});
+  return spesa().concat(spesaCalcolata().filter(function (v) { return presi[v.id] !== 'via'; }));
+}
 function vSpesa() {
   var presi = S.spesaPresi || (S.spesaPresi = {});
-  var voci = spesa().concat(spesaCalcolata());
+  var voci = vociSpesa();
   var n = voci.filter(function (v) { return v.auto ? presi[v.id] : v.preso; }).length;
   var h = testata('Lista della spesa', 'Dalla dieta e da ciò che manca', 'dispensa') + '<main>';
   h += '<div class="sp-prog"><span>' + (voci.length ? n + ' di ' + voci.length + ' presi' : 'Niente da comprare') + '</span><i><b style="width:' + (voci.length ? Math.round(n / voci.length * 100) : 0) + '%"></b></i></div>';
@@ -31549,6 +31590,7 @@ function vSpesa() {
     }).join('') + '</div>';
   });
   h += '<div class="sp-agg"><input id="sp-n" placeholder="Aggiungi qualcosa" maxlength="80" aria-label="Aggiungi alla spesa"><button class="gp-carica" id="sp-ok">Aggiungi</button></div>';
+  if (voci.length) h += '<button class="ghost danger sp-svuota" id="sp-svuota">Svuota la lista</button>';
   h += '</main><div class="cs-piede"><button class="primary" id="sp-casa"' + (n ? '' : ' disabled') + '>' + (n ? 'Metti in dispensa ' + n + (n === 1 ? ' prodotto' : ' prodotti') : 'Spunta quello che prendi') + '</button></div>';
   return h;
 }
@@ -31557,7 +31599,7 @@ function vAlimento() {
   var v = S.dispensa[S.ctx.id];
   if (!v) return testata('Alimento', '', 'dispensa') + '<main><p class="dim">Questo prodotto non è più in dispensa.</p></main>';
   var cat = categoriaDi(v).cat, grammi = /^(g|gr|grammi|ml)$/i.test(v.unita), q = +v.q || 0;
-  var h = '<div class="al-eroe"><span class="al-ic"><svg aria-hidden="true" viewBox="0 0 24 24">' + iconaCategoria(cat) + '</svg></span>' +
+  var h = '<div class="al-eroe" data-fp="' + esc(chiaveFotoProdotto(v)) + '"><span class="al-ic"><svg aria-hidden="true" viewBox="0 0 24 24">' + iconaCategoria(cat) + '</svg></span>' +
     '<button class="eh-tondo eh-back" data-back="1" aria-label="Indietro"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>' +
     (v.scad ? '<span class="al-scad' + scadenzaClasse(v) + '">' + esc(scadenzaTesto(v)) + '</span>' : '') + '</div>';
   h += '<main><span class="dim al-cat">' + esc(cat) + (v.marca ? ', ' + esc(v.marca) : '') + '</span><h1 class="es-titolo">' + esc(v.n) + '</h1>';
@@ -31575,8 +31617,13 @@ function vAlimento() {
   h += '<div class="foglio-due al-az"><button class="ghost" data-al-spesa="1">' + (inSpesa(v.n) ? 'Nella lista spesa ✓' : 'Aggiungi alla spesa') + '</button>' +
     '<button class="primary" data-cucina="1">Cosa ci cucino</button></div>';
   /* i valori per 100 g, se il prodotto viene dal codice a barre (Open Food Facts) */
-  var pr = v.ean && S.prodotti[v.ean];
-  if (pr && pr.k !== undefined) h += '<span class="cs-lbl al-v-t">Valori per 100 g</span><div class="card es-kv al-val">' +
+  /* 20/11 (Luigi): foto e codice a barre anche per quello messo in dispensa dalla spesa o a mano */
+  h += '<div class="foglio-due al-az"><label class="ghost al-foto">' + (FOTO_PROD[chiaveFotoProdotto(v)] ? 'Cambia la foto' : 'Fai una foto') +
+    '<input type="file" accept="image/*" capture="environment" id="al-foto" hidden></label>' +
+    (v.ean ? '<span class="dim al-ean">Codice ' + esc(v.ean) + '</span>' : '<button class="ghost" data-al-scan="1">Leggi il codice a barre</button>') + '</div>';
+  var pr = v.ean && S.prodotti[v.ean], medio = !(pr && pr.k !== undefined) && alimentoDaNome(v.n);
+  if (medio) pr = medio;
+  if (pr && pr.k !== undefined) h += '<span class="cs-lbl al-v-t">' + (medio ? 'Valori medi per 100 g (' + esc(medio.n) + ', tabelle CREA)' : 'Valori per 100 g') + '</span><div class="card es-kv al-val">' +
     [['Energia', pr.k, ' kcal'], ['Proteine', pr.pr, ' g'], ['Carboidrati', pr.c, ' g'], ['Grassi', pr.f, ' g']].filter(function (r) { return r[1] !== undefined && r[1] !== null; })
       .map(function (r) { return '<div><span>' + r[0] + '</span><span>' + numIt(+r[1]) + r[2] + '</span></div>'; }).join('') + '</div>';
   h += '<button class="link al-mod" data-al-mod="1">Modifica nome, quantità e scadenza</button>' +
@@ -31604,6 +31651,30 @@ function collegaSpesa() {
     clic('[data-al-spesa]', function () { if (!aggiungiSpesa(v.n, 'Dalla dispensa')) S.spesa = spesa().filter(function (x) { return normMia(x.n) !== normMia(v.n); }); save(); render(); });
     clic('[data-al-alt]', function (n) { aggiungiSpesa(n.dataset.alAlt, 'Al posto di: ' + v.n); toast('Aggiunto alla spesa'); render(); });
     clic('[data-al-mod]', function () { vai('dispensa', { disp: v.id }); });
+    var fi = document.getElementById('al-foto');
+    if (fi) fi.onchange = function () {
+      if (!fi.files[0]) return;
+      salvaFotoProdotto(chiaveFotoProdotto(v), fi.files[0]).then(function () { toast('Foto salvata: la ritrovi anche quando lo ricompri'); render(); },
+        function () { toast('Non riesco a salvare la foto su questo telefono'); });
+    };
+    clic('[data-al-scan]', function () {
+      /* niente attese prima di scansiona(): il permesso della fotocamera vuole il tocco diretto */
+      scansiona(function (ean) {
+        cercaProdotto(ean, function (r) {
+          var vecchia = chiaveFotoProdotto(v);
+          v.ean = ean;
+          if (r.prodotto) {
+            salvaProdotto(r.prodotto);
+            if (!v.marca) v.marca = r.prodotto.marca || '';
+            if (!v.tags || !v.tags.length) v.tags = r.prodotto.cat || [];
+          }
+          /* la foto fatta prima del codice resta con il prodotto */
+          if (FOTO_PROD[vecchia] && !FOTO_PROD[chiaveFotoProdotto(v)]) fetch(FOTO_PROD[vecchia]).then(function (x) { return x.blob(); })
+            .then(function (b) { return salvaFotoProdotto(chiaveFotoProdotto(v), b); }).then(render, render);
+          save(); toast(r.prodotto ? 'Codice letto: ' + r.prodotto.n : 'Codice salvato'); render();
+        });
+      });
+    });
     clic('[data-al-via]', function (n) {
       if (!n.dataset.sure) { n.dataset.sure = '1'; n.textContent = 'Tocca ancora per toglierlo'; return; }
       togliDallaDispensa(v.id);
@@ -31620,7 +31691,7 @@ function collegaSpesa() {
     clic('#sp-ok', agg);
     inp.onkeydown = function (e) { if (e.key === 'Enter') agg(); };
     clic('#sp-casa', function () {
-      var voci = spesa().concat(spesaCalcolata()), n = 0;
+      var voci = vociSpesa(), n = 0;
       voci.forEach(function (v) {
         var fatto = v.auto ? S.spesaPresi[v.id] : v.preso;
         if (!fatto) return;
@@ -31630,6 +31701,13 @@ function collegaSpesa() {
       });
       S.spesa = spesa().filter(function (v) { return !v.preso; }); S.spesaPresi = {};
       save(); toast(n + (n === 1 ? ' prodotto in dispensa' : ' prodotti in dispensa')); vai('dispensa', {});
+    });
+    clic('#sp-svuota', function (b) {
+      if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Tocca ancora: cancello tutta la lista'; return; }
+      var via = {};
+      spesaCalcolata().forEach(function (v) { via[v.id] = 'via'; });
+      S.spesa = []; S.spesaPresi = via;
+      save(); toast('Lista svuotata'); render();
     });
   }
 }
@@ -34071,15 +34149,24 @@ function rigaPastoMenu(x, d, si) {
     '<button class="m-cambia" data-cambia="' + d + '-' + si + '" aria-label="Cambia piatto">Cambia</button></div>';
 }
 
+/* 20/11 (Luigi): i numeri più chiari. Ogni giorno dice quanto è lontano dall'obiettivo (kcal e proteine), con
+   una barra e la differenza; sopra il 5% di scarto dice cosa aggiungere o togliere. Le porzioni restano quelle. */
 function cartaGiornoMenu(g, d, f, tipo) {
+  var dk = g.k - f.kcal, dp = g.p - f.prot, inLinea = Math.abs(dk) <= f.kcal * 0.05;
+  var segno = function (n, u) { return (n > 0 ? '+' : '−') + Math.abs(n) + u; };
   var h = '<section class="card m-giorno' + (tipo ? ' m-tipo' : '') + '"><div class="m-testa"><b>' +
-    (tipo ? 'Giornata tipo · ' : '') + esc(g.nome) + '</b><span>' + g.k + ' kcal · ' + g.p + ' g prot.</span></div>';
+    (tipo ? 'Giornata tipo · ' : '') + esc(g.nome) + '</b><span class="m-scarto' + (inLinea ? ' ok' : '') + '">' +
+    (inLinea ? 'in linea' : segno(dk, ' kcal')) + '</span></div>' +
+    '<div class="m-obi"><i><b style="width:' + Math.min(100, Math.round(g.k / f.kcal * 100)) + '%"></b></i><span>' + g.k + ' di ' + f.kcal +
+    ' kcal · ' + g.p + ' di ' + f.prot + ' g di proteine</span></div>';
   g.pasti.forEach(function (x, si) { h += rigaPastoMenu(x, d, si); });
-  var manca = f.kcal - g.k, mancaP = f.prot - g.p;
-  if (manca > f.kcal * 0.1 || mancaP > f.prot * 0.1) {
+  var manca = -dk, mancaP = -dp;
+  if (manca > f.kcal * 0.05 || mancaP > f.prot * 0.05) {
     h += '<p class="dim m-nota">Per arrivare ai tuoi numeri mancano circa ' +
       (manca > 0 ? manca + ' kcal' : '') + (manca > 0 && mancaP > 0 ? ' e ' : '') + (mancaP > 0 ? mancaP + ' g di proteine' : '') +
-      ': aggiungi pane, frutta o verdura' + (mancaP > 0 ? ', e uno yogurt, un uovo o un po\' di legumi' : '') + '.</p>';
+      ': aggiungi pane, frutta o verdura' + (mancaP > 0 ? ', e uno yogurt, un uovo o un po’ di legumi' : '') + '.</p>';
+  } else if (dk > f.kcal * 0.05) {
+    h += '<p class="dim m-nota">Sei sopra di circa ' + dk + ' kcal: riduci un po’ la porzione di pasta, pane o condimento, oppure salta lo spuntino.</p>';
   }
   return h + '</section>';
 }
@@ -34344,6 +34431,18 @@ function sincronizzaAvvio() {
   }).catch(function () {});
 }
 window.addEventListener('online', function () { if (SESSIONE && SESSIONE.daInviare) inviaCloud().catch(function () {}); });
+/* 20/11 (Luigi: «annullo la seduta e alla riapertura torna»): chiudendo l'app entro i 3 s l'invio non partiva, e una
+   seconda copia aperta (browser e app sulla home condividono i dati) riscriveva lo stato vecchio che aveva in memoria.
+   Ora si invia appena l'app va in secondo piano e, quando torna davanti, se un'altra copia ha scritto si ricarica. */
+if (typeof document !== 'undefined') document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') {
+    if (SESSIONE && SESSIONE.daInviare && navigator.onLine !== false) inviaCloud().catch(function () {});
+    return;
+  }
+  var ora = null;
+  try { ora = localStorage.getItem(KEY); } catch (e) {}
+  if (ora !== null && SALVATAGGIO.ultimo !== null && ora !== SALVATAGGIO.ultimo) location.reload();
+});
 
 /* chi: email oppure username. Con lo username l'accesso lo fa il server, che non rimanda l'email */
 function cloudAccedi(chi, password) {
@@ -35224,6 +35323,19 @@ function chatRicette(n, q) {
 /* ---------- la teoria, e quando non so ---------- */
 var ESEMPI_CHAT = ['Cosa faccio oggi?', 'Record di panca', 'Come si fa lo squat?', 'Quante proteine ha il tonno?',
   'Una ricetta col pollo', 'Quante serie a settimana per crescere?', 'Come carico la mia scheda?'];
+/* 20/11 (Luigi): l'assistente si apre da ogni schermata; le domande pronte seguono la sezione da cui arrivi */
+var ESEMPI_SEZIONE = {
+  nutrizione: ['Cosa ceno stasera?', 'Proteine di oggi', 'Quante proteine ha il tonno?', 'Una ricetta col pollo'],
+  progressi: ['Record di panca', 'Come va il mio peso?', 'Quante serie a settimana per crescere?'],
+  chiaro: ['Come carico la mia scheda?', 'Come si usa la dispensa?', 'Come funziona il cloud?']
+};
+function esempiChat() { return ESEMPI_SEZIONE[SEZIONE_DI[S.ctx.da]] || ESEMPI_CHAT; }
+/* il bottone tondo sopra la barra: non durante l'esercizio (coprirebbe le serie) e non dove la barra non c'è */
+function bottoneAssistente() {
+  if (S.vista === 'esercizio' || S.vista === 'giorno') return '';
+  return '<button class="fab-ass" data-ass-da="' + esc(S.vista) + '" aria-label="Chiedi al Gym Assistant"><svg aria-hidden="true" viewBox="0 0 24 24">' +
+    '<path d="M4 5h16v11H9l-5 4z"/><path d="M9 10h.01M12 10h.01M15 10h.01"/></svg></button>';
+}
 
 function chatTeoria(q) {
   var ris = cercaAssistente(q, 4);
@@ -35269,7 +35381,7 @@ function vAssistente() {
   var h = '<header class="ch-testa"><button class="back" data-back="1" aria-label="Indietro"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>' +
     '<div><h1>Gym Assistant</h1><span>risponde dalle fonti della rassegna, anche senza rete</span></div></header><main class="chat">';
   if (!CHAT.length) h += '<div class="ch-m ch-app">Chiedimi dei tuoi allenamenti, del peso, del menù, di un esercizio o di un cibo, di come si usa l\'app o della teoria con le fonti.' +
-    '<div class="ch-vedi">' + ESEMPI_CHAT.map(function (e) { return '<button class="pill" data-ch-q="' + esc(e) + '">' + esc(e) + '</button>'; }).join('') + '</div></div>';
+    '<div class="ch-vedi">' + esempiChat().map(function (e) { return '<button class="pill" data-ch-q="' + esc(e) + '">' + esc(e) + '</button>'; }).join('') + '</div></div>';
   var online = typeof SESSIONE !== 'undefined' && SESSIONE;
   CHAT.forEach(function (m, i) {
     if (m.tu !== undefined) { h += '<div class="ch-m ch-tu">' + esc(m.tu) + '</div>'; return; }
@@ -35341,7 +35453,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwp7zjvb';
+var BUILD = 'vmwpdh8sj';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -35757,7 +35869,7 @@ function render() {
   var barra = document.querySelector('meta[name="theme-color"]');
   if (barra) barra.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || barra.content;
   /* 20/11: il questionario a pagine non ha la barra (copriva «Avanti»), anche rifatto; il profilo voce per voce sì */
-  app.innerHTML = h + ((v === 'questionario' && !(QZ && QZ.solo)) || v === 'account' || v === 'fine' || v === 'assistente' ? '' : navBar());
+  app.innerHTML = h + ((v === 'questionario' && !(QZ && QZ.solo)) || v === 'account' || v === 'fine' || v === 'assistente' ? '' : navBar() + bottoneAssistente());
   collega();
   collegaQuestionario();
   collegaSchedaImpostazioni();
@@ -35785,11 +35897,14 @@ function render() {
   collegaDieta();
   collegaPanoramicaDiario();
   collegaSpesa();
+  mostraFotoProdotti();   // 20/11: le foto dei prodotti fatte col telefono
   collegaImpostazioniExtra();
   collegaVisteTrainer();
   avviaManichini();
   collegaPassaggi();
   collegaCrono();
+  collegaEroi();
+  document.querySelectorAll('[data-ass-da]').forEach(function (b) { b.onclick = function () { vai('assistente', { da: b.dataset.assDa }); }; });
   collegaAccount();
   collegaLegale();
   avviaCronoVista();
@@ -36522,16 +36637,23 @@ function vHome() {
 
   /* la card piena: la prossima seduta, con il pulsante per cominciare */
   var gp = giorniCorrenti().filter(function (g) { return g.id === prossimo; })[0] || giorniCorrenti()[0];
+  /* 20/11 (Luigi): le sedute come carte che scorrono; la prima è quella di oggi, le altre si fanno al suo posto */
   if (gp) {
-    var serieP = gp.esercizi.reduce(function (a, e) { return a + serieDi(e); }, 0);
-    var fattaOggiP = fatti[gp.id] === oggi();
-    h += '<div class="eroe"><span class="eroe-o">' + (fattaOggiP ? 'Fatta oggi' :
-           SCHEDA.seconda ? (schedaOggi ? 'Oggi tocca a «' + esc(schedaOggi === 2 ? SCHEDA.seconda.nome : SCHEDA.seconda.nome1) + '»' :
-           'Oggi nel calendario è riposo: se ti alleni lo stesso') : 'Oggi tocca a te') + '</span>' +
-         '<div><b class="eroe-t">' + esc(gp.nome) + '</b><span class="eroe-f">' + esc(gp.focus) + '</span></div>' +
-         '<div class="eroe-n"><span>' + gp.esercizi.length + ' esercizi</span><span>' + serieP + ' serie</span>' +
-         '<span>~' + durataSeduta(gp) + ' min</span></div>' +
-         '<button class="eroe-b" data-giorno="' + gp.id + '">' + (fattaOggiP ? 'Rivedi la seduta' : 'Inizia la seduta') + '</button></div>';
+    var carte = [gp].concat(giorniCorrenti().filter(function (g) { return g.id !== gp.id; }));
+    h += '<div class="eroi" role="region" aria-label="Sedute: scorri per sceglierne un’altra">' + carte.map(function (g, i) {
+      var serieP = g.esercizi.reduce(function (a, e) { return a + serieDi(e); }, 0);
+      var fattaOggiP = fatti[g.id] === oggi();
+      var sopra = fattaOggiP ? 'Fatta oggi' : i > 0 ? 'Oppure oggi, al posto della ' + gp.id :
+        SCHEDA.seconda ? (schedaOggi ? 'Oggi tocca a «' + esc(schedaOggi === 2 ? SCHEDA.seconda.nome : SCHEDA.seconda.nome1) + '»' :
+        'Oggi nel calendario è riposo: se ti alleni lo stesso') : 'Oggi tocca a te';
+      return '<div class="eroe' + (i ? ' alt' : '') + '"><span class="eroe-o">' + sopra + '</span>' +
+         '<div><b class="eroe-t">' + esc(g.nome) + '</b><span class="eroe-f">' + esc(g.focus) + '</span></div>' +
+         '<div class="eroe-n"><span>' + g.esercizi.length + ' esercizi</span><span>' + serieP + ' serie</span>' +
+         '<span>~' + durataSeduta(g) + ' min</span></div>' +
+         '<button class="eroe-b" data-giorno="' + g.id + '">' + (fattaOggiP ? 'Rivedi la seduta' : i ? 'Fai questa oggi' : 'Inizia la seduta') + '</button></div>';
+    }).join('') + '</div>';
+    if (carte.length > 1) h += '<div class="eroi-p" aria-hidden="true">' + carte.map(function (g, i) { return '<i' + (i ? '' : ' class="on"') + '>' + g.id + '</i>'; }).join('') +
+      '<span class="dim">scorri per un’altra seduta</span></div>';
   }
 
   /* l'ultima seduta fatta: quanto è durata, quanto hai sollevato */
@@ -36938,6 +37060,17 @@ function avviaCronoVista() {
     if (!n.length) { clearInterval(CRONO); CRONO = null; return; }
     n.forEach(function (x) { x.textContent = fmtCrono(Date.now() - (+x.dataset.cronoDa)); });
   }, 1000);
+}
+
+/* i pallini sotto le carte delle sedute seguono lo scorrimento; toccarne uno porta alla sua carta */
+function collegaEroi() {
+  var r = document.querySelector('.eroi'); if (!r) return;
+  var p = document.querySelectorAll('.eroi-p i');
+  r.onscroll = function () {
+    var i = Math.round(r.scrollLeft / (r.firstElementChild.offsetWidth + 12));
+    p.forEach(function (x, j) { x.classList.toggle('on', j === i); });
+  };
+  p.forEach(function (x, j) { x.onclick = function () { r.children[j].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' }); }; });
 }
 
 function collegaCrono() {
@@ -39533,7 +39666,7 @@ function vDispensaCorpo() {
     var gdz = giudica ? giudizioDispensa(v) : null;
     /* 20/11 (Luigi): il cestino su ogni card, per togliere in fretta quello che è finito (due tocchi) */
     h += '<div class="disp-cella"><button class="disp-card' + scadenzaClasse(v) + (aperta ? ' aperta' : '') + '" data-disp="' + esc(v.id) + '">' +
-      '<span class="dc-ico"><svg aria-hidden="true" viewBox="0 0 24 24">' + iconaCategoria(x.cat) + '</svg></span>' +
+      '<span class="dc-ico" data-fp="' + esc(chiaveFotoProdotto(v)) + '"><svg aria-hidden="true" viewBox="0 0 24 24">' + iconaCategoria(x.cat) + '</svg></span>' +
       '<b>' + esc(v.n) + '</b><span class="dc-q">' + esc(String(v.q)) + ' ' + esc(v.unita) + (st ? ', ' + esc(st) : '') + '</span>' +
       (gdz ? '<span class="sem ' + gdz.livello + ' disp-sem"><i></i>' + ETICHETTA_DISPENSA[gdz.livello] + '</span>' : '') + '</button>' +
       '<button class="dc-via" data-disp-via="' + esc(v.id) + '" aria-label="Finito: togli ' + esc(v.n) + '">' + ICONA_CESTINO + '</button></div>';
@@ -39573,6 +39706,63 @@ function vDispensaCorpo() {
     'Facts la prima volta e poi restano nell’archivio del telefono: la seconda scansione ' +
     'funziona anche senza rete.</div>';
   return h + '</main>';
+}
+
+/* 20/11 (Luigi): la foto del prodotto fatta col telefono resta anche quando lo togli: ricomprandolo (stesso codice a
+   barre o stesso nome) torna da sola. Sta in IndexedDB, rimpicciolita: niente cloud, niente quota di localStorage. */
+function chiaveFotoProdotto(v) { return v.ean ? 'e:' + v.ean : 'n:' + normMia(v.n); }
+var FOTO_PROD = {};
+function dbFotoProdotti() {
+  return new Promise(function (ok, no) {
+    if (!window.indexedDB) return no(new Error('IndexedDB assente'));
+    var r = indexedDB.open('palestra-foto-prodotti', 1);
+    r.onupgradeneeded = function () { r.result.createObjectStore('foto'); };
+    r.onsuccess = function () { ok(r.result); };
+    r.onerror = function () { no(r.error); };
+  });
+}
+function leggiFotoProdotto(k) {
+  if (k in FOTO_PROD) return Promise.resolve(FOTO_PROD[k]);
+  return dbFotoProdotti().then(function (db) {
+    return new Promise(function (ok) {
+      var q = db.transaction('foto').objectStore('foto').get(k);
+      q.onsuccess = function () { FOTO_PROD[k] = q.result ? URL.createObjectURL(q.result) : null; ok(FOTO_PROD[k]); };
+      q.onerror = function () { ok(null); };
+    });
+  }).catch(function () { return null; });
+}
+function salvaFotoProdotto(k, file) {
+  return createImageBitmap(file).then(function (img) {
+    var s = Math.min(1, 480 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+    c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return new Promise(function (ok) { c.toBlob(ok, 'image/jpeg', 0.75); });
+  }).then(function (blob) {
+    return dbFotoProdotti().then(function (db) {
+      return new Promise(function (ok, no) {
+        var tx = db.transaction('foto', 'readwrite');
+        tx.objectStore('foto').put(blob, k);
+        tx.oncomplete = function () { if (FOTO_PROD[k]) URL.revokeObjectURL(FOTO_PROD[k]); FOTO_PROD[k] = URL.createObjectURL(blob); ok(); };
+        tx.onerror = function () { no(tx.error); };
+      });
+    });
+  });
+}
+/* dopo ogni disegno: gli elementi con data-fp prendono la foto, se c'è */
+function mostraFotoProdotti() {
+  document.querySelectorAll('[data-fp]').forEach(function (n) {
+    leggiFotoProdotto(n.dataset.fp).then(function (u) { if (u) { n.style.backgroundImage = 'url("' + u + '")'; n.classList.add('con-foto'); } });
+  });
+}
+/* i valori medi per 100 g di quello che non ha codice a barre (patate, mele, pollo del banco), dalle tabelle CREA */
+function alimentoDaNome(n) {
+  var k = normMia(n); if (!k || typeof ALIMENTI === 'undefined') return null;
+  var p = k.split(' ')[0], migliore = null;
+  ALIMENTI.forEach(function (a) {
+    var an = normMia(a.n), punti = an === k ? 3 : an.indexOf(k) === 0 || k.indexOf(an) === 0 ? 2 : an.split(' ')[0] === p ? 1 : 0;
+    if (punti && (!migliore || punti > migliore.punti || (punti === migliore.punti && a.n.length < migliore.a.n.length))) migliore = { a: a, punti: punti };
+  });
+  return migliore && migliore.a;
 }
 
 /* 20/11: togliere un prodotto (finito, consumato, scaduto) da ovunque: card, editor, pagina dell'alimento */
@@ -41431,7 +41621,14 @@ function collegaVoce() {
       VOCE.rec.start();
       b.classList.add('on'); b.querySelector('span').textContent = 'Fermati';
       scrivi('Ti ascolto: parla, poi tocca «Fermati».');
-    }).catch(function () { scrivi('Il microfono non è disponibile: controlla il permesso nelle impostazioni del browser.'); });
+    }).catch(function (e) {
+      /* 20/11 (Luigi): dall'app sulla home non si vede il browser: i passi giusti per chi l'ha installata */
+      if (e && e.name === 'NotFoundError') { scrivi('Non trovo un microfono su questo telefono.'); return; }
+      if (e && e.name === 'NotReadableError') { scrivi('Il microfono è occupato da un\'altra app (una chiamata, un registratore): chiudila e riprova.'); return; }
+      scrivi(/iPhone|iPad/.test(navigator.userAgent)
+        ? 'Il microfono è bloccato. Su iPhone: Impostazioni → Safari → Microfono → Consenti, poi riapri l\'app.'
+        : 'Il microfono è bloccato. Tieni premuta l\'icona dell\'app sulla home → Informazioni app → Autorizzazioni (o Impostazioni sito) → Microfono → Consenti, poi riapri l\'app.');
+    });
   };
 }
 function trascrivi(blob) {
