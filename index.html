@@ -36441,7 +36441,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwphnbmm';
+var BUILD = 'vmwppfcvg';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -42638,7 +42638,9 @@ function collegaVoce() {
       if (e && e.name === 'NotReadableError') { scrivi('Il microfono è occupato da un\'altra app (una chiamata, un registratore): chiudila e riprova.'); return; }
       scrivi(/iPhone|iPad/.test(navigator.userAgent)
         ? 'Il microfono è bloccato. Su iPhone: Impostazioni → Safari → Microfono → Consenti, poi riapri l\'app.'
-        : 'Il microfono è bloccato. Tieni premuta l\'icona dell\'app sulla home → Informazioni app → Autorizzazioni (o Impostazioni sito) → Microfono → Consenti, poi riapri l\'app.');
+        /* 21/11 (Luigi): se fra le Impostazioni sito il Microfono non c'è, è Chrome a non averlo da Android */
+        : 'Il microfono è bloccato. Impostazioni del telefono → App → Chrome → Autorizzazioni → Microfono → «Consenti solo mentre l\'app è in uso». ' +
+          'Poi riapri l\'app, tocca «Detta» e rispondi «Consenti». Se è ancora bloccato: Impostazioni sito → Microfono → Consenti.');
     });
   };
 }
