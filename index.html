@@ -8990,13 +8990,9 @@ var ILLUSTRAZIONI_FONTE = 'Illustrazione di Fitness Programer (fitnessprogramer.
 
 
 /* ===== piatti-gemini.js ===== */
-/* piatti-gemini.js — v29: i piatti con l'immagine fatta con Gemini: per tipo (sito/foto/piatti/<tipo>.jpg)
-   e, dal 20/11, per ricetta (sito/foto/piatti/r/<chiaveFoto>.jpg: queste non si scaricano tutte, il
-   telefono tiene quelle viste e senza rete ripiega sul tipo).
+/* piatti-gemini.js — v29: i piatti con l'immagine fatta con Gemini, per tipo (sito/foto/piatti/<tipo>.jpg).
    Scritto da app/strumenti/piatti_gemini.py taglia: non modificarlo a mano. */
 var PIATTI_GEMINI = {"aglio-olio": 1, "agnello": 1, "alici": 1, "amatriciana": 1, "anatra": 1, "arancini": 1, "arrosto": 1, "baccala": 1, "besciamella": 1, "bevanda": 1, "bigne": 1, "biscotti": 1, "bistecca": 1, "bollito": 1, "brodo": 1, "budino": 1, "burro": 1, "cacio-pepe": 1, "calamari": 1, "canederli": 1, "cannelloni": 1, "carbonara": 1, "carciofi": 1, "carpaccio": 1, "cheesecake": 1, "ciambellone": 1, "cioccolata": 1, "coniglio": 1, "costolette": 1, "cotoletta": 1, "cozze": 1, "crema-dolce": 1, "crepes": 1, "crocchette": 1, "crostata": 1, "crostini": 1, "focaccia": 1, "fonduta": 1, "formaggio": 1, "formaggio-fritto": 1, "frattaglie": 1, "frittata": 1, "frittelle": 1, "fritto-misto": 1, "frittura-pesce": 1, "frutta-cotta": 1, "funghi": 1, "gamberi": 1, "gelato": 1, "gnocchi-patate": 1, "gnocchi-romana": 1, "insalata": 1, "insalata-riso": 1, "involtini": 1, "lasagne": 1, "legumi": 1, "liquore": 1, "maiale": 1, "maionese": 1, "manzo": 1, "marmellata": 1, "minestrone": 1, "olio-aromatico": 1, "ossobuco": 1, "paella": 1, "pane": 1, "pane-marmellata": 1, "panino": 1, "panna-cotta": 1, "pappa-pomodoro": 1, "parmigiana": 1, "pasta": 1, "pasta-cozze": 1, "pasta-fagioli": 1, "pasta-forno": 1, "pasta-funghi": 1, "pasta-insalata": 1, "pasta-panna": 1, "pasta-pesce": 1, "pasta-pesto": 1, "pasta-pomodoro": 1, "pasta-ragu": 1, "pasta-salmone": 1, "pasta-sarde": 1, "pasta-tonno": 1, "pasta-verdure": 1, "patate": 1, "peperonata": 1, "pesce": 1, "pesce-crudo": 1, "pesto": 1, "pizza": 1, "polenta": 1, "pollo": 1, "pollo-arrosto": 1, "polpette": 1, "porridge": 1, "ravioli": 1, "riso-curry": 1, "risotto": 1, "risotto-funghi": 1, "risotto-milanese": 1, "risotto-pesce": 1, "risotto-radicchio": 1, "risotto-verde": 1, "risotto-zucca": 1, "salmone": 1, "salsiccia": 1, "salumi": 1, "scaloppine": 1, "semolino": 1, "souffle": 1, "spaghetti-vongole": 1, "spezie": 1, "spezzatino": 1, "spiedini": 1, "spinaci": 1, "sugo": 1, "timballo": 1, "tiramisu": 1, "tonno": 1, "torta": 1, "torta-cioccolato": 1, "torta-mele": 1, "torta-salata": 1, "tortellini": 1, "uova": 1, "uova-sode": 1, "vellutata": 1, "vellutata-gen": 1, "verdure": 1, "verdure-grigliate": 1, "verdure-ripiene": 1, "vitello-tonnato": 1, "vol-au-vent": 1, "yogurt": 1, "zuppa": 1, "zuppa-cozze": 1, "zuppa-legumi": 1, "zuppa-pesce": 1};
-var PIATTI_GEMINI_R = {};
-"".split('|').forEach(function (k) { if (k) PIATTI_GEMINI_R[k] = 1; });
 
 
 /* ===== catalogo.js ===== */
@@ -36441,7 +36437,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwppu7ip';
+var BUILD = 'vmwt6h7yq';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -39463,8 +39459,6 @@ function immaginePiatto(v, grande) {
      piu' niente dentro l'app. */
   /* v29 (Luigi, 19/11): le immagini fatte con Gemini, tutte nello stesso stile, vengono prima di
      tutto, nell'elenco e nella ricetta (piatti-gemini.js, strumenti/piatti_gemini.py) */
-  /* 20/11: la foto di QUESTA ricetta (griglie 5 × 5, ricette_gemini.js); non è fra quelle scaricate in
-     sottofondo, quindi senza rete, se non è mai stata vista, ripiega sull'immagine del tipo */
   /* 20/11 sera (Luigi): prima la fotografia vera di QUESTO piatto, libera e precisa: la voce di Wikipedia
      (foto-piatti.js) o la foto trovata su Openverse (foto-web.js, strumenti/foto_web.py); poi Gemini */
   if (fotoFile(v)) {
@@ -39474,12 +39468,6 @@ function immaginePiatto(v, grande) {
   if (fotoWeb(v)) {
     return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="' + fotoWeb(v) + '" alt="' + esc(v.nome) +
            '" loading="lazy" decoding="async" data-rip="' + ripiegoGemini(v) + '" data-cf="' + (categoriaFoto(v) || '') + '" onerror="ripiegaFoto(this)">';
-  }
-  var kr = typeof PIATTI_GEMINI_R !== 'undefined' && chiaveFoto(v.nome);
-  if (kr && PIATTI_GEMINI_R[kr]) {
-    var rip = PIATTI_GEMINI[tipoFoto(v)] ? 'foto/piatti/' + tipoFoto(v) + '.jpg' : '';
-    return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="foto/piatti/r/' + kr + '.jpg" alt="' + esc(v.nome) +
-           '" loading="lazy" decoding="async" data-rip="' + rip + '" data-cf="' + (categoriaFoto(v) || '') + '" onerror="ripiegaFoto(this)">';
   }
   if (typeof PIATTI_GEMINI !== 'undefined' && PIATTI_GEMINI[tipoFoto(v)]) {
     return '<img class="foto-piatto' + (grande ? ' grande' : '') + '" src="foto/piatti/' + tipoFoto(v) + '.jpg" alt="' + esc(v.nome) +
@@ -39518,8 +39506,8 @@ function creditoFoto(nome, v) {
            ' · Wikimedia Commons. È il piatto, non necessariamente questa versione.</p>';
   }
   /* l'immagine fatta con Gemini viene prima delle altre (immaginePiatto): il credito la segue */
-  if (v && typeof PIATTI_GEMINI !== 'undefined' && (PIATTI_GEMINI_R[chiaveFoto(v.nome)] || PIATTI_GEMINI[tipoFoto(v)])) {
-    return '<p class="credito"><b>Immagine illustrativa</b>' + (PIATTI_GEMINI_R[chiaveFoto(v.nome)] ? '' : ': un piatto dello stesso tipo, non questa ricetta') + '.</p>';
+  if (v && typeof PIATTI_GEMINI !== 'undefined' && PIATTI_GEMINI[tipoFoto(v)]) {
+    return '<p class="credito"><b>Immagine illustrativa</b>: un piatto dello stesso tipo, non questa ricetta.</p>';
   }
   if (typeof FOTO_RICETTE_CREDITI !== 'undefined') {
     var c = FOTO_RICETTE_CREDITI[chiaveFoto(nome)];
