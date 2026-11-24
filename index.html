@@ -5248,7 +5248,7 @@ ESERCIZI['rematore-mono-cavo'] = variante('pulley-basso', {
   attrezzo: 'Maniglia singola',
   setup: [
     ['Cavo', 'Puleggia bassa'],
-    ['Posizione', 'Seduto o in piedi in affondo, un braccio alla volta'],
+    ['Posizione', 'Seduto al pulley basso, piedi sulla pedana, un braccio alla volta'],
     ['Traiettoria', 'Gomito che scorre lungo il fianco, spalla che si allunga in avanti nel ritorno'],
   ],
   tecnica: [
@@ -5630,7 +5630,7 @@ var MW = {
   'croci-cavi':                 ['cable-pec-fly', 'Cable Pec Fly'],
   'chest-supported-row':        ['machine-chest-supported-t-bar-row', 'Machine Chest Supported T Bar Row'],
   'pulley-basso':               ['machine-seated-cable-row', 'Machine Seated Cable Row'],
-  'rematore-mono-cavo':         ['cable-single-arm-neutral-grip-row', 'Cable Single Arm Neutral Grip Row'],
+  /* 24/11: niente video per rematore-mono-cavo: su MuscleWiki è in piedi, Luigi lo vuole seduto al pulley */
   'lat-machine':                ['machine-pulldown', 'Machine Pulldown'],
   'lat-machine-neutra':         ['neutral-pulldown', 'Neutral Pulldown'],
   'trazioni':                   ['pull-ups', 'Pull Ups'],
@@ -7670,12 +7670,7 @@ var MANICHINI = {
     pose: { a: { appoggio: [], pos: [0, 46, 0], busto: 24, coscia: [82, 8], gamba: [64, 5], piede: [150, 6], braccio: [88, 8], avambraccio: [88, 4] },
             b: { appoggio: [], pos: [0, 46, 0], busto: -4, coscia: [82, 8], gamba: [64, 5], piede: [150, 6], braccio: [-40, 14], avambraccio: [80, 0] } }
   },
-  'rematore-mono-cavo': {
-    durata: 3.4, lavora: 'schiena bicipiti', nota: 'Un braccio alla volta: il gomito va indietro lungo il fianco, il busto non ruota.',
-    attrezzi: [['cavo', { da: [-10, 105, 120], a: 'mano_d' }]],
-    pose: { a: { busto: 20, coscia_d: [-12, 5], gamba_d: [-4, 3], coscia_s: [22, 5], gamba_s: [-16, 3], braccio_d: [86, 4], avambraccio_d: [86, 2], braccio_s: [10, 10], avambraccio_s: [40, 10] },
-            b: { busto: 20, coscia_d: [-12, 5], gamba_d: [-4, 3], coscia_s: [22, 5], gamba_s: [-16, 3], braccio_d: [-34, 12], avambraccio_d: [80, 2], braccio_s: [10, 10], avambraccio_s: [40, 10] } }
-  },
+  /* 24/11: tolto il manichino del rematore a un braccio: era in piedi, Luigi lo vuole seduto al pulley (resta la foto) */
   'face-pull': {
     durata: 3.4, lavora: 'spalle schiena', nota: 'La corda arriva alla fronte, i gomiti salgono alti e larghi, le mani finiscono ai lati della testa.',
     attrezzi: [['cavo', { da: [0, 160, 110], a: 'mani', corda: 1 }]],
@@ -8243,7 +8238,6 @@ var ILLUSTRAZIONI = {
 "high-row": "foto/es/high-row.webp",
 "hip-thrust": "foto/es/hip-thrust.webp",
 "hip-thrust-macchina": "foto/es/hip-thrust-macchina.webp",
-"hop-ostacoli": "foto/es/hop-ostacoli.webp",
 "hyperextension-45": "foto/es/hyperextension-45.webp",
 "incline-curl": "foto/es/incline-curl.webp",
 "inverted-row": "foto/es/inverted-row.webp",
@@ -8261,7 +8255,6 @@ var ILLUSTRAZIONI = {
 "leg-press-orizzontale": "foto/es/leg-press-orizzontale.webp",
 "military-press": "foto/es/military-press.webp",
 "muscle-up-progressione": "foto/es/muscle-up-progressione.webp",
-"navetta-cono": "foto/es/navetta-cono.webp",
 "nordic-curl": "foto/es/nordic-curl.webp",
 "overhead-extension": "foto/es/overhead-extension.webp",
 "pallof-press": "foto/es/pallof-press.webp",
@@ -8300,7 +8293,6 @@ var ILLUSTRAZIONI = {
 "rematore-bilanciere": "foto/es/rematore-bilanciere.webp",
 "rematore-macchina": "foto/es/rematore-macchina.webp",
 "rematore-manubrio": "foto/es/rematore-manubrio.webp",
-"rematore-mono-cavo": "foto/es/rematore-mono-cavo.webp",
 "rematore-t-macchina": "foto/es/rematore-t-macchina.webp",
 "reverse-fly": "foto/es/reverse-fly.webp",
 "reverse-fly-cavi": "foto/es/reverse-fly-cavi.webp",
@@ -8318,7 +8310,6 @@ var ILLUSTRAZIONI = {
 "slancio-glutei-cavo": "foto/es/slancio-glutei-cavo.webp",
 "slancio-glutei-macchina": "foto/es/slancio-glutei-macchina.webp",
 "sollevamento-gambe": "foto/es/sollevamento-gambe.webp",
-"split-jump": "foto/es/split-jump.webp",
 "split-squat-bulgaro": "foto/es/split-squat-bulgaro.webp",
 "squat-bilanciere": "foto/es/squat-bilanciere.webp",
 "squat-corpo-libero": "foto/es/squat-corpo-libero.webp",
@@ -8582,10 +8573,6 @@ var ILLUSTRAZIONI_FOTO = {
 "foto/es/hip-thrust-macchina.a.webp",
 "foto/es/hip-thrust-macchina.b.webp"
 ],
-"hop-ostacoli": [
-"foto/es/hop-ostacoli.a.webp",
-"foto/es/hop-ostacoli.b.webp"
-],
 "hyperextension-45": [
 "foto/es/hyperextension-45.a.webp",
 "foto/es/hyperextension-45.b.webp"
@@ -8653,10 +8640,6 @@ var ILLUSTRAZIONI_FOTO = {
 "muscle-up-progressione": [
 "foto/es/muscle-up-progressione.a.webp",
 "foto/es/muscle-up-progressione.b.webp"
-],
-"navetta-cono": [
-"foto/es/navetta-cono.a.webp",
-"foto/es/navetta-cono.b.webp"
 ],
 "nordic-curl": [
 "foto/es/nordic-curl.a.webp",
@@ -8810,10 +8793,6 @@ var ILLUSTRAZIONI_FOTO = {
 "foto/es/rematore-manubrio.a.webp",
 "foto/es/rematore-manubrio.b.webp"
 ],
-"rematore-mono-cavo": [
-"foto/es/rematore-mono-cavo.a.webp",
-"foto/es/rematore-mono-cavo.b.webp"
-],
 "rematore-t-macchina": [
 "foto/es/rematore-t-macchina.a.webp",
 "foto/es/rematore-t-macchina.b.webp"
@@ -8881,10 +8860,6 @@ var ILLUSTRAZIONI_FOTO = {
 "sollevamento-gambe": [
 "foto/es/sollevamento-gambe.a.webp",
 "foto/es/sollevamento-gambe.b.webp"
-],
-"split-jump": [
-"foto/es/split-jump.a.webp",
-"foto/es/split-jump.b.webp"
 ],
 "split-squat-bulgaro": [
 "foto/es/split-squat-bulgaro.a.webp",
@@ -36670,7 +36645,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwusdcsf';
+var BUILD = 'vmwusju2i';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -38137,7 +38112,13 @@ function gifDi(id) {
 
 /* La prima immagine utile, qualunque sia la fonte: serve alle miniature e alla
    lente, che non hanno bisogno di sapere se e' una foto o un'animazione. */
+/* 24/11 (Luigi: la copertina deve essere lo stesso esercizio che si vede dentro): controllate a occhio tutte le
+   coppie; dove la foto mostra un altro esercizio (copenhagen: plank laterale a terra; calf su una gamba: a due gambe;
+   plank: in ginocchio) la copertina è il fotogramma d'arrivo dell'animazione, che è quella giusta. */
+var COPERTINA_ANIMATA = { plank: 1, copenhagen: 1, 'calf-una-gamba': 1 };
 function immagineDi(id) {
+  var ill = typeof ILLUSTRAZIONI_FOTO !== 'undefined' && ILLUSTRAZIONI_FOTO[id];
+  if (ill && COPERTINA_ANIMATA[id]) return ill[1];
   var f = fotoDi(id);
   return f ? f[0] : gifDi(id) || (typeof FOTO_LIBERE !== 'undefined' && FOTO_LIBERE[id]) || disegnoEsercizio(id);
 }
