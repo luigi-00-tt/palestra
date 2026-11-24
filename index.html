@@ -11001,6 +11001,20 @@ var TEMPI_M = { serie: 45, setupDischi: 90, setupMacchina: 30, setupCorpoLibero:
                    non promettere un'ora che poi ne diventa una e mezza. */
                 margine: 1.25 };
 
+/* 24/11 (Luigi: «per alcuni 1 minuto e arrivo stanco alla seconda o terza serie»): recupero minimo fra le serie di
+   pesi, per tutti. 3 minuti sui multiarticolari, 2 sugli isolamenti. A10 Schoenfeld 2016 (RCT, allenati, 3x8-12: 3 min
+   meglio di 1 min per forza e coscia), A11 Grgic & Schoenfeld 2024 (meta-analisi: oltre 60-90 s meglio per
+   l'ipertrofia, meno marcato sugli isolamenti), D04 Grgic 2018 (allenati: oltre 2 min per la forza). Niente minimo
+   per core, cardio, salti, abilità, equilibrio, cuffia: lì il recupero resta quello della prescrizione. */
+var REC_SENZA_MINIMO = /^(core|cardio|plio|sprint|agilita|abilita|equilibrio|cuffia|mobil|stretch|postura)/;
+function recMinimo(id) {
+  var c = CATALOGO[id];
+  return !c || REC_SENZA_MINIMO.test(c.s) ? 0 : c.m ? 180 : 120;
+}
+function conRecMinimo(rec, id) {
+  var min = recMinimo(id);
+  return min && secRec(rec) < min ? min / 60 + ' min' : rec;
+}
 function secRec(rec) {
   var r = String(rec || ''), n = parseFloat(r);
   if (isNaN(n)) return 90;
@@ -11128,7 +11142,7 @@ function costruisciGiorno(tipo, quota, q, fam, blocco, esclusi, perche, occorren
     scelti.forEach(function (s) {
       var id = s[0], c = CATALOGO[id];
       var pr = prescrizione(id, fam, q, blocco, primo && c.m && c.a.indexOf('bilanciere') >= 0);
-      var voce = { ex: id, blocco: nomeBlocco(g), serie: s[1], rip: pr.rip, rir: pr.rir, rec: pr.rec };
+      var voce = { ex: id, blocco: nomeBlocco(g), serie: s[1], rip: pr.rip, rir: pr.rir, rec: conRecMinimo(pr.rec, id) };
       if (c.ind && c.ind.length) voce.indiretti = c.ind.slice();
       if (c.m && primo) voce.avvicinamento = c.a.indexOf('bilanciere') >= 0 ? 3 : 2;
       /* sostituzione dovuta a una condizione: la si dice */
@@ -11349,9 +11363,7 @@ function staNelTempo(giorni, target, minuti, prio) {
                  (CATALOGO[a.ex].m - CATALOGO[b.ex].m);
         })[0];
         if (via) { gg.esercizi.splice(gg.esercizi.indexOf(via), 1); continue; }
-        /* al minimo ovunque: si abbrevia il recupero degli isolamenti */
-        var iso = gg.esercizi.filter(function (e) { return !CATALOGO[e.ex].m && !e.fisso && secRec(e.rec) > 60; });
-        if (iso.length) { iso.forEach(function (e) { e.rec = '60 sec'; }); continue; }
+        /* 24/11: qui prima si accorciavano i recuperi degli isolamenti a 60 s; ora sotto recMinimo non si scende */
         sforo = true; break;
       }
     }
@@ -31834,7 +31846,7 @@ function foglioSostituisci(e, g) {
 
 function foglioRecupero(e) {
   if (!FOGLIO_REC) return '';
-  var base = recSec(e.rec), mio = recuperoDi(e), ex = esercizioDi(e.ex);
+  var base = recScheda(e), mio = recuperoDi(e), ex = esercizioDi(e.ex);
   var mmss = mmssRec;
   var diff = mio - base;
   var h = '<div class="rs-pm"><button class="rb" data-rec-cambia="-15" data-rec-base="' + base + '" aria-label="15 secondi in meno">−</button>' +
@@ -36658,7 +36670,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwus4g6q';
+var BUILD = 'vmwus8ccq';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -37489,7 +37501,13 @@ function recSec(rec) {
 /* 19/11/2026: il recupero scelto dall'utente per quell'esercizio vince sul consigliato (S.prefEsercizi[ex].rec) */
 function recuperoDi(e) {
   var p = S.prefEsercizi && S.prefEsercizi[e.ex];
-  return p && p.rec > 0 ? p.rec : recSec(e.rec);
+  return p && p.rec > 0 ? p.rec : recScheda(e);
+}
+/* 24/11: il recupero della scheda, mai sotto il minimo (recMinimo, motore.js). La scheda scritta da te o dal trainer
+   resta com'è: l'ha decisa chi l'ha scritta. */
+function recScheda(e) {
+  var r = recSec(e.rec);
+  return S.questionario && S.questionario.mia ? r : Math.max(r, recMinimo(e.ex));
 }
 function testoSec(sec) {
   var m = Math.floor(sec / 60), r = sec % 60;
@@ -39210,7 +39228,7 @@ function pannelloSerie(e, salvate, tempo, nSerie) {
       return '<button data-ps-rir="' + n + '" aria-pressed="' + (rirS === n) + '">' + (n === 3 ? '3 o più' : n) + '</button>'; }).join('') + '</div></div>') +
     /* v29 (canvas): il recupero di questo esercizio, con «Cambia» che apre il foglio (sostituisci.js) */
     '<button class="card es-rec" id="rec-apri"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>' +
-      '<span><b>Recupero ' + mmssRec(recuperoDi(e)) + '</b><span class="dim">' + (recuperoDi(e) === recSec(e.rec) ? 'consigliato dalla scheda' : 'scelto da te, la scheda dice ' + mmssRec(recSec(e.rec))) + '</span></span>' +
+      '<span><b>Recupero ' + mmssRec(recuperoDi(e)) + '</b><span class="dim">' + (recuperoDi(e) === recScheda(e) ? 'consigliato dalla scheda' : 'scelto da te, la scheda dice ' + mmssRec(recScheda(e))) + '</span></span>' +
       '<i>Cambia</i></button>' +
     '<button class="primary" id="ps-fatta">Serie fatta</button></div>';
 }
