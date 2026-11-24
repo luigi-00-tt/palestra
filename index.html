@@ -36630,7 +36630,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwt7zfkq';
+var BUILD = 'vmwurmjtr';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -36891,6 +36891,28 @@ function vai(v, ctx) {
   try { history.pushState({ n: PILA.length }, '', '#' + v); } catch (e) {}
 }
 
+/* 24/11 (Luigi: «se esco dall'app e ritorno, devo ritornare dove l'ho lasciata»): Android chiude l'app in secondo
+   piano e load() ripartiva sempre dalla home. La schermata, il suo contesto e la pila si salvano qui, solo su questo
+   telefono (non vanno al cloud), e all'avvio si riaprono se sono di oggi. */
+var KEY_VISTA = 'palestra_vista', VISTA_LETTA = false;
+function ricordaVista() {
+  if (!VISTA_LETTA) return;   /* un render() prima della riapertura cancellerebbe la schermata salvata */
+  try { localStorage.setItem(KEY_VISTA, JSON.stringify({ d: oggi(), v: S.vista, ctx: S.ctx, pila: PILA, y: window.scrollY })); } catch (e) {}
+}
+function riapriVista() {
+  VISTA_LETTA = true;
+  try {
+    var r = JSON.parse(localStorage.getItem(KEY_VISTA) || 'null');
+    if (!r || r.d !== oggi() || !r.v) return false;
+    S.vista = r.v; S.ctx = r.ctx || {}; PILA = r.pila || [];
+    if (r.y) S.ctx._y = r.y;
+    return true;
+  } catch (e) { return false; }
+}
+if (typeof document !== 'undefined') document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') ricordaVista();
+});
+
 function indietro() {
   var p = PILA.pop();
   if (p) applica(p.v, p.ctx, 'indietro');
@@ -37047,6 +37069,7 @@ function render() {
   if (barra) barra.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || barra.content;
   /* 20/11: il questionario a pagine non ha la barra (copriva «Avanti»), anche rifatto; il profilo voce per voce sì */
   app.innerHTML = h + ((v === 'questionario' && !(QZ && QZ.solo)) || v === 'account' || v === 'fine' || v === 'assistente' ? '' : navBar() + bottoneAssistente());
+  ricordaVista();
   collega();
   collegaQuestionario();
   collegaSchedaImpostazioni();
@@ -37672,8 +37695,22 @@ function prossimaHtml() {
 
 /* ---------- timer di recupero ---------- */
 var T = { fine: 0, tick: null, durata: 0 };
+/* 24/11: il recupero sopravvive alla chiusura dell'app (Android la chiude in secondo piano): fine e durata sul telefono */
+function ricordaTimer() {
+  try { if (T.fine) localStorage.setItem('palestra_timer', JSON.stringify({ fine: T.fine, durata: T.durata })); else localStorage.removeItem('palestra_timer'); } catch (e) {}
+}
+function riprendiTimer() {
+  try {
+    var t = JSON.parse(localStorage.getItem('palestra_timer') || 'null');
+    if (!t || t.fine < Date.now()) { localStorage.removeItem('palestra_timer'); return; }
+    T.fine = t.fine; T.durata = t.durata;
+    if (T.tick) clearInterval(T.tick);
+    disegnaTimer(); T.tick = setInterval(disegnaTimer, 250);
+  } catch (e) {}
+}
 function avviaTimer(sec) {
   T.durata = sec; T.fine = Date.now() + sec * 1000;
+  ricordaTimer();
   if (T.tick) clearInterval(T.tick);
   disegnaTimer();
   T.tick = setInterval(disegnaTimer, 250);
@@ -37681,6 +37718,7 @@ function avviaTimer(sec) {
 function fermaTimer() {
   if (T.tick) clearInterval(T.tick);
   T.tick = null; T.fine = 0;
+  ricordaTimer();
   var n = document.querySelector('.timer'); if (n) n.remove();
 }
 function disegnaTimer() {
@@ -37695,8 +37733,8 @@ function disegnaTimer() {
       prossimaHtml() +
       '<button id="t-stop" class="rc-salta">Salta il recupero</button><button id="t-riduci" class="rc-riduci">Riduci</button></div>');
     document.body.appendChild(n);
-    n.querySelector('#t-add').onclick = function () { T.fine += 15000; T.durata += 15; disegnaTimer(); };
-    n.querySelector('#t-meno').onclick = function () { T.fine -= 15000; T.durata = Math.max(15, T.durata - 15); disegnaTimer(); };
+    n.querySelector('#t-add').onclick = function () { T.fine += 15000; T.durata += 15; ricordaTimer(); disegnaTimer(); };
+    n.querySelector('#t-meno').onclick = function () { T.fine -= 15000; T.durata = Math.max(15, T.durata - 15); ricordaTimer(); disegnaTimer(); };
     n.querySelector('#t-stop').onclick = fermaTimer;
     n.querySelector('#t-riduci').onclick = function () { n.classList.toggle('piccolo'); disegnaTimer(); };
   }
@@ -38210,8 +38248,8 @@ function chiudiLente() {
 
 /* ---------- cronometro della seduta (v24, chiesto il 7/10/2026) ----------
    Parte con «Inizia l'allenamento» (o da solo alla prima serie spuntata) e si
-   ferma con «Ho finito» oppure da solo quando l'ultima serie degli esercizi
-   obbligatori e' spuntata. Inizio e fine stanno in S.log[data]: la durata
+   ferma solo con «Termina» (24/11: non più da solo all'ultima serie; se resta
+   aperta la chiude chiudiSeduteDimenticate il giorno dopo). Inizio e fine stanno in S.log[data]: la durata
    finisce nei Progressi accanto alla stima. */
 var CRONO = null;
 
@@ -38225,14 +38263,31 @@ function fmtMinuti(ms) {
   return h ? h + ' h ' + dueCifre(m % 60) + ' min' : m + ' min';
 }
 
-/* Tutte le serie degli esercizi non facoltativi (addominali esclusi) spuntate? */
-function sedutaCompleta(g, l) {
-  if (!l || !l.serie) return false;
-  var obbl = eserciziDiOggi(g).filter(function (e) { return !e.opzionale && e.blocco !== 'Addominali' && !e.extra; });
-  return obbl.length > 0 && obbl.every(function (e) {
-    var ss = l.serie[e.ex] || [];
-    return ss.filter(function (s) { return s && s.fatto; }).length >= serieDi(e);
+/* 24/11: l'esercizio da fare dopo «ex»: il primo non finito che lo segue, poi quelli saltati prima; i facoltativi per ultimi */
+function prossimoEsercizio(g, ex) {
+  var lista = eserciziDiOggi(g), l = S.log[oggi()] || {}, i = 0;
+  lista.forEach(function (x, j) { if (x.ex === ex) i = j; });
+  var giro = lista.slice(i + 1).concat(lista.slice(0, i));
+  var aperti = giro.filter(function (x) {
+    return x.ex !== ex && ((l.serie || {})[x.ex] || []).filter(function (s) { return s && s.fatto; }).length < serieDi(x);
   });
+  return aperti.filter(function (x) { return !x.opzionale; })[0] || aperti[0] || null;
+}
+
+/* 24/11 (Luigi: «la fine dell'allenamento te la dico io»): una seduta lasciata aperta si chiude solo il giorno dopo,
+   all'ora dell'ultima serie spuntata */
+function chiudiSeduteDimenticate() {
+  var cambiato = false;
+  Object.keys(S.log).forEach(function (d) {
+    var l = S.log[d];
+    if (d >= oggi() || !l || !l.inizio || l.fine) return;
+    var ultima = l.inizio;
+    Object.keys(l.serie || {}).forEach(function (k) {
+      (l.serie[k] || []).forEach(function (s) { if (s && s.t > ultima) ultima = s.t; });
+    });
+    l.fine = ultima; cambiato = true;
+  });
+  if (cambiato) save();
 }
 
 
@@ -39068,16 +39123,15 @@ function collegaEsercizio() {
            da chiudere a mano. Segnalato dall'utente dopo il primo allenamento. */
         var ultima = i >= serieDi(e) - 1;
         if (!ultima) avviaTimer(recuperoDi(e));
-        var lg = S.log[oggi()];
-        if (lg && lg.inizio && !lg.fine && sedutaCompleta(g, lg)) {
-          lg.fine = Date.now(); save();
-          var mc = document.querySelector('.crono-mini');
-          if (mc) mc.textContent = 'Allenamento finito: ' + fmtMinuti(lg.fine - lg.inizio);
-          toast('Ultima serie: allenamento finito in ' + fmtMinuti(lg.fine - lg.inizio));
-          return vai('fine', {});
-        } else toast(ultima
+        /* 24/11 (Luigi): la seduta la chiude solo «Termina»; l'ultima serie di un esercizio porta al successivo, senza timer */
+        toast(ultima
           ? 'Esercizio completato: ' + kgTot() + ' kg × ' + ripTesto()
           : 'Serie ' + (i + 1) + ' salvata: ' + kgTot() + ' kg × ' + ripTesto());
+        if (ultima) {
+          var dopo = prossimoEsercizio(g, e.ex);
+          if (dopo) vai('esercizio', { giorno: g.id, ex: dopo.ex }); else vai('giorno', { giorno: g.id });
+          return;
+        }
       } else {
         /* togliendo la spunta il recupero non ha piu' motivo di andare avanti */
         fermaTimer();
@@ -44124,10 +44178,13 @@ migraQuestionario();
 if (migraDolori()) save();
 applicaScheda();
 leggiRitornoAuth();   /* 19/11: i link delle email (nuova password, email confermata), prima di riscrivere l'ancora */
+chiudiSeduteDimenticate();
 var iniziale = (location.hash || '').replace('#', '');
-if (['nutrizione', 'diario', 'progressi', 'impostazioni'].indexOf(iniziale) >= 0) S.vista = iniziale;
+if (!riapriVista() && ['nutrizione', 'diario', 'progressi', 'impostazioni'].indexOf(iniziale) >= 0) S.vista = iniziale;
 try { history.replaceState({ v: S.vista, ctx: S.ctx }, '', '#' + S.vista); } catch (e) {}
 render();
+if (S.ctx._y) window.scrollTo(0, S.ctx._y);
+riprendiTimer();
 
 /* Si chiede subito ad Android di considerare permanenti i dati di questo sito,
    cosi' non li butta per fare spazio. Da PWA installata il permesso arriva da
