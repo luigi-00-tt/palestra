@@ -1760,6 +1760,10 @@ details.risc { background: var(--surface); }
 /* l'elenco delle serie: righe compatte, la serie in corso con l'anello */
 .serie { background: var(--surface); border-radius: 14px; padding: 6px 8px; margin-bottom: 6px; border: 0; }
 .serie .ok.on { background: var(--accent); color: var(--on-accent); }
+.rir-riga { display: flex; align-items: center; gap: 6px; margin: -2px 0 8px; padding: 0 8px; }
+.rir-riga .dim { font-size: 13px; margin-right: 4px; }
+.rir-riga button { min-width: 44px; height: 36px; border-radius: 999px; border: 0; background: var(--surface-2); color: var(--text); font-size: 14px; cursor: pointer; }
+.rir-riga button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 700; }
 .hint.sug-su { background: var(--accent); color: var(--on-accent); font-weight: 500; font-size: 15px; padding: 16px; border-radius: var(--radius); }
 .tag.hi { background: var(--accent-soft); }
 
@@ -1819,7 +1823,12 @@ details.risc { background: var(--surface); }
 .timer.ring .rc-salta { background: var(--accent); color: var(--on-accent); }
 .timer .rc-riduci { background: none; border: 0; color: var(--text-dim); font-size: 15px; min-height: 44px; }
 /* ridotto: la pillola di prima, sopra la barra */
-.timer.piccolo .rc-t, .timer.piccolo .rc-anello svg, .timer.piccolo .rc-di, .timer.piccolo .rc-pm, .timer.piccolo .rc-salta { display: none; }
+/* 24/11 sera (Luigi): nella barretta piccola anche ±15 s e «Salta», senza aprirla */
+.timer.piccolo .rc-t, .timer.piccolo .rc-anello svg, .timer.piccolo .rc-di { display: none; }
+.timer.piccolo { gap: 6px; padding: 6px 8px 6px 14px; max-width: calc(100vw - 16px); }
+.timer.piccolo .rc-pm { display: flex; gap: 4px; }
+.timer.piccolo .rc-pm button { height: 36px; padding: 0 10px; font-size: 14px; background: var(--surface); }
+.timer.piccolo .rc-salta { width: auto; height: 36px; padding: 0 12px; font-size: 14px; }
 .timer.piccolo .rc-anello { width: auto; height: auto; }
 .timer.piccolo .rc-riduci { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .timer .rc-anello .rc-arco { transition: none; } }
@@ -33291,18 +33300,29 @@ function applicaScheda() {
   serieScelte(SCHEDA);
 }
 /* 24/11 sera (Luigi: «mi ha cambiato di nuovo la scheda»): la scheda si ricalcolava a ogni apertura, quindi ogni
-   aggiornamento del motore cambiava gli esercizi a metà settimana. Ora resta quella costruita la prima volta
-   (S.schedaFissa) finché non cambiano le risposte: questionario, «Rifai», luogo, dolori che rientrano, scheda propria. */
+   aggiornamento del motore cambiava gli esercizi a metà settimana. Ora il blocco in corso resta quello costruito
+   (S.schedaFissa); un motore migliorato entra solo dai blocchi successivi (deciso da Luigi nel grill-me).
+   Se cambiano le risposte (questionario, «Rifai», luogo, dolori che rientrano, scheda propria) si ricostruisce tutto. */
 function schedaFissata() {
   var q = S.questionario, dentro = q.mia ? { mia: q.mia, q: q } : qConRientri(q);
   var chiave = JSON.stringify(dentro, function (k, v) { return k === 'propri' || k === 'aggiunte' ? undefined : v; });
   var f = S.schedaFissa;
-  /* una copia: le modifiche fatte dopo (serie scelte, scambi) non devono finire nella scheda fissata */
-  if (f && f.chiave === chiave && f.base && f.base.blocchi) return JSON.parse(JSON.stringify(f.base));
   var base = q.mia ? schedaMia(q.mia, q)   /* v28: la scheda propria */
     : generaSchede(dentro);   /* v28: anche con la seconda scheda */
-  S.schedaFissa = { chiave: chiave, base: base, dal: oggi() };
+  if (f && f.chiave === chiave && f.base && f.base.blocchi && f.base.blocchi.length === base.blocchi.length) {
+    var i = bloccoInCorso(f.base);
+    base.blocchi[i] = f.base.blocchi[i];
+  }
+  S.schedaFissa = { chiave: chiave, base: base, dal: f && f.chiave === chiave ? f.dal : oggi() };
+  /* una copia: le modifiche fatte dopo (serie scelte, scambi) non devono finire nella scheda fissata */
   return JSON.parse(JSON.stringify(base));
+}
+/* come statoCiclo().indice, ma su una scheda data (all'avvio SCHEDA non c'è ancora) */
+function bloccoInCorso(sc) {
+  var inizio = inizioCiclo();
+  if (!inizio || !sc.settimanePerBlocco) return 0;
+  var sett = Math.max(1, Math.floor((Date.now() - new Date(inizio + 'T00:00:00').getTime()) / (7 * 24 * 3600 * 1000)) + 1);
+  return Math.floor((sett - 1) / sc.settimanePerBlocco) % sc.blocchi.length;
 }
 function serieScelte(sc) {
   var pref = S.prefEsercizi || {};
@@ -36736,7 +36756,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwv9t1zt';
+var BUILD = 'vmwvalss0';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -37894,7 +37914,8 @@ function disegnaTimer() {
   n.querySelector('.rc-arco').style.strokeDasharray = circ.toFixed(1);
   n.querySelector('.rc-arco').style.strokeDashoffset = (circ * (1 - rest / tot)).toFixed(1);
   n.querySelector('.rc-di').textContent = rest ? 'di ' + Math.floor(tot / 60) + ':' + String(tot % 60).padStart(2, '0') : 'Pronto per la serie';
-  n.querySelector('#t-stop').textContent = rest ? 'Salta il recupero' : 'Vai alla serie';
+  var pic = n.classList.contains('piccolo');
+  n.querySelector('#t-stop').textContent = rest ? (pic ? 'Salta' : 'Salta il recupero') : (pic ? 'Vai' : 'Vai alla serie');
   n.querySelector('#t-riduci').textContent = n.classList.contains('piccolo') ? 'Apri' : 'Riduci';
   if (rest === 0) {
     n.classList.add('ring');
@@ -37944,7 +37965,7 @@ function sedutaInCorso() {
   if (!l || !l.giorno || l.fine) return null;
   return l.inizio || sedutaConSerie() ? l.giorno : null;
 }
-/* «Inizia»: da qualsiasi carta o seduta. Se oggi ne avevi cominciata un'altra senza serie fatte, la sostituisce */
+/* «Inizia»: da qualsiasi carta o seduta, quando non ce n'è una in corso (allora le altre si consultano soltanto) */
 function sedutaConSerie() {
   var l = S.log[oggi()] || {};
   return Object.keys(l.serie || {}).some(function (k) { return (l.serie[k] || []).some(function (x) { return x && x.fatto; }); });
@@ -38041,9 +38062,10 @@ function vHome() {
          '<div><b class="eroe-t">' + esc(g.nome) + '</b><span class="eroe-f">' + esc(g.focus) + '</span></div>' +
          '<div class="eroe-n"><span>' + g.esercizi.length + ' esercizi</span><span>' + serieP + ' serie</span>' +
          '<span>~' + durataSeduta(g) + ' min</span></div>' +
+         /* 24/11 sera (Luigi): con una seduta cominciata le altre si consultano soltanto, niente «Inizia» */
          '<div class="eroe-az">' + (qui ? '<button class="eroe-b" data-giorno="' + g.id + '">Riprendi la seduta</button>'
-           : '<button class="eroe-b" data-inizia="' + g.id + '">' + (inCorso ? 'Inizia questa' : 'Inizia') + '</button>' +
-             '<button class="eroe-b eroe-v" data-giorno="' + g.id + '">Vedi</button>') + '</div></div>';
+           : inCorso ? '<button class="eroe-b" data-giorno="' + g.id + '">Consulta</button>'
+           : '<button class="eroe-b" data-inizia="' + g.id + '">Inizia</button><button class="eroe-b eroe-v" data-giorno="' + g.id + '">Vedi</button>') + '</div></div>';
     }).join('') + '</div>';
     if (carte.length > 1) h += '<div class="eroi-p" aria-hidden="true">' + carte.map(function (g, i) { return '<i' + (i ? '' : ' class="on"') + '>' + g.id + '</i>'; }).join('') +
       '<span class="dim">scorri per un’altra seduta</span></div>';
@@ -38683,6 +38705,7 @@ function vGiorno() {
     var nS = serieDi(e), finito = fatte >= nS, sug = finito ? null : suggerimento(e.ex, e.rip);
     var ult = S.ultimo[e.ex] || [], kgU = ult[0] && ult[0].kg;
     var riga2 = fatte && !finito ? 'serie ' + (fatte + 1) + ' di ' + nS + ', ' + esc(e.rip) + ' rip'
+      : altra && ult.length ? nS + ' × ' + esc(e.rip) + ' · l’ultima volta ' + (kgU ? numIt(kgU) + ' kg × ' : '') + ult.map(function (x) { return x.rip; }).join(', ')   /* 24/11 sera: per confrontare */
       : nS + ' × ' + esc(e.rip) + (kgU ? ', ' + numIt(kgU) + ' kg' : '') + (e.avvicinamento ? ', + ' + e.avvicinamento + ' di avvicinamento' : '');
     var riga3 = !sug ? '' : sug.tipo === 'sali' && sug.kg && kgU ? '<em class="su">Oggi +' + numIt(sug.kg - kgU) + ' kg → ' + numIt(sug.kg) + ' kg</em>'
       : sug.tipo === 'sali' ? '<em class="su">Oggi sali di carico</em>'
@@ -38713,7 +38736,7 @@ function vGiorno() {
   h += riquadroAggiunte(g);
   h += '<button class="agg" id="agg-ex">+ Aggiungi un esercizio a oggi</button>';
   /* in fondo: comincia o continua, e chiudi */
-  if (altra) { if (!sedutaConSerie()) h += '<button class="primary continua" data-inizia="' + g.id + '">Fai questa al posto della ' + esc(corso) + '</button>'; }
+  if (altra) h += '<button class="primary continua" data-giorno="' + esc(corso) + '">Torna alla seduta ' + esc(corso) + '</button>';
   else if (!ini) h += '<button class="primary continua" id="crono-via">Inizia la seduta</button>';
   else if (prossimoEx && !fin) h += '<button class="primary continua" data-ex="' + prossimoEx.ex + '" data-giorno="' + g.id + '">Continua: ' + esc(esercizioDi(prossimoEx.ex).nome) + '</button>';
   h += '<button class="link g-chiudi" data-nav="home">Chiudi la seduta</button>';
@@ -39114,7 +39137,7 @@ function vEsercizio() {
     var ph = prec[i] || prec[prec.length - 1] || {};
     var obi = tempo ? null : obiettivoRip(e, i, sug);
     /* 24/11 sera (Luigi: «non evidenziare solo la prima serie, lasciali liberi»): tutte le righe uguali */
-    h += '<div class="serie" data-i="' + i + '"' + (s.rir !== undefined ? ' data-rir="' + s.rir + '"' : '') + '>' +
+    h += '<div class="serie" data-i="' + i + '">' +
       '<span class="n">' + (i + 1) + '</span>' +
       '<input type="number" inputmode="decimal" step="0.5" enterkeyhint="next" class="kg' + (s.kg ? ' filled' : '') +
         '" aria-label="Serie ' + (i + 1) + ', ' + (bil ? 'chili di dischi' : 'chili') + '" value="' + (s.kg !== undefined ? s.kg - bil : '') + '" placeholder="' + (ph.kg !== undefined ? Math.max(0, ph.kg - bil) : '–') + '">' +
@@ -39122,6 +39145,9 @@ function vEsercizio() {
         '" enterkeyhint="done" aria-label="Serie ' + (i + 1) + ', ' + (tempo ? (inMin ? 'minuti' : 'secondi') : 'ripetizioni') + '" value="' + aVista(s.rip) + '" placeholder="' + (obi !== null ? obi : ph.rip !== undefined ? aVista(ph.rip) : e.rip) + '">' +
       '<button class="ok' + (s.fatto ? ' on' : '') + '" aria-label="Serie ' + (i + 1) + ' fatta" aria-pressed="' + !!s.fatto + '">✓</button>' +
       '</div>';
+    /* 24/11 sera (Luigi: «lasciala, male non fa»): sotto la serie appena segnata, facoltativo, quante ripetizioni restavano */
+    if (S.ctx.rirRiga === i && s.fatto && !tempo) h += '<div class="rir-riga"><span class="dim">Ti restavano</span>' + [0, 1, 2, 3].map(function (n) {
+      return '<button data-rir-i="' + i + '" data-rir-v="' + n + '" aria-pressed="' + (s.rir === n) + '">' + (n === 3 ? '3+' : n) + '</button>'; }).join('') + '</div>';
   }
   h += '</div>';
   h += pannelloSerie(e, salvate, tempo, nSerie, g);
@@ -39313,7 +39339,7 @@ function collegaEsercizio() {
            reale della seduta invece di limitarsi a stimarla */
         t: fatto === true ? Date.now() : vecchia.t,
         /* 19/11/2026: quante ripetizioni restavano (0-3), dal pannello della serie */
-        rir: row.dataset.rir !== undefined && row.dataset.rir !== '' ? +row.dataset.rir : vecchia.rir
+        rir: vecchia.rir
       };
       /* cronometro della seduta: se non e' stato avviato parte con la prima
          serie spuntata; una serie spuntata dopo la fine (es. gli addominali)
@@ -39366,12 +39392,22 @@ function collegaEsercizio() {
         toast(ultima
           ? 'Esercizio completato: ' + kgTot() + ' kg × ' + ripTesto()
           : 'Serie ' + (i + 1) + ' salvata: ' + kgTot() + ' kg × ' + ripTesto());
-        if (ultima) { render(); return; }
+        S.ctx.rirRiga = i;
+        var y = window.scrollY; render(); window.scrollTo(0, y);
+        return;
       } else {
         /* togliendo la spunta il recupero non ha piu' motivo di andare avanti */
         fermaTimer();
       }
       aggiornaContatore();
+    };
+  });
+  document.querySelectorAll('[data-rir-i]').forEach(function (b) {
+    b.onclick = function () {
+      var ss = ((S.log[oggi()] || {}).serie || {})[e.ex] || [], x = ss[+b.dataset.rirI];
+      if (!x) return;
+      x.rir = +b.dataset.rirV; save();
+      b.parentNode.querySelectorAll('button').forEach(function (o) { o.setAttribute('aria-pressed', o === b); });
     };
   });
   collegaPannelloSerie();
