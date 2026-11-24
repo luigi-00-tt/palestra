@@ -1809,7 +1809,7 @@ details.risc { background: var(--surface); }
 /* Recupero del canvas: schermo intero, anello grande */
 .timer:not(.piccolo) {
   position: fixed; inset: 0; transform: none; left: 0; bottom: 0; z-index: 60; border: 0; border-radius: 0; box-shadow: none;
-  background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+  background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 24px; overflow-y: auto;
   padding: calc(40px + env(safe-area-inset-top, 0px)) 20px calc(40px + env(safe-area-inset-bottom, 0px));
 }
 .timer .rc-t { font-size: 16px; color: var(--text-dim); }
@@ -1888,6 +1888,7 @@ p.dim a[data-go], p.dim a[data-legale] { display: inline-block; padding: 6px 0; 
 .timer .rc-cons { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 8px; }
 .timer .rc-cons p { margin: 0; display: flex; gap: 12px; font-size: 15px; line-height: 1.45; }
 .timer .rc-cons p i { flex: none; width: 8px; height: 8px; margin-top: 7px; border-radius: 999px; background: var(--accent); }
+.timer .rc-cons p i.no { background: var(--warm, #f5a623); }
 .timer.piccolo .rc-pros, .timer.piccolo .rc-cons { display: none; }
 .timer:not(.piccolo) { overflow-y: auto; justify-content: flex-start; }
 /* v29: «Esercizio in corso» come il canvas WLhTb6: riquadro grande in cima, chip, titolo, card del giorno */
@@ -36657,7 +36658,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwurtep6';
+var BUILD = 'vmwus4g6q';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -37714,10 +37715,19 @@ function prossimaHtml() {
   var e = giro.filter(function (x) { return fatte(x) < serieDi(x); })[0];
   if (!e) return '<div class="rc-pros"><span class="dim">Prossima</span><b>Seduta finita: bel lavoro</b></div>';
   var ex = esercizioDi(e.ex) || { nome: e.ex }, n = fatte(e), prec = (log[e.ex] || []).filter(function (x) { return x && x.fatto; }).pop() || (S.ultimo[e.ex] || [])[0] || {};
-  var consiglio = (ex.tecnica || [])[n % Math.max(1, (ex.tecnica || []).length)];
+  var obi = aTempo(e) ? null : obiettivoRip(e, n, suggerimento(e.ex, e.rip));
   return '<div class="rc-pros"><span class="dim">Prossima</span><b>' + esc(ex.nome) + ', serie ' + (n + 1) + ' di ' + serieDi(e) + '</b>' +
-    '<span class="dim">' + (prec.kg ? numIt(prec.kg) + ' kg, ' : '') + esc(e.rip) + ' ripetizioni' + (e.rir && e.rir !== '-' ? ', RIR ' + esc(e.rir) : '') + '</span></div>' +
-    (consiglio ? '<div class="rc-cons"><span class="dim">Per la prossima serie</span><p><i></i>' + testoPerTe(consiglio) + '</p></div>' : '');
+    '<span class="dim">' + (prec.kg ? numIt(prec.kg) + ' kg × ' : '') + (obi !== null ? obi + ' ripetizioni (range ' + esc(e.rip) + ')' : esc(e.rip)) +
+    (e.rir && e.rir !== '-' ? ', RIR ' + esc(e.rir) : '') + '</span></div>';
+}
+/* 24/11 (Luigi: «durante la pausa i consigli, così qualcuno se li legge»): esecuzione ed errori dell'esercizio in corso */
+function consigliRecupero() {
+  if (S.vista !== 'esercizio') return '';
+  var ex = esercizioDi(S.ctx.ex); if (!ex) return '';
+  var tec = ex.tecnica ? righePerTe(ex.tecnica) : [], err = elencoPerTe(ex.errori), h = '';
+  if (tec.length) h += '<div class="rc-cons"><span class="dim">Esecuzione</span>' + tec.map(function (t) { return '<p><i></i>' + esc(t) + '</p>'; }).join('') + '</div>';
+  if (err.length) h += '<div class="rc-cons"><span class="dim">Errori da evitare</span>' + err.map(function (t) { return '<p><i class="no"></i>' + esc(testoPerTe(t)) + '</p>'; }).join('') + '</div>';
+  return h;
 }
 
 /* ---------- timer di recupero ---------- */
@@ -37758,7 +37768,7 @@ function disegnaTimer() {
       '<div><b></b><span class="rc-di"></span></div></div>' +
       '<div class="rc-pm"><button id="t-meno">−15 s</button><button id="t-add">+15 s</button></div>' +
       prossimaHtml() +
-      '<button id="t-stop" class="rc-salta">Salta il recupero</button><button id="t-riduci" class="rc-riduci">Riduci</button></div>');
+      '<button id="t-stop" class="rc-salta">Salta il recupero</button><button id="t-riduci" class="rc-riduci">Riduci</button>' + consigliRecupero() + '</div>');
     document.body.appendChild(n);
     n.querySelector('#t-add').onclick = function () { T.fine += 15000; T.durata += 15; ricordaTimer(); disegnaTimer(); };
     n.querySelector('#t-meno').onclick = function () { T.fine -= 15000; T.durata = Math.max(15, T.durata - 15); ricordaTimer(); disegnaTimer(); };
@@ -38855,7 +38865,8 @@ function vEsercizio() {
        (CATALOGO[e.ex] && !e.extra ? '<button class="es-sost" id="sost-apri"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>Sostituisci</button>' : '') +
        '</div>';
   h += '<p class="es-pos">Esercizio ' + (lista.indexOf(e) + 1) + ' di ' + lista.length + ', serie ' + Math.min(daFare + 1, nSerie) + ' di ' + nSerie +
-       (e.rir && e.rir !== '-' ? ', RIR ' + esc(e.rir) : '') + '</p><h1 class="es-titolo">' + esc(ex.nome) + '</h1>';
+       (e.rip && !aTempo(e) ? ' &middot; <b>' + esc(e.rip) + ' ripetizioni</b>' : '') +
+       (e.rir && e.rir !== '-' ? ' &middot; RIR ' + esc(e.rir) : '') + '</p><h1 class="es-titolo">' + esc(ex.nome) + '</h1>';
 
   /* il consiglio del giorno: la card piena quando si sale di carico */
   var sug = e.fisso && e.blocco === 'Potenza' ? null : suggerimento(e.ex, e.rip);
@@ -38910,17 +38921,18 @@ function vEsercizio() {
   var ultima = prec.length ? (prec[0].kg !== undefined ? numIt(prec[0].kg) + ' kg × ' : '') + prec.map(function (x) { return x.rip; }).join(', ') : '';
   h += '<div class="card es-serie"><div class="es-serie-t"><b>Serie di oggi</b>' + (ultima ? '<span class="dim">l’ultima volta: ' + ultima + '</span>' : '') + '</div>' +
     /* 20/11 (Luigi): chili e ripetizioni si scrivono a mano in ogni riga, si salvano mentre scrivi */
-    '<div class="serie-int" aria-hidden="true"><span></span><span>' + (bil ? 'kg dischi' : 'kg') + '</span><span>' + (tempo ? (inMin ? 'minuti' : 'secondi') : 'ripetizioni') + '</span><span></span></div>';
+    '<div class="serie-int" aria-hidden="true"><span></span><span>' + (bil ? 'kg dischi' : 'kg') + '</span><span>' + (tempo ? (inMin ? 'minuti' : 'secondi') : 'obiettivo') + '</span><span></span></div>';
   for (var i = 0; i < nSerie; i++) {
     var s = salvate[i] || {};
     var ph = prec[i] || prec[prec.length - 1] || {};
+    var obi = tempo ? null : obiettivoRip(e, i, sug);
     var cur = i === daFare, dopo = i > daFare;
     h += '<div class="serie' + (cur ? ' cur' : dopo ? ' dopo' : '') + '" data-i="' + i + '"' + (s.rir !== undefined ? ' data-rir="' + s.rir + '"' : '') + '>' +
       '<span class="n">' + (i + 1) + '</span>' +
       '<input type="number" inputmode="decimal" step="0.5" class="kg' + (s.kg ? ' filled' : '') +
         '" aria-label="Serie ' + (i + 1) + ', ' + (bil ? 'chili di dischi' : 'chili') + '" value="' + (s.kg !== undefined ? s.kg - bil : '') + '" placeholder="' + (ph.kg !== undefined ? Math.max(0, ph.kg - bil) : '–') + '">' +
       '<input type="number" inputmode="' + (inMin ? 'decimal" step="0.25' : 'numeric') + '" class="rip' + (s.rip ? ' filled' : '') +
-        '" aria-label="Serie ' + (i + 1) + ', ' + (tempo ? (inMin ? 'minuti' : 'secondi') : 'ripetizioni') + '" value="' + aVista(s.rip) + '" placeholder="' + (ph.rip !== undefined ? aVista(ph.rip) : e.rip) + '">' +
+        '" aria-label="Serie ' + (i + 1) + ', ' + (tempo ? (inMin ? 'minuti' : 'secondi') : 'ripetizioni') + '" value="' + aVista(s.rip) + '" placeholder="' + (obi !== null ? obi : ph.rip !== undefined ? aVista(ph.rip) : e.rip) + '">' +
       '<button class="ok' + (s.fatto ? ' on' : '') + '" aria-label="Serie ' + (i + 1) + ' fatta" aria-pressed="' + !!s.fatto + '">✓</button>' +
       '</div>';
   }
@@ -39176,6 +39188,18 @@ function collegaEsercizio() {
 /* 19/11/2026 (canvas WLhTb6): la serie da fare, una alla volta, con i numeri grandi.
    Il pannello non salva niente da solo: scrive nella riga della serie (.serie.cur) e preme la sua spunta,
    così salvataggio, timer, record e fine seduta restano quelli di sempre. */
+/* 24/11 (Luigi: «non c'è quante ripetizioni dovrei cercare di fare»): l'obiettivo di ogni serie, dentro il range della
+   scheda. Si parte dalla seduta precedente (ultimoPrima: S.ultimo intanto diventa quella di oggi): una ripetizione in più
+   di allora, fino al massimo del range; con il carico nuovo si riparte dal minimo; la prima volta, il minimo. */
+function obiettivoRip(e, i, sug) {
+  var r = /^(\d+)\s*-\s*(\d+)$/.exec(String(e.rip || '').trim());
+  if (!r) return /^\d+$/.test(String(e.rip || '').trim()) ? +e.rip : null;
+  var lo = +r[1], hi = +r[2], l = S.log[oggi()] || {};
+  if (sug && sug.tipo === 'sali' && sug.kg) return lo;
+  var prima = l.ultimoPrima && e.ex in l.ultimoPrima ? l.ultimoPrima[e.ex] || [] : S.ultimo[e.ex] || [];
+  var p = (prima[i] || prima[prima.length - 1] || {}).rip;
+  return p ? Math.max(lo, Math.min(hi, p + 1)) : lo;
+}
 function pannelloSerie(e, salvate, tempo, nSerie) {
   var fatte = primaDaFare(salvate, nSerie);
   if (fatte >= nSerie) return '<div class="hint good">Tutte le ' + nSerie + ' serie fatte. Se devi correggerne una, toccala qui sopra.</div>';
