@@ -10376,8 +10376,11 @@ function alternativaPer(id, zona, tipo, q, presenti) {
   /* nessuno dello stesso schema: stesso gruppo muscolare, ma mai cardio o salti */
   if (!lista.length && ESERCIZI[id]) {
     var gr = ESERCIZI[id].gruppo;
-    lista = Object.keys(CATALOGO).filter(function (x) {
-      return ok(x) && ESERCIZI[x].gruppo === gr && !/^(cardio|plio|sprint|agilita)/.test(CATALOGO[x].s);
+    /* 24/11 (Luigi: «sostituzioni sensate»): mai il muscolo opposto (abductor → adductor), e la prevenzione
+       (equilibrio, copenhagen) non ha un gruppo muscolare da cui pescare */
+    var opposto = { abduttori: 'adduttori', adduttori: 'abduttori' }[c && c.s];
+    lista = gr === 'Prevenzione' ? [] : Object.keys(CATALOGO).filter(function (x) {
+      return ok(x) && ESERCIZI[x].gruppo === gr && CATALOGO[x].s !== opposto && (!c || CATALOGO[x].m === c.m) && !/^(cardio|plio|sprint|agilita)/.test(CATALOGO[x].s);
     }).sort(function (a, b) { return punteggio(b, qq, fam) - punteggio(a, qq, fam); });
   }
   /* movimento limitato: prima gli esercizi che non chiedono l'arco estremo
@@ -31766,10 +31769,34 @@ function foglio(titolo, sotto, corpo, id) {
     corpo + '</div></div>';
 }
 
+/* 24/11 (Luigi: «sostituzioni sensate, non fatte a caso»): il motore dà i candidati dello stesso movimento; qui si
+   mettono in cima i più simili a quello da cambiare: stessa famiglia di attrezzo (bilanciere e multipower, manubri,
+   cavi, macchine, corpo libero), stesso tipo (multiarticolare o isolamento), parole del nome in comune. */
+var VICINI_DI = { 'chin-up': 'trazioni' };   /* il chin-up sta fra i bicipiti, ma si sostituisce con una tirata verticale */
+function famigliaAttrezzo(id) {
+  var a = (CATALOGO[id] || {}).a || [];
+  if (!a.length || a.join() === 'sbarra') return 'corpo';
+  if (a.some(function (x) { return /bilanciere|multipower|rack|trapbar|landmine/.test(x); })) return 'bil';
+  if (a.indexOf('manubri') >= 0) return 'man';
+  if (a.indexOf('cavi') >= 0) return 'cavi';
+  return 'mac';
+}
+function vicinanza(da, a) {
+  var parole = function (id) { return ((ESERCIZI[id] || {}).nome || '').toLowerCase().split(/[^a-zàèéìòù]+/).filter(function (w) { return w.length > 3; }); };
+  var pd = parole(da), comuni = parole(a).filter(function (w) { return pd.indexOf(w) >= 0; }).length;
+  return (famigliaAttrezzo(da) === famigliaAttrezzo(a) ? 2 : 0) + ((CATALOGO[da] || {}).m === (CATALOGO[a] || {}).m ? 1 : 0) + comuni;
+}
 function alternativeDi(e, g) {
   var presenti = eserciziDi(g).map(function (x) { return x.ex; });
-  try { return alternativaPer(e.ex, '', SOST.motivo === 'manca' ? 'limitazione' : 'scelta', personaApp(), presenti).lista.slice(0, 4); }
-  catch (err) { return []; }
+  var tipo = SOST && SOST.motivo === 'manca' ? 'limitazione' : 'scelta';
+  try {
+    var lista = alternativaPer(e.ex, '', tipo, personaApp(), presenti).lista;
+    if (VICINI_DI[e.ex]) lista = [VICINI_DI[e.ex]].concat(alternativaPer(VICINI_DI[e.ex], '', tipo, personaApp(), presenti).lista, lista)
+      .filter(function (x, i, t) { return x !== e.ex && t.indexOf(x) === i && presenti.indexOf(x) < 0 && ESERCIZI[x]; });
+    return lista.map(function (x, i) { return [x, vicinanza(e.ex, x), i]; })
+      .sort(function (p, q) { return (q[1] - p[1]) || (p[2] - q[2]); })
+      .map(function (p) { return p[0]; }).slice(0, 4);
+  } catch (err) { return []; }
 }
 
 function foglioSostituisci(e, g) {
@@ -36630,7 +36657,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwurmjtr';
+var BUILD = 'vmwurtep6';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -38941,8 +38968,12 @@ function vEsercizio() {
       return '<div><span>' + dataIt(d) + '</span><span>' + (kg ? numIt(kg) + ' kg × ' : '') + ss.map(function (x) { return x.rip || '–'; }).join(', ') + '</span></div>';
     }).join('') + '</div>';
   }
-  if (ex.alternativa && CATALOGO[e.ex] && !e.extra) {
-    h += '<div class="card es-alt"><div><span class="dim">Non lo trovi o è occupato?</span><span>' + esc(ex.alternativa) + '</span></div>' +
+  /* 24/11 (Luigi): l'anteprima mostrava un testo scritto a mano («Leg press o goblet squat») che poi nel foglio non
+     c'era; ora sono i primi due della stessa lista del foglio «Cambia» (mai esercizi già nella seduta) */
+  var altOra = CATALOGO[e.ex] && !e.extra ? alternativeDi(e, g).slice(0, 2) : [];
+  if (altOra.length) {
+    h += '<div class="card es-alt"><div><span class="dim">Non lo trovi o è occupato?</span><span>' +
+         esc(altOra.map(function (x) { return ESERCIZI[x].nome; }).join(' o ')) + '</span></div>' +
          '<button id="sost-apri-2" data-sost-apri="1">Cambia</button></div>';
   }
   h += '</main>' + foglioSostituisci(e, g) + foglioRecupero(e);
