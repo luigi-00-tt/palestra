@@ -33124,7 +33124,7 @@ function bozzaQuestionario() {
       condTolte: (v.condTolte || []).slice(), sconosciute: (v.sconosciute || []).slice(),
       no: v.no ? JSON.parse(JSON.stringify(v.no)) : {},
       nascita: v.nascita || p.nascita || '', sesso: v.sesso || p.sesso || '',
-      peso: v.peso || p.peso || '', altezza: v.altezza || p.altezza || '',
+      peso: p.peso || v.peso || '', altezza: p.altezza || v.altezza || '',
       esperienza: v.esperienza !== undefined ? v.esperienza : null,
       giorni: v.giorni || 3, minuti: v.minuti || 60,
       attrezzi: (v.attrezzi || attrezziAttivi()).slice(),
@@ -36756,7 +36756,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwvalss0';
+var BUILD = 'vmwvbdw4i';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -37003,6 +37003,19 @@ function eta() {
 function profiloCompleto() {
   var p = S.profilo;
   return !!(p.impostato && p.nascita && p.peso > 0 && p.altezza > 0);
+}
+/* 25/11 (Luigi: «mi chiede di compilare il profilo, ma il questionario l'ho fatto»): un profilo incompleto (backup o
+   cloud con il profilo vuoto) si riprende dalle risposte del questionario, che hanno già età, sesso, peso e altezza */
+function profiloDalQuestionario() {
+  var q = S.questionario, p = S.profilo;
+  if (!q || profiloCompleto() || !(q.nascita && q.peso > 0 && q.altezza > 0)) return false;
+  if (!p.nascita) p.nascita = q.nascita;
+  if (!(p.peso > 0)) p.peso = q.peso;
+  if (!(p.altezza > 0)) p.altezza = q.altezza;
+  if (!p.sesso && q.sesso) p.sesso = q.sesso;
+  if (q.obiettivo) p.obiettivo = q.obiettivo;
+  p.impostato = true;
+  return true;
 }
 
 /* ============================================================
@@ -43612,6 +43625,7 @@ function applicaBackup(testo) {
   migraQuestionario();
   if (typeof d.controlloBlocco === 'string') S.controlloBlocco = d.controlloBlocco;
   migraDolori();
+  profiloDalQuestionario();
   applicaScheda();
   save();
   return null;
@@ -44447,7 +44461,7 @@ if (!S.idLocale) S.idLocale = nuovoId();   /* v28: si salva col primo save() */
    poi si decide quale scheda è SCHEDA. Fuori da load(), che al primo avvio
    assoluto esce subito perché non c'è niente da leggere. */
 migraQuestionario();
-if (migraDolori()) save();
+if (migraDolori() | profiloDalQuestionario()) save();
 applicaScheda();
 leggiRitornoAuth();   /* 19/11: i link delle email (nuova password, email confermata), prima di riscrivere l'ancora */
 chiudiSeduteDimenticate();
