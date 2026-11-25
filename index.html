@@ -36756,7 +36756,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwvbdw4i';
+var BUILD = 'vmwwpykns';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
@@ -37027,7 +37027,8 @@ function profiloDalQuestionario() {
 var PILA = [];
 
 function vai(v, ctx) {
-  if (S.vista) PILA.push({ v: S.vista, ctx: S.ctx });
+  /* 25/11 (Luigi): da un esercizio al successivo non si impila, così «indietro» torna alla lista della seduta */
+  if (S.vista && !(S.vista === 'esercizio' && v === 'esercizio')) PILA.push({ v: S.vista, ctx: S.ctx });
   applica(v, ctx, 'avanti');
   try { history.replaceState({ guardia: 1 }, '', '#' + v); } catch (e) {}
 }
