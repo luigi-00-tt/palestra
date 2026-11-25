@@ -5192,6 +5192,8 @@ function variante(base, mod) {
   var v = {}, k;
   for (k in ESERCIZI[base]) v[k] = ESERCIZI[base][k];
   for (k in mod) v[k] = mod[k];
+  /* 25/11: la variante è della stessa famiglia (stessa macchina): il motore non la mette in due sedute */
+  v.famiglia = ESERCIZI[base].famiglia || base;
   return v;
 }
 
@@ -11111,6 +11113,7 @@ function spinta(seme, chiave) {
   for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return h;
 }
+function famigliaDi(id) { return (ESERCIZI[id] && ESERCIZI[id].famiglia) || id; }
 function costruisciGiorno(tipo, quota, q, fam, blocco, esclusi, perche, occorrenza, usati) {
   usati = usati || {};
   var es = [], primo = true;
@@ -11141,8 +11144,11 @@ function costruisciGiorno(tipo, quota, q, fam, blocco, esclusi, perche, occorren
       var id = null;
       for (var k = 0; k < cand.length && !id; k++) {
         var c2 = k < giro ? cand[(base + k) % giro] : cand[k];
-        if (!usati[c2] && !scelti.some(function (s) { return s[0] === c2; })) id = c2;
+        if (!usati[famigliaDi(c2)] && !scelti.some(function (s) { return famigliaDi(s[0]) === famigliaDi(c2); })) id = c2;
       }
+      /* stessa famiglia già usata: meglio una variante (altra presa, un braccio) che lo stesso esercizio */
+      for (k = 0; k < cand.length && !id; k++)
+        if (!usati['#' + cand[k]] && !scelti.some(function (s) { return famigliaDi(s[0]) === famigliaDi(cand[k]); })) id = cand[k];
       if (!id) continue;
       scelti.push([id, parti[scelti.length]]);
     }
@@ -11157,7 +11163,7 @@ function costruisciGiorno(tipo, quota, q, fam, blocco, esclusi, perche, occorren
       perche.mancanti[g] = true;
       return;
     }
-    scelti.forEach(function (s) { usati[s[0]] = 1; });
+    scelti.forEach(function (s) { usati[famigliaDi(s[0])] = 1; usati['#' + s[0]] = 1; });
     scelti.forEach(function (s) {
       var id = s[0], c = CATALOGO[id];
       var pr = prescrizione(id, fam, q, blocco, primo && c.m && c.a.indexOf('bilanciere') >= 0);
@@ -36801,7 +36807,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwwqbqbb';
+var BUILD = 'vmwwqf1cp';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
