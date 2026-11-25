@@ -10176,7 +10176,7 @@ var CONDIZIONI = {
                   nota: 'Squat, stacco e spinte con il bilanciere restano: non ci sono prove che facciano male con una scoliosi lieve o moderata, né che pressa o macchine siano meglio (ricerca del 19/11/2026). Meglio i movimenti bilaterali e simmetrici e il lavoro di stabilità del tronco; i carichi su un lato solo si alternano fra i due lati. Negli adolescenti chi fa sport peggiora meno, non di più. Con una curva importante, dolore o peggioramento la valutazione dell\'ortopedico viene prima della scheda.' },
   lordosi:      { evita: [], fonti: ['D19', 'D35'],
                   nota: 'Addominali in tenuta e glutei forti; per prudenza niente iperestensioni della schiena. Gli esercizi correttivi cambiano poco l\'angolo, e non è dimostrato che l\'angolo c\'entri col dolore: squat e stacco restano, con la schiena neutra.' },
-  cifosi:       { evita: [], fonti: ['D19', 'J01', 'J02', 'J13'], aggiungi: [['face-pull', 'reverse-fly', 'band-pull-apart']], dorsoPiu: 2,
+  cifosi:       { evita: [], fonti: ['D19', 'J01', 'J02', 'J13'], aggiungi: [['face-pull', 'reverse-fly', 'reverse-fly-cavi', 'reverse-fly-manubri', 'band-pull-apart']], dorsoPiu: 2,
                   nota: 'Il rinforzo del dorso alto migliora la cifosi, lo stretching no: la scheda dà qualche serie in più al dorso che al petto, aggiunge il face pull e mette nel riscaldamento 2-3 minuti di esercizi per la postura (chin tuck, Y e T sulla panca inclinata, band pull-apart). Gli studi usano dosi più alte: per vedere se funziona, una foto di profilo ogni 4 settimane. Se la curva non si appiana da sdraiati, fa male o peggiora, serve il medico.' },
   ginocchio:    { evita: ['ginocchio', 'impatto'], fonti: ['D14'],
                   nota: 'Il ginocchio sano non ha niente da temere dalla profondità; con il dolore conta evitare l\'angolo che fa male sotto carico. Per questo la scheda preferisce pressa, step-up basso e leg extension: scendi fin dove non senti dolore e metti i piedi più alti sulla pedana della pressa.' },
@@ -11022,6 +11022,12 @@ function durataGiorno(g, realistica) {
     prec = e.blocco;
   });
   if (realistica) s *= TEMPI_M.margine;
+  /* 25/11 (Luigi: «avevo chiesto 1 ora, dura 1 ora e mezza»): il riscaldamento sta nei minuti scelti.
+     Una voce a minuti conta i suoi minuti, le altre (chin tuck, Y e T…) un minuto ciascuna. */
+  (g.riscaldamento || []).forEach(function (v) {
+    var m = /^(\d+) minuti/.exec(v[0] || v);
+    s += m ? m[1] * 60 : 60;
+  });
   if (g.cardio) s += g.cardio.minuti * 60;
   return Math.round(s / 60);
 }
@@ -11267,7 +11273,9 @@ function aggiungiPerCondizione(giorni, tipi, q, esclusi) {
         if (gg.esercizi.some(function (e) { return ammessi.indexOf(e.ex) >= 0; })) { messi++; return; }
         /* v29: nelle altre sedute un'alternativa non ancora usata in settimana, se c'è */
         var inSett = function (x) { return giorni.some(function (d) { return d.esercizi.some(function (e) { return e.ex === x; }); }); };
-        id = ammessi.filter(function (x) { return !inSett(x); })[0] || base;
+        /* 25/11 (Luigi): se le alternative sono già tutte in settimana, meglio una volta sola che ripetere */
+        id = ammessi.filter(function (x) { return !inSett(x); })[0];
+        if (!id) return;
         if (eq) {
           gg.esercizi.push({ ex: id, blocco: 'Prevenzione', serie: 3, rip: '30-45 sec per lato', rir: '-', rec: '30 sec', perCondizione: k, fisso: true,
             nota: 'Prima a occhi aperti a terra, poi su un cuscino o un tappetino morbido, poi a occhi chiusi. Dose indicativa: gli studi dicono che funziona, non quanto ne serve.' });
@@ -11333,6 +11341,40 @@ function aggiusta(giorni, target) {
 /* Se la seduta sfora il tempo, si toglie una serie alla volta partendo dai
    gruppi più lontani dal minimo e mai sotto il minimo: prima si scende al
    minimo efficace, poi (solo se non basta) si dichiara che il tempo è poco. */
+/* 25/11 (Luigi: «se chiedo un'ora deve durare un'ora, e la scheda dev'essere la migliore in quell'ora»): quando
+   nemmeno il volume minimo ci sta, il tempo scelto vince lo stesso. Escono prima gli isolamenti dei gruppi non
+   prioritari (polpacci, braccia, poi gli altri), i multiarticolari restano; come ultima cosa si toglie una serie
+   dove ce ne sono più di due. */
+var ULTIMI = { Polpacci: 0, Bicipiti: 1, Tricipiti: 1, Addominali: 2 };
+function dentroIlTempo(giorni, minuti, prio) {
+  giorni.forEach(function (gg) {
+    for (var giro = 0; giro < 40 && durataGiorno(gg, true) > minuti; giro++) {
+      var via = gg.esercizi.filter(function (e) { return !CATALOGO[e.ex].m && !e.fisso && !e.perCondizione && e.blocco !== 'Potenza'; })
+        .sort(function (a, b) {
+          var ga = ESERCIZI[a.ex].gruppo, gb = ESERCIZI[b.ex].gruppo;
+          return ((prio[ga] ? 1 : 0) - (prio[gb] ? 1 : 0)) ||
+                 ((ga in ULTIMI ? ULTIMI[ga] : 3) - (gb in ULTIMI ? ULTIMI[gb] : 3));
+        })[0];
+      /* poi un secondo esercizio dello stesso gruppo nella seduta, anche multiarticolare */
+      if (!via) via = gg.esercizi.filter(function (e) {
+        var g = ESERCIZI[e.ex].gruppo;
+        return !e.perCondizione && e.blocco !== 'Potenza' && gg.esercizi.some(function (x) { return x !== e && ESERCIZI[x.ex].gruppo === g; });
+      }).pop();
+      if (via) { gg.esercizi.splice(gg.esercizi.indexOf(via), 1); continue; }
+      var piu = gg.esercizi.filter(function (e) { return e.serie > 2; }).sort(function (a, b) { return (a.fisso ? 1 : 0) - (b.fisso ? 1 : 0) || b.serie - a.serie; })[0];
+      if (piu) { piu.serie--; continue; }
+      /* ultimo gradino: esce l'esercizio del gruppo meno importante, se ne restano almeno 3; poi 1 serie */
+      var resto = gg.esercizi.filter(function (e) { return !e.fisso && !e.perCondizione && e.blocco !== 'Potenza'; }).sort(function (a, b) {
+        var ga = ESERCIZI[a.ex].gruppo, gb = ESERCIZI[b.ex].gruppo;
+        return ((prio[ga] ? 1 : 0) - (prio[gb] ? 1 : 0)) || ((ga in ULTIMI ? ULTIMI[ga] : 3) - (gb in ULTIMI ? ULTIMI[gb] : 3));
+      });
+      if (resto.length && gg.esercizi.length > 3) { gg.esercizi.splice(gg.esercizi.indexOf(resto[0]), 1); continue; }
+      var uno = gg.esercizi.filter(function (e) { return e.serie > 1; })[0];
+      if (!uno) break;
+      uno.serie--;
+    }
+  });
+}
 function staNelTempo(giorni, target, minuti, prio) {
   var sforo = false;
   giorni.forEach(function (gg) {
@@ -11421,6 +11463,7 @@ function generaScheda(q) {
   var perche = { voci: [], mancanti: {}, avvisi: [] };
   var lettere = 'ABCDEF';
 
+  var risc = riscaldamentoPer(q);
   var blocchi = [0, 1, 2].map(function (b) {
     var qu = quote(str.tipi, tCiclo, DIVISIONI[q.divisione] ? 2 : 0), usati = {};
     var giorni = str.tipi.map(function (t, i) {
@@ -11443,6 +11486,7 @@ function generaScheda(q) {
     if (q.ambito === 'calisthenics') aggiungiAbilita(giorni, q, esclusi);
     aggiusta(giorni, tCiclo);
     giorni.forEach(ordinaSeduta);   /* prima del controllo del tempo: le serie di avvicinamento contano */
+    giorni.forEach(function (g) { g.riscaldamento = riscaldamentoGiorno(risc, g, q); });   /* anche il riscaldamento conta */
     /* primo tentativo: dentro l'intervallo consigliato. Se non basta, si
        scende al minimo efficace (4 serie frazionarie, Pelland 2025) e lo si
        dice; solo se non basta nemmeno quello il tempo è dichiarato stretto. */
@@ -11452,6 +11496,8 @@ function generaScheda(q) {
       perche.volumeRidotto = true;
       if (staNelTempo(giorni, minimo, minuti, tv.prio)) perche.tempoStretto = true;
     }
+    /* staNelTempo si ferma anche dopo 40 tagli senza dirlo: il controllo finale vale sempre */
+    if (giorni.some(function (g) { return durataGiorno(g, true) > minuti; })) { perche.tempoStretto = true; dentroIlTempo(giorni, minuti, tv.prio); }
     return {
       id: b + 1,
       nome: 'Blocco ' + (b + 1) + ' — ' + ['costruire la base', 'più volume, più ripetizioni', 'più carico'][b],
@@ -11462,7 +11508,6 @@ function generaScheda(q) {
     };
   });
 
-  var risc = riscaldamentoPer(q);
   blocchi.forEach(function (b) { b.giorni.forEach(function (g) { g.riscaldamento = riscaldamentoGiorno(risc, g, q); }); });
   /* il cardio prende il tempo che avanza dopo i pesi, mai il contrario: in
      deficit sono i pesi a conservare il muscolo. Se non ci sta, va nei giorni
@@ -36756,7 +36801,7 @@ function quantiProcedimenti() {
    a Impostazioni ed e' la stessa che nomina la cache del service worker.
    Il marcatore sotto serve a build.js: non toglierlo. */
 /*__BUILD__*/
-var BUILD = 'vmwwpykns';
+var BUILD = 'vmwwq8epp';
 
 /* Profilo di partenza.
    ATTENZIONE: questa riga viene RISCRITTA da build.js nella copia destinata al
