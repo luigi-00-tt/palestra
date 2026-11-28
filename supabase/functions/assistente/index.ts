@@ -127,21 +127,29 @@ Deno.serve(async (req) => {
 
   // Senza try e senza scadenza, una chiamata lenta o caduta dava un 500 senza intestazioni
   // CORS, che il telefono leggeva come «nessuna connessione».
+  // v31: una domanda a cui il modello non risponde torna all'utente (rendi_domanda)
+  const url = Deno.env.get('SUPABASE_URL')!, anon = Deno.env.get('SUPABASE_ANON_KEY')!;
+  const rpc = (nome: string) => fetch(url + '/rest/v1/rpc/' + nome, {
+    method: 'POST',
+    headers: { apikey: anon, Authorization: req.headers.get('Authorization') || '', 'Content-Type': 'application/json' },
+    body: '{}',
+    signal: AbortSignal.timeout(10000),
+  });
+  let contata = false;
+  const fallita = async (errore: string) => {
+    if (contata) await rpc('rendi_domanda').catch(() => null);
+    return risposta({ errore }, 502);
+  };
   try {
     // una domanda in meno per oggi: con il token dell'utente, così conta la sua
-    const url = Deno.env.get('SUPABASE_URL')!, anon = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const conto = await fetch(url + '/rest/v1/rpc/usa_domanda', {
-      method: 'POST',
-      headers: { apikey: anon, Authorization: req.headers.get('Authorization') || '', 'Content-Type': 'application/json' },
-      body: '{}',
-      signal: AbortSignal.timeout(10000),
-    });
+    const conto = await rpc('usa_domanda');
     if (!conto.ok) {
       const e = await conto.json().catch(() => ({}));
       const finite = /finite/.test(e.message || '');
       return risposta({ errore: finite ? 'Domande online di oggi finite: riprova domani.' : 'Serve l’account.' }, finite ? 429 : 401);
     }
     const restanti = await conto.json();
+    contata = true;
 
     // v29: il campo «Altro» del questionario. Il modello sceglie SOLO fra le chiavi che il
     // telefono manda (validate qui), e quello che non riconosce torna come testo corto.
@@ -176,7 +184,7 @@ Per ogni pasto una riga «Colazione: alimento quantità; alimento quantità», l
 kcal solo se sono scritte. Solo il testo della dieta, niente commenti e niente consigli.`;
       const testo = await chiedi(chiave, [{ role: 'user', content: [{ type: 'text', text: compito }, { type: 'image_url', image_url: { url: immagine } }] }],
         1500, 3, 30000, true);
-      if (!testo) return risposta({ errore: 'Adesso non riesco a leggere la foto: riprova fra poco o scrivi il testo.' }, 502);
+      if (!testo) return await fallita('Adesso non riesco a leggere la foto: riprova fra poco o scrivi il testo.');
       return risposta({ testo: testo.slice(0, 8000), restanti });
     }
 
@@ -184,9 +192,9 @@ kcal solo se sono scritte. Solo il testo della dieta, niente commenti e niente c
     const testo = await chiedi(chiave, [{ role: 'system', content: ISTRUZIONI },
       { role: 'user', content: `DOMANDA: ${domanda}\n\nRISPOSTE GIÀ PRONTE:\n${pronte || '(nessuna)'}`
         + (libri ? `\n\nBRANI DAI LIBRI (non copiarli):\n${libri}` : '') }], 500, 3, 15000);
-    if (!testo) return risposta({ errore: 'Il modello non risponde adesso: riprova fra poco.' }, 502);
+    if (!testo) return await fallita('Il modello non risponde adesso: riprova fra poco (la domanda non è stata contata).');
     return risposta({ risposta: testo.slice(0, 3000), restanti });
   } catch {
-    return risposta({ errore: 'Il servizio non risponde adesso: riprova fra poco.' }, 502);
+    return await fallita('Il servizio non risponde adesso: riprova fra poco.');
   }
 });
